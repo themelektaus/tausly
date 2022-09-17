@@ -1,0 +1,264 @@
+.----------------------------------------------------------.
+|                                                          |
+|                     - T A U S L Y -                      |
+|                                                          |
+|                 THE Programming Language                 |
+|                                                          |
+'..........................................................'
+ ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+
+
+------------------------------------------------------------
+ * Start
+------------------------------------------------------------
+
+CLEAR
+SIZE 800, 600
+INIT LastDeltaTime
+INIT W = 10
+INIT H = 80
+INIT MinSmoothness = 600
+INIT MaxSmoothness = 1200
+
+
+
+------------------------------------------------------------
+ * Keys
+------------------------------------------------------------
+
+INIT _x = 0
+INIT _y = 1
+INIT _speed = 2
+
+INIT _velocity = 3
+INIT _bot = 4
+INIT _botSmoothness = 5
+
+INIT _size = 3
+INIT _plus = 4
+
+
+
+------------------------------------------------------------
+ * Player
+------------------------------------------------------------
+
+DIM(2, 5) Player
+
+Player(0)(_bot) = FALSE
+Player(1)(_bot) = TRUE
+
+Player(0)(_x) = W * 3
+Player(1)(_x) = WIDTH - W * 4
+
+FOR i = 0 TO 1
+  Player(i)(_y) = HEIGHT / 2
+  Player(i)(_speed) = 0.5
+  IF Player(i)(_bot) = TRUE
+    Player(i)(_botSmoothness) = 0.1
+    Player(i)(_y) += XRANDOM(H / 2)
+  END
+END
+
+
+
+------------------------------------------------------------
+ * Ball
+------------------------------------------------------------
+
+DIM(5) Ball
+Ball(_x) = WIDTH / 2
+Ball(_y) = HEIGHT / 2
+Ball(_size) = 10
+Ball(_speed) = 0.3
+Ball(_plus) = 0.01
+
+DIM(2) BallDir
+BallDir(0) = XRANDOM(1)
+
+
+
+------------------------------------------------------------
+ * Game Loop
+------------------------------------------------------------
+
+GOSUB Render
+SLEEP 500
+
+LOOP
+  GOSUB Update
+  GOSUB Render
+  SLEEP FRAMETIME(60)
+  LastDeltaTime = DELTATIME
+END
+
+
+
+------------------------------------------------------------
+ * Update
+------------------------------------------------------------
+
+IF Ball(_y) < Ball(_size) / 2
+  Ball(_y) = Ball(_size) / 2
+  BallDir(1) *= -1
+END
+
+IF Ball(_y) > HEIGHT - Ball(_size) / 2
+  Ball(_y) = HEIGHT - Ball(_size) / 2
+  BallDir(1) *= -1
+END
+
+FOR i = 0 TO 1
+  
+  SET Y = Player(i)(_y)
+  SET Velocity = Player(i)(_velocity)
+  
+  IF Player(i)(_bot) = TRUE
+    SET TargetY = HEIGHT / 2
+    IF i = 0
+      IF BallDir(0) < 0 AND Ball(_x) < WIDTH / 3
+        TargetY = Ball(_y)
+      END
+    ELSE
+      IF BallDir(0) > 0 AND Ball(_x) > WIDTH / 3
+        TargetY = Ball(_y)
+      END
+    END
+    IF ABS(Y - TargetY) > H / 16
+      SET Max = Player(i)(_speed) * 1000
+      SMOOTHDAMP Y, TargetY, Velocity, _
+                 Player(i)(_botSmoothness), _
+                 LastDeltaTime, Max
+    END
+  ELSE
+    SET Move = 0
+    IF i = 0
+      IF INPUT("W") : Move -= 1 : END
+      IF INPUT("S") : Move += 1 : END
+    ELSE
+      IF INPUT("I") : Move -= 1 : END
+      IF INPUT("K") : Move += 1 : END
+    END
+    Y += Move * LastDeltaTime * Player(i)(_speed)
+  END
+  
+  IF Y < H / 2
+    Y = H / 2
+    Velocity = 0
+  END
+  
+  IF Y > HEIGHT - H / 2
+    Y = HEIGHT - H / 2
+    Velocity = 0
+  END
+  
+  Player(i)(_y) = Y
+  Player(i)(_velocity) = Velocity
+  
+END
+
+SET Iterations = ROUND(Ball(_speed) * 10)
+
+SET Step = LastDeltaTime * Ball(_speed) * (1 / Iterations)
+SET StepX = BallDir(0) * Step
+SET StepY = BallDir(1) * Step
+
+INIT HitDelta
+
+FOR j = 0 TO Iterations 
+  
+  Ball(_x) += StepX
+  Ball(_y) += StepY
+  
+  IF BallDir(0) < 0
+    
+    IF Ball(_x) > Player(0)(_x) _
+    AND Ball(_x) < Player(0)(_x) + W
+      
+      HitDelta = Ball(_y) - Player(0)(_y)
+      IF ABS(HitDelta) < (H + Ball(_size)) / 2
+        Player(0)(_botSmoothness) = 1
+        Player(1)(_botSmoothness) = _
+          RANDOM(MinSmoothness, MaxSmoothness) / 10000
+        BallDir(0) = 1
+        GOTO Hit
+      END
+      
+    END
+    
+  ELSE
+    
+    IF Ball(_x) < Player(1)(_x) + W _
+    AND Ball(_x) > Player(1)(_x)
+      
+      HitDelta = Ball(_y) - Player(1)(_y)
+      IF ABS(HitDelta) < (H + Ball(_size)) / 2
+        Player(1)(_botSmoothness) = 1
+        Player(0)(_botSmoothness) = _
+          RANDOM(MinSmoothness, MaxSmoothness) / 10000
+        BallDir(0) = -1
+        GOTO Hit
+      END
+      
+    END
+    
+  END
+  
+END
+
+IF Ball(_x) + Ball(_size) < 0
+  GOSUB Render
+  GOTO Lose
+END
+
+IF Ball(_x) > WIDTH + Ball(_size)
+  GOSUB Render
+  GOTO Win
+END
+
+RETURN
+
+Hit:
+BallDir(1) = HitDelta / H * 2
+Ball(_speed) += Ball(_plus)
+NORMALIZE BallDir
+RETURN
+
+
+
+------------------------------------------------------------
+ * Render
+------------------------------------------------------------
+
+COLOR "#033"
+FILL
+
+COLOR "#9ee"
+FOR i = 0 TO 1
+  FILL Player(i)(_x), Player(i)(_y) - H / 2, W, H
+END
+
+COLOR "yellow"
+FILL Ball(_x) - Ball(_size) / 2, _
+     Ball(_y) - Ball(_size) / 2, _
+     Ball(_size), _
+     Ball(_size)
+
+RETURN
+
+
+
+------------------------------------------------------------
+ * Game Over
+------------------------------------------------------------
+
+Lose:
+  ECHO "You Lose :("
+  GOTO Exit
+
+Win:
+  ECHO "You Win :)"
+
+Exit:
+  ECHO "Game Over"

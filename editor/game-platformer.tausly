@@ -1,0 +1,230 @@
+.----------------------------------------------------------.
+|                                                          |
+|                     - T A U S L Y -                      |
+|                                                          |
+|                 THE Programming Language                 |
+|                                                          |
+'..........................................................'
+ ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+
+
+------------------------------------------------------------
+ * Start
+------------------------------------------------------------
+
+CLEAR
+SIZE 800, 600
+
+INIT LastDeltaTime
+
+INIT TS = 50
+INIT G = 9.81
+
+Quick Notes:
+ TS means TileSize
+  G means Gravity
+
+
+
+------------------------------------------------------------
+ * Keys
+------------------------------------------------------------
+
+INIT _x = 0
+INIT _y = 1
+INIT _speed = 2
+INIT _jumpPower = 3
+INIT _moveVelocity = 4
+INIT _moveSmoothness = 5
+INIT _downVelocity = 6
+INIT _grounded = 7
+
+
+
+------------------------------------------------------------
+ * Player
+------------------------------------------------------------
+
+DIM(8) Player
+
+Player(_x) = TS * 2
+Player(_y) = TS * 4
+Player(_speed) = 0.2
+Player(_jumpPower) = 1.8
+Player(_moveSmoothness) = 0.2
+Player(_grounded) = FALSE
+
+
+
+------------------------------------------------------------
+ * Map
+------------------------------------------------------------
+
+DIM(16, 12) Map
+FOR x = 0 TO 15 : Map(x)(11)  = 1                   : END
+FOR y = 0 TO 10 : Map(0)(y)   = 1 : Map(15)(y)  = 1 : END
+Map(10)(10) = 1 : Map(11)(10) = 1 : Map(12)(10) = 1
+Map(13)(8)  = 1 : Map(13)(9)  = 1 : Map(13)(10) = 1
+Map(14)(8)  = 1 : Map(14)(9)  = 1 : Map(14)(10) = 1
+Map(9)(6)   = 2 : Map(10)(6)  = 2 : Map(11)(6)  = 2
+
+
+
+------------------------------------------------------------
+ * Temp Variables
+------------------------------------------------------------
+
+INIT Current
+INIT Target
+
+INIT Move
+INIT Velocity
+INIT Smoothness
+
+INIT CollisionX
+INIT CollisionY
+
+
+
+------------------------------------------------------------
+ * Game Loop
+------------------------------------------------------------
+
+GOSUB Render
+SLEEP 500
+
+LOOP
+  GOSUB Update
+  GOSUB Render
+  SLEEP FRAMETIME(60)
+  LastDeltaTime = DELTATIME
+END
+
+
+
+------------------------------------------------------------
+ * Update
+------------------------------------------------------------
+
+Current = Player(_x)
+
+Move = 0
+
+IF INPUT("A") : Move -= 1 : END
+IF INPUT("D") : Move += 1 : END
+
+Target = Current + Move * Player(_speed) * 1000
+
+Velocity = Player(_moveVelocity)
+
+Smoothness = Player(_moveSmoothness)
+IF Move <> 0
+  Smoothness *= 2
+END
+
+SMOOTHDAMP Current, Target, Velocity, _
+           Smoothness, LastDeltaTime
+
+Player(_x) = Current
+Player(_moveVelocity) = Velocity
+
+Player(_y) += Player(_downVelocity) * LastDeltaTime * 0.04
+Player(_downVelocity) += G * LastDeltaTime * 0.005
+
+Player(_grounded) = FALSE
+
+FOR i = 0 TO 1
+  
+  FOR x = 0 TO 15
+    
+    FOR y = 0 TO 11
+      
+      IF Map(x)(y) = 0 : NEXT : END
+      
+      IF Player(_x) + TS < x * TS  : NEXT : END
+      IF Player(_x) > x * TS + TS  : NEXT : END
+      IF Player(_y) + TS <= y * TS : NEXT : END
+      IF Player(_y) >= y * TS + TS : NEXT : END
+      
+      CollisionX = Player(_x) - x * TS
+      CollisionY = Player(_y) - y * TS
+      
+      IF i = 0
+        
+        IF ABS(CollisionX) >= ABS(CollisionY)
+          
+          IF Player(_moveVelocity) > 0
+            IF CollisionX < 0
+              Player(_x) = x * TS - TS
+              Player(_moveVelocity) = 0
+            END
+          END
+          
+          IF Player(_moveVelocity) < 0
+            IF CollisionX > 0
+              Player(_x) = x * TS + TS
+              Player(_moveVelocity) = 0
+            END
+          END
+        
+        END
+        
+      ELSE
+        
+        IF ABS(CollisionX) < ABS(CollisionY)
+          
+          IF Player(_downVelocity) > 0
+            IF CollisionY < 0
+              Player(_y) = y * TS - TS
+              Player(_downVelocity) = 0
+              Player(_grounded) = TRUE
+            END
+          END
+          
+          IF Player(_downVelocity) < 0
+            IF CollisionY > 0
+              Player(_y) = y * TS + TS
+              Player(_downVelocity) = 0
+            END
+          END
+          
+        END
+        
+      END
+      
+    END
+    
+  END
+  
+END
+
+IF Player(_grounded) AND INPUT("SPACE")
+  Player(_downVelocity) -= G * Player(_jumpPower)
+END
+
+RETURN
+
+
+
+------------------------------------------------------------
+ * Render
+------------------------------------------------------------
+
+COLOR "#344"
+FILL
+
+FOR x = 0 TO 15
+  FOR y = 0 TO 11
+    IF Map(x)(y) <> 0
+      IF Map(x)(y) = 1 : COLOR "#022" : END
+      IF Map(x)(y) = 2 : COLOR "#011" : END
+      FILL x * TS, y * TS, TS, TS
+    END
+  END
+END
+
+COLOR "#9ee"
+FILL Player(_x), Player(_y), TS, TS
+
+RETURN
