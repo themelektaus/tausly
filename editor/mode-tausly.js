@@ -23,7 +23,7 @@ define(
                 start: [
                     {
                         token: 'keyword.method.tausly',
-                        regex: '\\b(?:ECHO|SLEEP|NORMALIZE|SMOOTHDAMP|SIZE|CLEAR|COLOR|FILL|TEXT|ALIGN\\sLEFT|ALIGN\\sCENTER|ALIGN\\sRIGHT|DIM|LABEL|INIT|SET|DIM|GAIN|BPM|TIME\\sSIGNATURE|REPEAT|TYPE|REVERB|SHEET|PLAY|STOP|RESET|DRAW|TRANSLATE|ROTATE|SCALE|ATTACK|RELEASE)\\b',
+                        regex: '\\b(?:ECHO|SLEEP|NORMALIZE|SMOOTHDAMP|SIZE|CLEAR|COLOR|FILL|TEXT|ALIGN\\sLEFT|ALIGN\\sCENTER|ALIGN\\sRIGHT|DIM|LABEL|INIT|SET|DIM|GAIN|BPM|TIME\\sSIGNATURE|REPEAT|TYPE|REVERB|SHEET|PLAY|STOP|RESET|DRAW|TRANSLATE|ROTATE|SCALE|ATTACK|RELEASE|CURSOR\\sSHOW|CURSOR\\sHIDE)\\b',
                         caseInsensitive: true
                     },
                     {
@@ -41,7 +41,7 @@ define(
                     },
                     {
                         token: 'keyword.const.tausly',
-                        regex: '\\b(?:DELTATIME|TIME|WIDTH|HEIGHT|TRUE|FALSE|NULL)\\b'
+                        regex: '\\b(?:DELTATIME|TIME|WIDTH|HEIGHT|TRUE|FALSE|NULL|MOUSEX|MOUSEY)\\b'
                     },
                     {
                         token: 'punctuation.definition.string.begin.shell',

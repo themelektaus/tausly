@@ -26,11 +26,11 @@ class TranslateLine extends Line
     {
         const ctx = this.root.getContext()
         const x = this.getX()
-        const y = this.getX()
+        const y = this.getY()
         
         this.root.getHistory("TRANSFORMS")[0].push((tx, ty) =>
         {
-            ctx.translate(x, y)
+            ctx.translate(x - tx, y - ty)
         })
     }
 }

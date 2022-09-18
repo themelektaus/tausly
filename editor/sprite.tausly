@@ -1,3 +1,5 @@
+CURSOR HIDE
+
 SPRITE "Sprite"
   SIZE 5, 4
   
@@ -42,24 +44,30 @@ END
 INIT LastDeltaTime
 
 INIT Index
+INIT NewIndex
+
 INIT Angle
+INIT X
+INIT Y
 
 LOOP
-  SET NewIndex = ROUND(TIME / 600 % 1)
+  
+  NewIndex = ROUND(TIME / 600 % 1)
   IF Index <> NewIndex
     Index = NewIndex
-    IF Index = 0
-    	PLAY "Sound 1"
-    ELSE
-      PLAY "Sound 2"
-     END
+    PLAY "Sound " + (Index + 1)
   END
-  Angle += LastDeltaTime / 10
   
   COLOR "#112"
   FILL
   
+  Angle += LastDeltaTime / 10
+  X = CLAMP(MOUSEX, 0, WIDTH)
+  Y = CLAMP(MOUSEY, 0, HEIGHT)
+  
   BEGIN
+    
+    TRANSLATE X, Y
     SCALE 20
     ROTATE Angle
     DRAW WIDTH / 2 - 4, HEIGHT / 2 - 4, "Sprite", Index
@@ -67,4 +75,5 @@ LOOP
   
   SLEEP FRAMETIME(60)
   LastDeltaTime = DELTATIME
+  
 END

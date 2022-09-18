@@ -77,6 +77,14 @@ class Functions
         [
             /\bSUM\b\s*\(([^\)]+)\)/gi,
             "Functions._SUM_($1)"
+        ],
+        [
+            /\bMOUSEX\b/gi,
+            "Functions._MOUSEX_.apply(this)"
+        ],
+        [
+            /\bMOUSEY\b/gi,
+            "Functions._MOUSEY_.apply(this)"
         ]
     ]
     
@@ -103,6 +111,16 @@ class Functions
     static _HEIGHT_()
     {
         return this.root.canvas.height
+    }
+    
+    static _MOUSEX_()
+    {
+        return this.root.mouse.x
+    }
+    
+    static _MOUSEY_()
+    {
+        return this.root.mouse.y
     }
     
     static _INT_(x)

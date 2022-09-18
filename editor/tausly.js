@@ -5,6 +5,9 @@
 class Regex
 {
     static outsideQuotes = "(?=(?:(?:[^\"]*\"){2})*[^\"]*$)"
+    
+    // TODO: Use it
+    //static outsideBraces = "(?=(?:(?:[^\()]*\"){2})*[^\)]*$)"
 }
 
 
@@ -190,6 +193,14 @@ class Functions
         [
             /\bSUM\b\s*\(([^\)]+)\)/gi,
             "Functions._SUM_($1)"
+        ],
+        [
+            /\bMOUSEX\b/gi,
+            "Functions._MOUSEX_.apply(this)"
+        ],
+        [
+            /\bMOUSEY\b/gi,
+            "Functions._MOUSEY_.apply(this)"
         ]
     ]
     
@@ -216,6 +227,16 @@ class Functions
     static _HEIGHT_()
     {
         return this.root.canvas.height
+    }
+    
+    static _MOUSEX_()
+    {
+        return this.root.mouse.x
+    }
+    
+    static _MOUSEY_()
+    {
+        return this.root.mouse.y
     }
     
     static _INT_(x)
@@ -593,6 +614,7 @@ class Tausly extends Block
         })
         
         this.canvas = document.querySelector(canvasSelector ?? "canvas")
+        
         this.ctx = this.canvas.getContext("2d")
         this.ctx.isRoot = true
         
@@ -634,6 +656,27 @@ class Tausly extends Block
                 return
             
             this.input.delete(processKey(e.key))
+        })
+        
+        window.addEventListener("mousemove", e =>
+        {
+            if (!this.mouse)
+                return
+            
+            const r = this.canvas.getBoundingClientRect()
+            const s = r.width / this.canvas.offsetWidth
+            this.mouse.x = (e.clientX - r.left) / s
+            this.mouse.y = (e.clientY - r.top) / s
+        })
+        
+        window.addEventListener("mousedown", e =>
+        {
+            this.input.add("MOUSE")
+        })
+        
+        window.addEventListener("mouseup", e =>
+        {
+            this.input.delete("MOUSE")
         })
     }
     
@@ -816,7 +859,9 @@ class Tausly extends Block
     
     async beforeRun()
     {
+        this.mouse = { x: this.canvas.width / 2, y: this.canvas.height / 2 }
         this.history = { }
+        
         this.getHistory("TRANSFORMS").unshift([])
         
         if (!this.audioCtx)
@@ -831,6 +876,12 @@ class Tausly extends Block
     
     afterRun()
     {
+        const parent = this.canvas.parentNode
+        if (parent)
+            parent.style.cursor = "unset"
+        
+        delete this.mouse
+        
         if (this.audioCtx.reverbNode)
             this.audioCtx.reverbNode.disconnect()
         
@@ -2743,11 +2794,11 @@ class TranslateLine extends Line
     {
         const ctx = this.root.getContext()
         const x = this.getX()
-        const y = this.getX()
+        const y = this.getY()
         
         this.root.getHistory("TRANSFORMS")[0].push((tx, ty) =>
         {
-            ctx.translate(x, y)
+            ctx.translate(x - tx, y - ty)
         })
     }
 }
@@ -2903,6 +2954,43 @@ class DimLine extends Line
     * step()
     {
         this.parent.init(this.name, this.getValue())
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/65-cursor.js
+//------------------------------------------------------------------------------
+
+class CursorLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        if (options.code.matchKeyword("CURSOR\\s+SHOW"))
+        {
+            const line = new CursorLine(options)
+            line.hide = false
+            return line
+        }
+        
+        if (options.code.matchKeyword("CURSOR\\s+HIDE"))
+        {
+            const line = new CursorLine(options)
+            line.hide = true
+            return line
+        }
+        
+        return null
+    }
+    
+    * step()
+    {
+        const parent = this.root.canvas.parentNode
+        if (parent)
+            parent.style.cursor = this.hide ? "none" : "unset"
     }
 }
 

@@ -279,6 +279,9 @@ canvas {
     position: absolute;
     transition: opacity 200ms;
     z-index: -1;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 #side + #view > #empty {
