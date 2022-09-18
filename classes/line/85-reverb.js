@@ -20,6 +20,6 @@ class ReverbLine extends Line
     * step()
     {
         const instrument = this.root.getHistory("INSTRUMENT")
-        instrument[0].instrument.blend.value = this.value
+        instrument[0].instrument.reverb = this.value
     }
 }

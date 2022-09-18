@@ -750,7 +750,7 @@ class Tausly extends Block
             this.compile()
         }
         
-        this.beforeRun()
+        await this.beforeRun()
         
         const lines = this.getAllLines()
         
@@ -814,16 +814,25 @@ class Tausly extends Block
         this.running = false
     }
     
-    beforeRun()
+    async beforeRun()
     {
         this.history = { }
         this.getHistory("TRANSFORMS").unshift([])
-        this.audioCtx = new AudioContext
+        
+        if (!this.audioCtx)
+        {
+            this.audioCtx = new AudioContext
+            this.audioCtx.reverbNode = await this.audioCtx.getReverbNode()
+        }
+        
+        if (this.audioCtx.reverbNode)
+            this.audioCtx.reverbNode.connect(this.audioCtx.destination)
     }
     
     afterRun()
     {
-        this.audioCtx = undefined
+        if (this.audioCtx.reverbNode)
+            this.audioCtx.reverbNode.disconnect()
         
         for (const song of PlayLine.songs)
             song.stop()
@@ -913,83 +922,26 @@ class Tausly extends Block
 // * classes/audio/01-audio-context.js
 //------------------------------------------------------------------------------
 
-AudioContext.prototype.createReverb = async function(url)
+AudioContext.prototype.getReverbNode = async function()
 {
-    const reverbNode = this.createConvolver()
-    
-    if (!AudioContext.reverbNodeBuffer)
-        AudioContext.reverbNodeBuffer = { }
-    
-    if (!AudioContext.reverbNodeBuffer[url])
+    if (AudioContext.reverbNode === undefined)
     {
-        await new Promise(resolve =>
+        AudioContext.reverbNode = null
+        try
         {
-            fetch(url).then(x => x.arrayBuffer()).then(data =>
-            {
-                this.decodeAudioData(data, buffer =>
-                {
-                    AudioContext.reverbNodeBuffer[url] = buffer
-                    resolve()
-                })
-            })
-        })
+            const buffer = await fetch("reverb-impulse-response.m4a")
+                .then(x => x.arrayBuffer())
+                .then(audioData => this.decodeAudioData(audioData))
+            
+            AudioContext.reverbNode = this.createConvolver()
+            AudioContext.reverbNode.buffer = buffer
+        }
+        catch
+        {
+            
+        }
     }
-    reverbNode.buffer = AudioContext.reverbNodeBuffer[url]
-    return reverbNode
-}
-
-
-
-//------------------------------------------------------------------------------
-// * classes/audio/05-blend.js
-//------------------------------------------------------------------------------
-
-class Blend
-{
-    constructor(blendNode)
-    {
-        this.blendNode = blendNode
-        this.value = 0
-    }
-    
-    get value()
-    {
-        return this.blendNode.node2.gain.value
-    }
-    
-    set value(val)
-    {
-        this.blendNode.node1.gain.value = 1 - val
-        this.blendNode.node2.gain.value = val
-    }
-}
-
-
-
-//------------------------------------------------------------------------------
-// * classes/audio/06-blend-node.js
-//------------------------------------------------------------------------------
-
-class BlendNode
-{
-    constructor(ctx)
-    {
-        this.node1 = ctx.createGain()
-        this.node2 = ctx.createGain()
-        this.blend = new Blend(this)
-    }
-    
-    connect(node)
-    {
-        this.node1.connect(node)
-        this.node2.connect(node)
-    }
-    
-    disconnect(node)
-    {
-        this.node1.disconnect(node)
-        this.node2.disconnect(node)
-    }
+    return AudioContext.reverbNode
 }
 
 
@@ -1044,20 +996,20 @@ class Note
             const ctx = song.ctx
             const time = ctx.currentTime
             const gain = instrument.gain
-            const attack = Math.max(instrument.attack / 1000, 0)
-            const release = instrument.release / 1000
+            
+            const attack = Math.min(length / 2, instrument.attack / 1000)
+            const release = Math.min(length / 2, instrument.release / 1000)
             
             gainNode = ctx.createGain()
             
             gainNode.gain.setValueAtTime(0, time)
             gainNode.gain.linearRampToValueAtTime(gain, time + attack)
             
-            const releaseTime = Math.max(time + length - release, 0)
-            gainNode.gain.setValueAtTime(gain, releaseTime)
+            gainNode.gain.setValueAtTime(gain, time + length - release)
             gainNode.gain.linearRampToValueAtTime(0, time + length)
             
-            gainNode.connect(instrument.node1)
-            gainNode.connect(instrument.reverbNode)
+            gainNode.connect(instrument.dryNode)
+            gainNode.connect(instrument.wetNode)
         
             oscillator = ctx.createOscillator()
             oscillator.type = instrument.type;
@@ -1071,17 +1023,16 @@ class Note
             if (oscillator)
             {
                 oscillator.stop()
-                oscillator.disconnect(gainNode)
+                oscillator.disconnect()
                 oscillator = undefined
             }
             if (gainNode)
             {
-                gainNode.disconnect(instrument.reverbNode)
-                gainNode.disconnect(instrument.node1)
+                gainNode.disconnect(instrument.dryNode)
                 gainNode = undefined
             }
             resolve()
-        }, length * 1000)
+        }, length * 1100)
     }
 }
 
@@ -1091,25 +1042,24 @@ class Note
 // * classes/audio/11-instrument.js
 //------------------------------------------------------------------------------
 
-class Instrument extends BlendNode
+class Instrument
 {
     constructor(song)
     {
-        super(song.ctx)
         this.song = song
         this.sheet = ""
         this.index = -1
         this.notes = []
         this.gain = 1
         this.type = "sine"
-        this.attack = 1
+        this.attack = 2
         this.release = 20
+        this.reverb = 0
     }
     
     clone(song)
     {
         const clone = new Instrument(song)
-        clone.blend.value = this.blend.value
         clone.sheet = this.sheet
         clone.index = this.index
         clone.notes = this.notes
@@ -1117,6 +1067,7 @@ class Instrument extends BlendNode
         clone.type = this.type
         clone.attack = this.attack
         clone.release = this.release
+        clone.reverb = this.reverb
         return clone
     }
     
@@ -1170,13 +1121,16 @@ class Instrument extends BlendNode
         const song = this.song
         const ctx = song.ctx
         
-        if (!this.reverbNode)
-        {
-            this.reverbNode = await ctx.createReverb("reverb-impulse-response.m4a")
-            this.reverbNode.connect(this.node2)
-        }
+        this.dryNode = ctx.createGain()
+        this.dryNode.gain.value = (1 - this.reverb) * this.gain
+        this.dryNode.connect(song)
         
-        this.connect(song)
+        if (ctx.reverbNode)
+        {
+            this.wetNode = ctx.createGain()
+            this.wetNode.gain.value = this.reverb * this.gain
+            this.wetNode.connect(ctx.reverbNode)
+        }
         
         let index = 0
         this.stopped = false
@@ -1195,12 +1149,12 @@ class Instrument extends BlendNode
             }
         }
         
-        if (!this.stopped)
-            await Promise.delay(3000)
+        await Promise.delay(5000)
         
-        this.disconnect(song)
+        this.dryNode.disconnect()
         
-        this.reverbNode.disconnect(this.node2)
+        if (this.wetNode)
+            this.wetNode.disconnect()
     }
     
     stop()
@@ -3329,7 +3283,7 @@ class ReverbLine extends Line
     * step()
     {
         const instrument = this.root.getHistory("INSTRUMENT")
-        instrument[0].instrument.blend.value = this.value
+        instrument[0].instrument.reverb = this.value
     }
 }
 

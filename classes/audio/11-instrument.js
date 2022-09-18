@@ -1,22 +1,21 @@
-class Instrument extends BlendNode
+class Instrument
 {
     constructor(song)
     {
-        super(song.ctx)
         this.song = song
         this.sheet = ""
         this.index = -1
         this.notes = []
         this.gain = 1
         this.type = "sine"
-        this.attack = 1
+        this.attack = 2
         this.release = 20
+        this.reverb = 0
     }
     
     clone(song)
     {
         const clone = new Instrument(song)
-        clone.blend.value = this.blend.value
         clone.sheet = this.sheet
         clone.index = this.index
         clone.notes = this.notes
@@ -24,6 +23,7 @@ class Instrument extends BlendNode
         clone.type = this.type
         clone.attack = this.attack
         clone.release = this.release
+        clone.reverb = this.reverb
         return clone
     }
     
@@ -77,13 +77,16 @@ class Instrument extends BlendNode
         const song = this.song
         const ctx = song.ctx
         
-        if (!this.reverbNode)
-        {
-            this.reverbNode = await ctx.createReverb("reverb-impulse-response.m4a")
-            this.reverbNode.connect(this.node2)
-        }
+        this.dryNode = ctx.createGain()
+        this.dryNode.gain.value = (1 - this.reverb) * this.gain
+        this.dryNode.connect(song)
         
-        this.connect(song)
+        if (ctx.reverbNode)
+        {
+            this.wetNode = ctx.createGain()
+            this.wetNode.gain.value = this.reverb * this.gain
+            this.wetNode.connect(ctx.reverbNode)
+        }
         
         let index = 0
         this.stopped = false
@@ -102,12 +105,12 @@ class Instrument extends BlendNode
             }
         }
         
-        if (!this.stopped)
-            await Promise.delay(3000)
+        await Promise.delay(5000)
         
-        this.disconnect(song)
+        this.dryNode.disconnect()
         
-        this.reverbNode.disconnect(this.node2)
+        if (this.wetNode)
+            this.wetNode.disconnect()
     }
     
     stop()

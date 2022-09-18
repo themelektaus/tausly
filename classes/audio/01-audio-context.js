@@ -1,24 +1,21 @@
-AudioContext.prototype.createReverb = async function(url)
+AudioContext.prototype.getReverbNode = async function()
 {
-    const reverbNode = this.createConvolver()
-    
-    if (!AudioContext.reverbNodeBuffer)
-        AudioContext.reverbNodeBuffer = { }
-    
-    if (!AudioContext.reverbNodeBuffer[url])
+    if (AudioContext.reverbNode === undefined)
     {
-        await new Promise(resolve =>
+        AudioContext.reverbNode = null
+        try
         {
-            fetch(url).then(x => x.arrayBuffer()).then(data =>
-            {
-                this.decodeAudioData(data, buffer =>
-                {
-                    AudioContext.reverbNodeBuffer[url] = buffer
-                    resolve()
-                })
-            })
-        })
+            const buffer = await fetch("reverb-impulse-response.m4a")
+                .then(x => x.arrayBuffer())
+                .then(audioData => this.decodeAudioData(audioData))
+            
+            AudioContext.reverbNode = this.createConvolver()
+            AudioContext.reverbNode.buffer = buffer
+        }
+        catch
+        {
+            
+        }
     }
-    reverbNode.buffer = AudioContext.reverbNodeBuffer[url]
-    return reverbNode
+    return AudioContext.reverbNode
 }

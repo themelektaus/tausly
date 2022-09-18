@@ -7,7 +7,7 @@ SONG "BGM"
   INSTRUMENT "Lead"
     TYPE "square"
     GAIN 50
-    REVERB 20
+    REVERB 10
     SHEET "C5 .. D5 E5 F5 G5 -- --"
     SHEET "E5 .. E5 .. D5 F5 E5 --"
     SHEET "C5 .. D5 E5 F5 G5 -- --"

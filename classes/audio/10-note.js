@@ -44,20 +44,20 @@ class Note
             const ctx = song.ctx
             const time = ctx.currentTime
             const gain = instrument.gain
-            const attack = Math.max(instrument.attack / 1000, 0)
-            const release = instrument.release / 1000
+            
+            const attack = Math.min(length / 2, instrument.attack / 1000)
+            const release = Math.min(length / 2, instrument.release / 1000)
             
             gainNode = ctx.createGain()
             
             gainNode.gain.setValueAtTime(0, time)
             gainNode.gain.linearRampToValueAtTime(gain, time + attack)
             
-            const releaseTime = Math.max(time + length - release, 0)
-            gainNode.gain.setValueAtTime(gain, releaseTime)
+            gainNode.gain.setValueAtTime(gain, time + length - release)
             gainNode.gain.linearRampToValueAtTime(0, time + length)
             
-            gainNode.connect(instrument.node1)
-            gainNode.connect(instrument.reverbNode)
+            gainNode.connect(instrument.dryNode)
+            gainNode.connect(instrument.wetNode)
         
             oscillator = ctx.createOscillator()
             oscillator.type = instrument.type;
@@ -71,16 +71,15 @@ class Note
             if (oscillator)
             {
                 oscillator.stop()
-                oscillator.disconnect(gainNode)
+                oscillator.disconnect()
                 oscillator = undefined
             }
             if (gainNode)
             {
-                gainNode.disconnect(instrument.reverbNode)
-                gainNode.disconnect(instrument.node1)
+                gainNode.disconnect(instrument.dryNode)
                 gainNode = undefined
             }
             resolve()
-        }, length * 1000)
+        }, length * 1100)
     }
 }

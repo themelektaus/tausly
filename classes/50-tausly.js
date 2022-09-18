@@ -167,7 +167,7 @@ class Tausly extends Block
             this.compile()
         }
         
-        this.beforeRun()
+        await this.beforeRun()
         
         const lines = this.getAllLines()
         
@@ -231,16 +231,25 @@ class Tausly extends Block
         this.running = false
     }
     
-    beforeRun()
+    async beforeRun()
     {
         this.history = { }
         this.getHistory("TRANSFORMS").unshift([])
-        this.audioCtx = new AudioContext
+        
+        if (!this.audioCtx)
+        {
+            this.audioCtx = new AudioContext
+            this.audioCtx.reverbNode = await this.audioCtx.getReverbNode()
+        }
+        
+        if (this.audioCtx.reverbNode)
+            this.audioCtx.reverbNode.connect(this.audioCtx.destination)
     }
     
     afterRun()
     {
-        this.audioCtx = undefined
+        if (this.audioCtx.reverbNode)
+            this.audioCtx.reverbNode.disconnect()
         
         for (const song of PlayLine.songs)
             song.stop()

@@ -30,20 +30,22 @@ SONG "Accept"
 END
 
 SONG "Player Hit"
-  GAIN 50 : BPM 240
+  GAIN 90 : BPM 240
   TIME SIGNATURE 16
   INSTRUMENT
-    REVERB 5
+    GAIN 60
+    REVERB 3
     TYPE "square"
     SHEET "C4"
   END
 END
 
 SONG "Border Hit"
-  GAIN 40 : BPM 240
+  GAIN 80 : BPM 240
   TIME SIGNATURE 16
   INSTRUMENT
-    REVERB 10
+    GAIN 50
+    REVERB 4
   	TYPE "square"
   	SHEET "C3"
   END
@@ -54,21 +56,20 @@ SONG "Music 1"
   TIME SIGNATURE 8
   REPEAT TRUE
   INSTRUMENT
-    GAIN 40
+    GAIN 35
     TYPE "sawtooth"
     RELEASE 120
-    REVERB 25
     SHEET "F1 -- -- -- -- -- -- --"
     SHEET "F1 -- -- -- -- -- -- --"
     SHEET "F1 -- -- -- -- -- -- --"
     SHEET "F1 -- -- -- -- -- -- --"
   END
   INSTRUMENT
-    GAIN 20
+    GAIN 40
     TYPE "triangle"
     ATTACK 50
     RELEASE 50
-    REVERB 5
+    REVERB 10
     SHEET "F5 -- F5 -- F5 -- F4 --"
     SHEET "F5 -- F5 -- F5 -- F4 --"
     SHEET "F5 -- F5 -- F5 -- F4 --"
@@ -81,28 +82,28 @@ SONG "Music 2"
   TIME SIGNATURE 8
   REPEAT TRUE
   INSTRUMENT
-    GAIN 80
+    GAIN 60
     TYPE "sawtooth"
     RELEASE 120
-    REVERB 15
+    REVERB 5
     SHEET "F1 -- -- -- -- -- -- --"
     SHEET "F1 -- -- -- -- -- -- --"
     SHEET "F1 -- -- -- -- -- -- --"
     SHEET "F1 -- -- -- -- -- -- --"
   END
   INSTRUMENT
-    GAIN 90
+    GAIN 60
     TYPE "sawtooth"
-    ATTACK 20
-    RELEASE 200
-    REVERB 10
+    ATTACK 50
+    RELEASE 100
+    REVERB 5
     SHEET "-- -- -- -- F2 -- -- --"
     SHEET "-- -- -- -- F2 -- -- --"
     SHEET "-- -- -- -- F2 -- -- --"
     SHEET "-- -- -- -- F2 -- -- --"
   END
   INSTRUMENT
-    GAIN 10
+    GAIN 30
     TYPE "triangle"
     ATTACK 50
     RELEASE 50
@@ -115,7 +116,7 @@ SONG "Music 2"
   INSTRUMENT
     GAIN 30
     TYPE "square"
-    REVERB 15
+    REVERB 10
     SHEET "F4 .. -- E4 D4 -- C4 --"
     SHEET "F5 -- -- -- -- -- -- --"
     SHEET "F3 -- -- -- -- C4 D4 --"
