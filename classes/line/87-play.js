@@ -50,9 +50,10 @@ class PlayLine extends Line
         while (true)
         {
             const index = PlayLine.songs.indexOf(song)
-            console.log(index)
-            if (index !== -1)
-                PlayLine.songs.splice(index, 1)
+            if (index == -1)
+                break
+            
+            PlayLine.songs.splice(index, 1)
         }
     }
 }

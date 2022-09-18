@@ -3384,9 +3384,14 @@ class PlayLine extends Line
         
         master.disconnect(ctx.destination)
         
-        let index
-        while (index = PlayLine.songs.indexOf(song) !== -1)
+        while (true)
+        {
+            const index = PlayLine.songs.indexOf(song)
+            if (index == -1)
+                break
+            
             PlayLine.songs.splice(index, 1)
+        }
     }
 }
 
