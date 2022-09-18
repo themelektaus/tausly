@@ -1044,15 +1044,16 @@ class Note
             const ctx = song.ctx
             const time = ctx.currentTime
             const gain = instrument.gain
-            const attack = instrument.attack / 1000
+            const attack = Math.max(instrument.attack / 1000, 0)
             const release = instrument.release / 1000
-        
+            
             gainNode = ctx.createGain()
             
             gainNode.gain.setValueAtTime(0, time)
             gainNode.gain.linearRampToValueAtTime(gain, time + attack)
             
-            gainNode.gain.setValueAtTime(gain, time + length - release)
+            const releaseTime = Math.max(time + length - release, 0)
+            gainNode.gain.setValueAtTime(gain, releaseTime)
             gainNode.gain.linearRampToValueAtTime(0, time + length)
             
             gainNode.connect(instrument.node1)

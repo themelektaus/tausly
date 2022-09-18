@@ -22,10 +22,39 @@ SPRITE "Sprite"
   END
 END
 
+SONG "Sound 1"
+  BPM 240 : TIME SIGNATURE 16
+  GAIN 60
+  INSTRUMENT
+    REVERB 5
+    RELEASE 100
+    SHEET "A5"
+  END
+END
+
+SONG "Sound 2"
+  BPM 300
+  GAIN 30
+  INSTRUMENT
+    SHEET "E2"
+  END
+END
+
 INIT LastDeltaTime
+
+INIT Index
 INIT Angle
 
 LOOP
+  SET NewIndex = ROUND(TIME / 600 % 1)
+  IF Index <> NewIndex
+    Index = NewIndex
+    IF Index = 0
+    	PLAY "Sound 1"
+    ELSE
+      PLAY "Sound 2"
+     END
+  END
   Angle += LastDeltaTime / 10
   
   COLOR "#112"
@@ -34,8 +63,7 @@ LOOP
   BEGIN
     SCALE 20
     ROTATE Angle
-    DRAW WIDTH / 2 - 4, HEIGHT / 2 - 4, _
-         "Sprite", ROUND(TIME / 600 % 1)
+    DRAW WIDTH / 2 - 4, HEIGHT / 2 - 4, "Sprite", Index
   END
   
   SLEEP FRAMETIME(60)
