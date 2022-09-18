@@ -24,7 +24,7 @@ class InstrumentBlock extends Block
     
     * step()
     {
-        this.root.getHistory("INSTRUMENT").push(this)
+        this.root.getHistory("INSTRUMENT").unshift(this)
         
         const song = this.root.getHistory("SONG")
         this.instrument = new Instrument(song[0].song)
@@ -35,6 +35,6 @@ class InstrumentBlock extends Block
         const song = this.root.getHistory("SONG")
         song[0].song.add(this.instrument)
         
-        this.root.getHistory("INSTRUMENT").pop(this)
+        this.root.getHistory("INSTRUMENT").shift(this)
     }
 }

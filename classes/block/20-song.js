@@ -25,7 +25,7 @@ class SongBlock extends Block
     
     * step()
     {
-        this.root.getHistory("SONG").push(this)
+        this.root.getHistory("SONG").unshift(this)
         
         this.song = new Song(this.root.audioCtx)
         
@@ -35,6 +35,6 @@ class SongBlock extends Block
     
     end()
     {
-        this.root.getHistory("SONG").pop(this)
+        this.root.getHistory("SONG").shift(this)
     }
 }
