@@ -75,8 +75,8 @@ class Note
             }
             if (gainNode)
             {
-                gainNode.disconnect(instrument.node1)
                 gainNode.disconnect(instrument.reverbNode)
+                gainNode.disconnect(instrument.node1)
                 gainNode = undefined
             }
             resolve()

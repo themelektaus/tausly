@@ -106,6 +106,8 @@ class Instrument extends BlendNode
             await Promise.delay(3000)
         
         this.disconnect(song)
+        
+        this.reverbNode.disconnect(this.node2)
     }
     
     stop()

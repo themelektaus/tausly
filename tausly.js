@@ -1075,8 +1075,8 @@ class Note
             }
             if (gainNode)
             {
-                gainNode.disconnect(instrument.node1)
                 gainNode.disconnect(instrument.reverbNode)
+                gainNode.disconnect(instrument.node1)
                 gainNode = undefined
             }
             resolve()
@@ -1198,6 +1198,8 @@ class Instrument extends BlendNode
             await Promise.delay(3000)
         
         this.disconnect(song)
+        
+        this.reverbNode.disconnect(this.node2)
     }
     
     stop()
