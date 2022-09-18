@@ -3369,6 +3369,7 @@ class PlayLine extends Line
     {
         const title = this.getSongTitle()
         const song = SongBlock.songs[title].clone()
+        
         song.title = title
         PlayLine.songs.push(song)
         
@@ -3383,8 +3384,9 @@ class PlayLine extends Line
         
         master.disconnect(ctx.destination)
         
-        const index = PlayLine.songs.indexOf(song)
-        PlayLine.songs.splice(index, 1)
+        let index
+        while (index = PlayLine.songs.indexOf(song) !== -1)
+            PlayLine.songs.splice(index, 1)
     }
 }
 

@@ -287,6 +287,8 @@ END
 TEXT WIDTH / 2, HEIGHT / 2 - 30, "Start Game"
 
 IF MenuIndex = 1
+	COLOR "red"
+  TEXT WIDTH / 2, HEIGHT / 2 + 60, "Not available"
   COLOR "white"
 ELSE
   COLOR "grey"
