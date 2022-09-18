@@ -101,6 +101,8 @@ window.onload = () =>
         
         this.dataset.previousIndex = this.selectedIndex
         
+        location.hash = this.value.split(".")[0]
+        
         loadSrcFile(editor, this.value)
     }
     
