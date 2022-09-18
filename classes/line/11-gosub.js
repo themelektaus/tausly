@@ -4,18 +4,20 @@ class GosubLine extends Line
     
     static parse(options)
     {
-        const matches = options.code.match(/^GOSUB\s+(.+)$/i)
-        if (!matches)
-            return null
+        const matches = options.code.matchKeyword("GOSUB", 1)
+        if (matches)
+        {
+            const line = new GosubLine(options)
+            line.label = matches[1]
+            return line
+        }
         
-        const line = new GosubLine(options)
-        line.label = matches[1]
-        return line
+        return null
     }
     
     * step()
     {
-        this.root.gosubHistory.push(this)
+        this.root.getHistory("GOSUB").push(this)
         
         const line = this.root.findLine(line =>
         {

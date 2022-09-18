@@ -4,13 +4,15 @@ class NormalizeLine extends Line
     
     static parse(options)
     {
-        const matches = options.code.match(/^NORMALIZE\s+(.+)$/i)
-        if (!matches)
-            return null
+        const matches = options.code.matchKeyword("NORMALIZE", 1)
+        if (matches)
+        {
+            const line = new NormalizeLine(options)
+            line.dimName = matches[1]
+            return line
+        }
         
-        const line = new NormalizeLine(options)
-        line.dimName = matches[1]
-        return line
+        return null
     }
     
     compile()

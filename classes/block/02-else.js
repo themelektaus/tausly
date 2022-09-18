@@ -4,10 +4,10 @@ class ElseBlock extends Block
     
     static parse(options)
     {
-        if (!/^ELSE$/i.test(options.code))
-            return null
+        if (options.code.matchKeyword("ELSE"))
+            return new ElseBlock(options)
         
-        return new ElseBlock(options)
+        return null
     }
     
     setup(parents)

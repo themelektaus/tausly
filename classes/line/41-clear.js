@@ -4,10 +4,11 @@ class ClearLine extends Line
     
     static parse(options)
     {
-        if (!/^CLEAR$/i.test(options.code))
-            return null
+        const matches = options.code.matchKeyword("CLEAR")
+        if (matches)
+            return new ClearLine(options)
         
-        return new ClearLine(options)
+        return null
     }
     
     * step()

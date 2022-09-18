@@ -4,13 +4,15 @@ class EchoLine extends Line
     
     static parse(options)
     {
-        const matches = options.code.match(/^ECHO\s+(.*)$/i)
-        if (!matches)
-            return null
+        const matches = options.code.matchKeyword("ECHO", 1)
+        if (matches)
+        {
+            const line = new EchoLine(options)
+            line.getData = matches[1]
+            return line
+        }
         
-        const line = new EchoLine(options)
-        line.getData = matches[1]
-        return line
+        return null
     }
     
     compile()

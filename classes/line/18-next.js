@@ -4,10 +4,10 @@ class NextLine extends Line
     
     static parse(options)
     {
-        if (!/^NEXT$/i.test(options.code))
-            return null
+        if (options.code.matchKeyword("NEXT"))
+            return new NextLine(options)
         
-        return new NextLine(options)
+        return null
     }
     
     * step()

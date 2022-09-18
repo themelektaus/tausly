@@ -23,7 +23,7 @@ define(
                 start: [
                     {
                         token: 'keyword.method.tausly',
-                        regex: '\\b(?:ECHO|SLEEP|NORMALIZE|SMOOTHDAMP|SIZE|CLEAR|COLOR|FILL|TEXT|ALIGN|DIM|LABEL|INIT|SET|DIM)\\b',
+                        regex: '\\b(?:ECHO|SLEEP|NORMALIZE|SMOOTHDAMP|SIZE|CLEAR|COLOR|FILL|TEXT|ALIGN|DIM|LABEL|INIT|SET|DIM|GAIN|BPM|TIME\\sSIGNATURE|REPEAT|TYPE|REVERB|SHEET|PLAY|STOP)\\b',
                         caseInsensitive: true
                     },
                     {
@@ -37,7 +37,7 @@ define(
                     },
                     {
                         token: 'keyword.block.tausly',
-                        regex: '\\b(?:IF|NOT|THEN|AND|OR|ELSE|END|FOR|TO|WHILE|LOOP|NEXT|BREAK)\\b'
+                        regex: '\\b(?:IF|NOT|THEN|AND|OR|ELSE|END|FOR|TO|WHILE|LOOP|NEXT|BREAK|SONG|INSTRUMENT)\\b'
                     },
                     {
                         token: 'keyword.const.tausly',

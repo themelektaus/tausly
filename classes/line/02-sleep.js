@@ -4,13 +4,25 @@ class SleepLine extends Line
     
     static parse(options)
     {
-        const matches = options.code.match(/^SLEEP\s+(.+)$/i)
-        if (!matches)
-            return null
+        let matches
         
-        const line = new SleepLine(options)
-        line.getMilliseconds = matches[1]
-        return line
+        matches = options.code.matchKeyword("SLEEP", 1)
+        if (matches)
+        {
+            const line = new SleepLine(options)
+            line.getMilliseconds = matches[1]
+            return line
+        }
+        
+        matches = options.code.matchKeyword("SLEEP")
+        if (matches)
+        {
+            const line = new SleepLine(options)
+            line.getMilliseconds = 1
+            return line
+        }
+        
+        return null
     }
     
     compile()

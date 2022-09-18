@@ -5,14 +5,16 @@ class ForBlock extends Block
     static parse(options)
     {
         const matches = options.code.match(/^FOR\s+([^ ]+)\s*\=\s*([0-9]+)\s+TO\s+(.+)$/i)
-        if (!matches)
-            return null
+        if (matches)
+        {
+            const block = new ForBlock(options)
+            block.name = matches[1]
+            block.from = +matches[2]
+            block.getTo = matches[3]
+            return block
+        }
         
-        const block = new ForBlock(options)
-        block.name = matches[1]
-        block.from = +matches[2]
-        block.getTo = matches[3]
-        return block
+        return null
     }
     
     constructor(options)

@@ -4,15 +4,15 @@ class ReturnLine extends Line
     
     static parse(options)
     {
-        if (!/^RETURN$/i.test(options.code))
-            return null
+        if (options.code.matchKeyword("RETURN"))
+            return new ReturnLine(options)
         
-        return new ReturnLine(options)
+        return null
     }
     
     * step()
     {
-        const line = this.root.gosubHistory.pop()
+        const line = this.root.getHistory("GOSUB").pop()
         
         if (!line)
             return

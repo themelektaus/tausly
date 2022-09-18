@@ -4,13 +4,15 @@ class GotoLine extends Line
     
     static parse(options)
     {
-        const matches = options.code.match(/^GOTO\s+(.+)$/i)
-        if (!matches)
-            return null
+        const matches = options.code.matchKeyword("GOTO", 1)
+        if (matches)
+        {
+            const line = new GotoLine(options)
+            line.label = matches[1]
+            return line
+        }
         
-        const line = new GotoLine(options)
-        line.label = matches[1]
-        return line
+        return null
     }
     
     * step()

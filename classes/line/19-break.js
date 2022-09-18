@@ -4,10 +4,10 @@ class BreakLine extends Line
     
     static parse(options)
     {
-        if (!/^BREAK$/i.test(options.code))
-            return null
+        if (options.code.matchKeyword("BREAK"))
+            return new BreakLine(options)
         
-        return new BreakLine(options)
+        return null
     }
     
     * step()

@@ -6,7 +6,7 @@ class IfBlock extends Block
     {
         let matches
         
-        matches = options.code.match(/^IF\s+NOT\s+(.+)$/i)
+        matches = options.code.matchKeyword("IF\\s+NOT", 1)
         if (matches)
         {
             let statement = matches[1]
@@ -16,11 +16,11 @@ class IfBlock extends Block
             
             const line = new IfBlock(options)
             line.not = true
-            line.getCondition = Utils.convertToCondition(statement)
+            line.getCondition = statement.toCondition()
             return line
         }
         
-        matches = options.code.match(/^IF\s+(.+)$/i)
+        matches = options.code.matchKeyword("IF", 1)
         if (matches)
         {
             let statement = matches[1]
@@ -29,7 +29,7 @@ class IfBlock extends Block
                 statement = statement.substr(0, statement.length - 4).trim()
             
             const line = new IfBlock(options)
-            line.getCondition = Utils.convertToCondition(statement)
+            line.getCondition = statement.toCondition()
             return line
         }
         

@@ -5,13 +5,15 @@ class SetLine extends Line
     static parse(options)
     {
         const matches = options.code.match(/^SET\s+([^ ]+)\s*\=\s*(.+)$/i)
-        if (!matches)
-            return null
+        if (matches)
+        {
+            const line = new SetLine(options)
+            line.name = matches[1]
+            line.getValue = matches[2]
+            return line
+        }
         
-        const line = new SetLine(options)
-        line.name = matches[1]
-        line.getValue = matches[2]
-        return line
+        return null
     }
     
     prepare()

@@ -1,0 +1,74 @@
+SONG "BGM"
+  GAIN 20
+  BPM 100
+  TIME SIGNATURE 8
+  REPEAT TRUE
+  
+  INSTRUMENT "Lead"
+    TYPE "square"
+    GAIN 50
+    REVERB 20
+    SHEET "C5 .. D5 E5 F5 G5 -- --"
+    SHEET "E5 .. E5 .. D5 F5 E5 --"
+    SHEET "C5 .. D5 E5 F5 G5 -- --"
+    SHEET "E5 .. E5 .. F5 .. -- --"
+  END
+  
+  INSTRUMENT "Bass"
+    TYPE "sawtooth"
+    GAIN 70
+    SHEET "C1 -- -- C2 C1 -- -- C2"
+    SHEET "C1 -- -- C2 C1 -- -- --"
+    SHEET "C1 -- -- C2 C1 -- -- C2"
+    SHEET "C1 -- -- -- -- -- -- --"
+  END
+END
+
+SONG "SFX"
+  GAIN 50
+  BPM 240
+  TIME SIGNATURE 16
+  
+  INSTRUMENT "FX"
+    SHEET "C4 C5 C6"
+  END
+END
+
+COLOR "#112"
+FILL
+
+COLOR "white"
+ALIGN CENTER
+TEXT WIDTH / 2, HEIGHT / 2 - 12, "Toggle BGM with [M]"
+TEXT WIDTH / 2, HEIGHT / 2 + 12, "Press [SPACE] for SFX"
+
+INIT MPressed = FALSE
+INIT MusicPlaying = FALSE
+
+INIT SpacePressed = FALSE
+
+WHILE NOT INPUT("ESCAPE")
+  IF INPUT("M")
+    IF MPressed = FALSE
+      MPressed = TRUE
+      IF MusicPlaying = TRUE
+        MusicPlaying = FALSE
+        STOP "BGM"
+      ELSE
+        MusicPlaying = TRUE
+        PLAY "BGM"
+      END
+    END
+  ELSE
+    MPressed = FALSE
+  END
+  IF INPUT("SPACE")
+    IF SpacePressed = FALSE
+      SpacePressed = TRUE
+      PLAY "SFX"
+    END
+  ELSE
+    SpacePressed = FALSE
+  END
+  SLEEP
+END

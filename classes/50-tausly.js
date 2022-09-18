@@ -82,8 +82,8 @@ class Tausly extends Block
                 for (let _line of codeLine.split(new RegExp(`(\:)${Regex.outsideQuotes}`)))
                 {
                     _line = _line.trim()
-                    if (_line)
-                    tempCodeLines.push(_line)
+                    if (_line && _line != ":")
+                        tempCodeLines.push(_line)
                 }
             }
         }
@@ -171,9 +171,9 @@ class Tausly extends Block
             this.compile()
         }
         
-        const lines = this.getAllLines()
+        this.beforeRun()
         
-        this.gosubHistory = []
+        const lines = this.getAllLines()
         
         for (const line of [ this, ...this.getAllLines() ])
             if (line.reset)
@@ -234,7 +234,31 @@ class Tausly extends Block
             this.runtimeIndex++
         }
         
+        this.afterRun()
+        
         this.running = false
+    }
+    
+    beforeRun()
+    {
+        this.history = { }
+        this.audioCtx = new AudioContext
+    }
+    
+    afterRun()
+    {
+        this.audioCtx = undefined
+        
+        for (const song of PlayLine.songs)
+            song.stop()
+        PlayLine.songs.splice(0, PlayLine.songs.length - 1)
+    }
+    
+    getHistory(key)
+    {
+        if (this.history[key] === undefined)
+            this.history[key] = []
+        return this.history[key]
     }
     
     goto(line, offset)

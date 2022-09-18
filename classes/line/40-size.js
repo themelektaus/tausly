@@ -4,14 +4,16 @@ class SizeLine extends Line
     
     static parse(options)
     {
-        const matches = options.code.match(/^SIZE\s(.+)\s*\,\s*(.+)$/i)
-        if (!matches)
-            return null
+        const matches = options.code.matchKeyword("SIZE", 2)
+        if (matches)
+        {
+            const line = new SizeLine(options)
+            line.getWidth = matches[1]
+            line.getHeight = matches[2]
+            return line
+        }
         
-        const line = new SizeLine(options)
-        line.getWidth = matches[1]
-        line.getHeight = matches[2]
-        return line
+        return null
     }
     
     compile()

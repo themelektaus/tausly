@@ -4,35 +4,26 @@ class SmoothDampLine extends Line
     
     static parse(options)
     {
-        let matches
+        let matches = options.code.matchKeyword("SMOOTHDAMP", 6)
         
-        matches = options.code.match(/^SMOOTHDAMP\s+(.+)\s*\,\s*(.+)\s*\,\s*(.+)\s*\,\s*(.+)\s*\,\s*(.+)\s*\,\s*(.+)$/i)
-        if (matches)
+        if (!matches)
         {
-            const line = new SmoothDampLine(options)
-            line.current = matches[1]
-            line.target = matches[2]
-            line.currentVelocity = matches[3]
-            line.getSmoothTime = matches[4]
-            line.getDeltaTime = matches[5]
-            line.getMaxSpeed = matches[6]
-            return line
+            matches = options.code.matchKeyword("SMOOTHDAMP", 5)
+            if (matches)
+                matches[6] = "undefined"
         }
         
-        matches = options.code.match(/^SMOOTHDAMP\s+(.+)\s*\,\s*(.+)\s*\,\s*(.+)\s*\,\s*(.+)\s*\,\s*(.+)$/i)
-        if (matches)
-        {
-            const line = new SmoothDampLine(options)
-            line.current = matches[1]
-            line.target = matches[2]
-            line.currentVelocity = matches[3]
-            line.getSmoothTime = matches[4]
-            line.getDeltaTime = matches[5]
-            line.getMaxSpeed = "undefined"
-            return line
-        }
+        if (!matches)
+            return null
         
-        return null
+        const line = new SmoothDampLine(options)
+        line.current = matches[1]
+        line.target = matches[2]
+        line.currentVelocity = matches[3]
+        line.getSmoothTime = matches[4]
+        line.getDeltaTime = matches[5]
+        line.getMaxSpeed = matches[6]
+        return line
     }
     
     compile()

@@ -4,10 +4,10 @@ class LoopBlock extends Block
     
     static parse(options)
     {
-        if (!/^LOOP$/i.test(options.code))
-            return null
+        if (options.code.matchKeyword("LOOP"))
+            return new LoopBlock(options)
         
-        return new LoopBlock(options)
+        return null
     }
     
     constructor(options)

@@ -4,10 +4,10 @@ class EndLine extends Line
     
     static parse(options)
     {
-        if (!/^END$/i.test(options.code))
-            return null
+        if (options.code.matchKeyword("END"))
+            return new EndLine(options)
         
-        return new EndLine(options)
+        return null
     }
     
     setup(parents)

@@ -6,7 +6,7 @@ class ColorLine extends Line
     {
         let matches
         
-        matches = options.code.match(/^COLOR\s+([0-9]+)\s*\,\s*([0-9]+)\s*\,\s*([0-9]+)\s*\,\s*([0-9]+)$/i)
+        matches = options.code.matchKeyword("COLOR", 4)
         if (matches)
         {
             const line = new ColorLine(options)
@@ -14,7 +14,7 @@ class ColorLine extends Line
             return line
         }
         
-        matches = options.code.match(/^COLOR\s+([0-9]+)\s*\,\s*([0-9]+)\s*\,\s*([0-9]+)$/i)
+        matches = options.code.matchKeyword("COLOR", 3)
         if (matches)
         {
             const line = new ColorLine(options)
@@ -22,7 +22,7 @@ class ColorLine extends Line
             return line
         }
         
-        matches = options.code.match(/^COLOR\s+(.+)$/i)
+        matches = options.code.matchKeyword("COLOR", 1)
         if (matches)
         {
             const line = new ColorLine(options)

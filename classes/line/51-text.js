@@ -4,15 +4,17 @@ class TextLine extends Line
     
     static parse(options)
     {
-        const matches = options.code.match(/^TEXT\s+(.+?)\s*\,\s*(.+?)\s*\,\s*(.+?)$/i)
-        if (!matches)
-            return null
+        const matches = options.code.matchKeyword("TEXT", 3)
+        if (matches)
+        {
+            const line = new TextLine(options)
+            line.getX = matches[1]
+            line.getY = matches[2]
+            line.getText = matches[3]
+            return line
+        }
         
-        const line = new TextLine(options)
-        line.getX = matches[1]
-        line.getY = matches[2]
-        line.getText = matches[3]
-        return line
+        return null
     }
     
     compile()

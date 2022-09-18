@@ -4,17 +4,9 @@ class FillLine extends Line
     
     static parse(options)
     {
-        if (/^FILL$/i.test(options.code))
-        {
-            const line = new FillLine(options)
-            line.getX = "0"
-            line.getY = "0"
-            line.getWidth = -1
-            line.getHeight = -1
-            return line
-        }
+        let matches
         
-        const matches = options.code.match(/^FILL\s(.+)\s*\,\s*(.+)\s*\,\s*(.+)\s*\,\s*(.+)$/i)
+        matches = options.code.matchKeyword("FILL", 4)
         if (matches)
         {
             const line = new FillLine(options)
@@ -22,6 +14,17 @@ class FillLine extends Line
             line.getY = matches[2]
             line.getWidth = matches[3]
             line.getHeight = matches[4]
+            return line
+        }
+        
+        matches = options.code.matchKeyword("FILL")
+        if (matches)
+        {
+            const line = new FillLine(options)
+            line.getX = "0"
+            line.getY = "0"
+            line.getWidth = -1
+            line.getHeight = -1
             return line
         }
         

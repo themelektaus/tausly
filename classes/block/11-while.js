@@ -4,13 +4,27 @@ class WhileBlock extends Block
     
     static parse(options)
     {
-        const matches = options.code.match(/^WHILE\s+(.+)$/i)
-        if (!matches)
-            return null
+        let matches
         
-        const line = new WhileBlock(options)
-        line.getCondition = Utils.convertToCondition(matches[1])
-        return line
+        matches = options.code.matchKeyword("WHILE\\s+NOT", 1)
+        if (matches)
+        {
+            const line = new WhileBlock(options)
+            line.not = true
+            line.getCondition = matches[1].toCondition()
+            return line
+        }
+        
+        matches = options.code.matchKeyword("WHILE", 1)
+        if (matches)
+        {
+            const line = new WhileBlock(options)
+            line.not = false
+            line.getCondition = matches[1].toCondition()
+            return line
+        }
+        
+        return null
     }
     
     constructor(options)
@@ -26,7 +40,7 @@ class WhileBlock extends Block
     
     * step()
     {
-        if (!this.skip && this.getCondition())
+        if (!this.skip && this.getCondition() == !this.not)
             return
         
         delete this.skip

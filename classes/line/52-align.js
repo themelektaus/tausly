@@ -4,21 +4,21 @@ class AlignLine extends Line
     
     static parse(options)
     {
-        if (/^ALIGN\s+LEFT$/i.test(options.code))
+        if (options.code.matchKeyword("ALIGN\\s+LEFT"))
         {
             const line = new AlignLine(options)
             line.align = "start"
             return line
         }
         
-        if (/^ALIGN\s+CENTER$/i.test(options.code))
+        if (options.code.matchKeyword("ALIGN\\s+CENTER"))
         {
             const line = new AlignLine(options)
             line.align = "center"
             return line
         }
         
-        if (/^ALIGN\s+RIGHT$/i.test(options.code))
+        if (options.code.matchKeyword("ALIGN\\s+RIGHT"))
         {
             const line = new AlignLine(options)
             line.align = "right"
