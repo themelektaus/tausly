@@ -41,7 +41,7 @@ define(
                     },
                     {
                         token: 'keyword.const.tausly',
-                        regex: '\\b(?:DELTATIME|WIDTH|HEIGHT|TRUE|FALSE|NULL)\\b'
+                        regex: '\\b(?:DELTATIME|TIME|WIDTH|HEIGHT|TRUE|FALSE|NULL)\\b'
                     },
                     {
                         token: 'punctuation.definition.string.begin.shell',
