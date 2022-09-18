@@ -131,6 +131,7 @@ END
 
 CLEAR
 SIZE 800, 600
+INIT LastTime
 INIT LastDeltaTime
 INIT W = 10
 INIT H = 80
@@ -226,6 +227,7 @@ LOOP
   GOSUB InGame Update
   GOSUB InGame Render
   SLEEP FRAMETIME(60)
+  LastTime = TIME
   LastDeltaTime = DELTATIME
 END
 
@@ -446,11 +448,14 @@ FOR i = 0 TO 1
   FILL Player(i)(_x), Player(i)(_y) - H / 2, W, H
 END
 
-COLOR "yellow"
-FILL Ball(_x) - Ball(_size) / 2, _
-     Ball(_y) - Ball(_size) / 2, _
-     Ball(_size), _
-     Ball(_size)
+BEGIN
+  SCALE ABS(LastTime % 500 - 250) / 250 * 0.5 + 1
+  COLOR "yellow"
+  FILL Ball(_x) - Ball(_size) / 2, _
+       Ball(_y) - Ball(_size) / 2, _
+       Ball(_size), _
+       Ball(_size)
+END
 
 RETURN
 
