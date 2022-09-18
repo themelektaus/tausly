@@ -1513,7 +1513,7 @@ class SongBlock extends Block
     
     * step()
     {
-        this.root.getHistory("SONG").push(this)
+        this.root.getHistory("SONG").unshift(this)
         
         this.song = new Song(this.root.audioCtx)
         
@@ -1523,7 +1523,7 @@ class SongBlock extends Block
     
     end()
     {
-        this.root.getHistory("SONG").pop(this)
+        this.root.getHistory("SONG").shift(this)
     }
 }
 
@@ -1559,7 +1559,7 @@ class InstrumentBlock extends Block
     
     * step()
     {
-        this.root.getHistory("INSTRUMENT").push(this)
+        this.root.getHistory("INSTRUMENT").unshift(this)
         
         const song = this.root.getHistory("SONG")
         this.instrument = new Instrument(song[0].song)
@@ -1570,7 +1570,7 @@ class InstrumentBlock extends Block
         const song = this.root.getHistory("SONG")
         song[0].song.add(this.instrument)
         
-        this.root.getHistory("INSTRUMENT").pop(this)
+        this.root.getHistory("INSTRUMENT").shift(this)
     }
 }
 
