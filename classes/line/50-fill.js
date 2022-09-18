@@ -49,17 +49,17 @@ class FillLine extends Line
     
     * step()
     {
+        const ctx = this.root.getContext()
         const x = this.getX()
         const y = this.getY()
         const w = this.getWidth()
         const h = this.getHeight()
-        const tx = x + w / 2
-        const ty = y + h / 2
-        //this.root.ctx.translate(tx, ty)
-        //this.root.ctx.rotate(45 * Math.PI / 180);
-        //this.root.ctx.translate(-tx, -ty)
-        this.root.ctx.fillRect(x, y, this.getWidth(), this.getHeight())
-        //this.root.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        this.root.onRender()
+        
+        this.beginTransform(x, y, w, h)
+        ctx.fillRect(x, y, this.getWidth(), this.getHeight())
+        this.endTransform(ctx)
+        
+        if (ctx.isRoot)
+            this.root.onRender()
     }
 }

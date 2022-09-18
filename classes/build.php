@@ -2,7 +2,7 @@
     
     $contents = "";
     
-    foreach ([ "", "audio/", "block/", "line/" ] as $folder)
+    foreach ([ "", "audio/", "block/", "line/", "sprite/", ] as $folder)
     {
         foreach (glob(__DIR__ . "/{$folder}*.js") as $file)
         {

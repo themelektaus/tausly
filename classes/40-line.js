@@ -23,6 +23,13 @@ class Line
         return this._root
     }
     
+    getTime()
+    {
+        if (this.startTime)
+            return this.startTime
+        return 0
+    }
+    
     resetDeltaTime()
     {
         this.startTime = performance.now()
@@ -38,5 +45,19 @@ class Line
     createFunction(expression)
     {
         return new Function(`return ${this.parent.evaluate(expression)}`)
+    }
+    
+    beginTransform(x, y, w, h)
+    {
+        const tx = x + w / 2
+        const ty = y + h / 2
+        const transforms = this.root.getHistory("TRANSFORMS")[0]
+        for (const transform of transforms)
+            transform(tx, ty)
+    }
+
+    endTransform(ctx)
+    {
+        ctx.setTransform(1, 0, 0, 1, 0, 0)
     }
 }

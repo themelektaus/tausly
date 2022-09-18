@@ -13,7 +13,11 @@ class ClearLine extends Line
     
     * step()
     {
-        this.root.onClear()
-        this.root.ctx.clearRect(0, 0, this.root.canvas.width, this.root.canvas.height)
+        const ctx = this.root.getContext()
+        
+        if (ctx.isRoot)
+            this.root.onClear()
+        
+        ctx.clearRect(0, 0, this.root.canvas.width, this.root.canvas.height)
     }
 }

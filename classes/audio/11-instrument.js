@@ -29,7 +29,7 @@ class Instrument extends BlendNode
     
     build()
     {
-        this.notes.splice(0, this.notes.length - 1)
+        this.notes.splice(0, this.notes.length)
         
         const sheetNotes = this.sheet.trim()
             .replaceAll("\r", " ")

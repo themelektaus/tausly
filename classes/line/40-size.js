@@ -24,6 +24,12 @@ class SizeLine extends Line
     
     * step()
     {
+        const sprite = this.root.getHistory("SPRITE")
+        if (sprite && sprite.length)
+        {
+            sprite[0].sprite.setSize(this.getWidth(), this.getHeight())
+            return
+        }
         this.root.setSize(this.getWidth(), this.getHeight())
     }
 }

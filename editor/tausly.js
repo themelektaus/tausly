@@ -51,6 +51,13 @@ String.prototype.matchKeyword = function(keyword, argumentCount)
     return matches
 }
 
+CanvasRenderingContext2D.prototype.refresh = function()
+{
+    const styleMap = document.body.computedStyleMap()
+    this.font = styleMap.get("font").toString()
+    this.textBaseline = "top"
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -310,6 +317,13 @@ class Line
         return this._root
     }
     
+    getTime()
+    {
+        if (this.startTime)
+            return this.startTime
+        return 0
+    }
+    
     resetDeltaTime()
     {
         this.startTime = performance.now()
@@ -325,6 +339,20 @@ class Line
     createFunction(expression)
     {
         return new Function(`return ${this.parent.evaluate(expression)}`)
+    }
+    
+    beginTransform(x, y, w, h)
+    {
+        const tx = x + w / 2
+        const ty = y + h / 2
+        const transforms = this.root.getHistory("TRANSFORMS")[0]
+        for (const transform of transforms)
+            transform(tx, ty)
+    }
+
+    endTransform(ctx)
+    {
+        ctx.setTransform(1, 0, 0, 1, 0, 0)
     }
 }
 
@@ -407,22 +435,14 @@ class Block extends Line
         
         if (/\bDELTATIME\b/i.test(value))
         {
-            const path = [ "parent" ]
-            let found = false
-            let line = this
-            while (line)
-            {
-                if (line.useDeltaTime === undefined)
-                {
-                    path.push("parent")
-                    line = line.parent
-                    continue
-                }
-                found = true
-                break
-            }
-            
-            value = value.replaceAll(/\bDELTATIME\b/gi, found ? `this.${path.join(".")}.getDeltaTime()` : "0")
+            const path = this.getPath(line => line.useDeltaTime)
+            value = value.replaceAll(/\bDELTATIME\b/gi, path ? `${path}.getDeltaTime()` : "0")
+        }
+        
+        if (/\bTIME\b/i.test(value))
+        {
+            const path = this.getPath(line => line.useDeltaTime)
+            value = value.replaceAll(/\bTIME\b/gi, path ? `${path}.getTime()` : "0")
         }
         
         for (const rule of Functions.rules)
@@ -434,6 +454,23 @@ class Block extends Line
             value = this.parent.evaluateFunctions(value)
         
         return value
+    }
+    
+    getPath(predicate)
+    {
+        const path = [ "parent" ]
+        let line = this
+        while (line)
+        {
+            if (!predicate(line))
+            {
+                path.push("parent")
+                line = line.parent
+                continue
+            }
+            return `this.${path.join(".")}`
+        }
+        return null
     }
     
     declare(name)
@@ -539,6 +576,7 @@ class Tausly extends Block
         
         this.canvas = document.querySelector(canvasSelector ?? "canvas")
         this.ctx = this.canvas.getContext("2d")
+        this.ctx.isRoot = true
         
         this.onRefresh = () => { }
         
@@ -583,10 +621,8 @@ class Tausly extends Block
     
     refresh()
     {
-        const styleMap = document.body.computedStyleMap()
-        this.ctx.font = styleMap.get("font").toString()
-        this.ctx.textBaseline = "top"
-        
+        this.ctx.imageSmoothingEnabled = false
+        this.ctx.refresh()
         this.onRefresh()
     }
     
@@ -770,6 +806,7 @@ class Tausly extends Block
     beforeRun()
     {
         this.history = { }
+        this.getHistory("TRANSFORMS").unshift([])
         this.audioCtx = new AudioContext
     }
     
@@ -779,7 +816,8 @@ class Tausly extends Block
         
         for (const song of PlayLine.songs)
             song.stop()
-        PlayLine.songs.splice(0, PlayLine.songs.length - 1)
+        
+        PlayLine.songs.splice(0, PlayLine.songs.length)
     }
     
     getHistory(key)
@@ -787,6 +825,38 @@ class Tausly extends Block
         if (this.history[key] === undefined)
             this.history[key] = []
         return this.history[key]
+    }
+    
+    getCanvas()
+    {
+        if (this.history)
+        {
+            const frame = this.getHistory("FRAME")
+            if (frame && frame.length)
+                return frame[0].frame.canvas
+        }
+        return this.canvas
+    }
+    
+    getContext()
+    {
+        if (this.history)
+        {
+            const frame = this.getHistory("FRAME")
+            if (frame && frame.length)
+                return frame[0].frame.ctx
+        }
+        return this.ctx
+    }
+    
+    setSize(width, height)
+    {
+        const canvas = this.getCanvas()
+        canvas.width = width
+        canvas.height = height
+        
+        if (canvas == this.canvas)
+            this.refresh()
     }
     
     goto(line, offset)
@@ -801,14 +871,6 @@ class Tausly extends Block
             if (predicate(line))
                 return line
         return null
-    }
-    
-    setSize(width, height)
-    {
-        this.canvas.width = width
-        this.canvas.height = height
-        
-        this.refresh()
     }
     
     pause()
@@ -1051,7 +1113,7 @@ class Instrument extends BlendNode
     
     build()
     {
-        this.notes.splice(0, this.notes.length - 1)
+        this.notes.splice(0, this.notes.length)
         
         const sheetNotes = this.sheet.trim()
             .replaceAll("\r", " ")
@@ -1278,6 +1340,36 @@ class ElseBlock extends Block
     {
         if (this.parent.isTrue)
             yield StepResult.skip()
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/block/05-begin.js
+//------------------------------------------------------------------------------
+
+class BeginBlock extends Block
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        if (options.code.matchKeyword("BEGIN"))
+            return new BeginBlock(options)
+        
+        return null
+    }
+    
+    * step()
+    {
+        this.transforms = []
+        this.root.getHistory("TRANSFORMS").unshift(this.transforms)
+    }
+    
+    end()
+    {
+        this.root.getHistory("TRANSFORMS").shift(this.transforms)
     }
 }
 
@@ -1571,6 +1663,115 @@ class InstrumentBlock extends Block
         song[0].song.add(this.instrument)
         
         this.root.getHistory("INSTRUMENT").shift(this)
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/block/30-sprite.js
+//------------------------------------------------------------------------------
+
+class SpriteBlock extends Block
+{
+    static _ = Line.classes.add(this.name)
+    static sprites = { }
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("SPRITE", 1)
+        if (matches)
+        {
+            const line = new SpriteBlock(options)
+            line.getTitle = matches[1]
+            line.width = 0
+            line.height = 0
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getTitle = this.createFunction(this.getTitle)
+    }
+    
+    * step()
+    {
+        this.root.getHistory("SPRITE").unshift(this)
+        
+        this.sprite = new Sprite()
+        
+        const title = this.getTitle()
+        SpriteBlock.sprites[title] = this.sprite
+    }
+    
+    end()
+    {
+        this.root.getHistory("SPRITE").shift(this)
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/block/31-frame.js
+//------------------------------------------------------------------------------
+
+class FrameBlock extends Block
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("FRAME")
+        if (matches)
+        {
+            const line = new FrameBlock(options)
+            line.getTitle = "undefined"
+            return line
+        }
+        
+        matches = options.code.matchKeyword("FRAME", 1)
+        if (matches)
+        {
+            const line = new FrameBlock(options)
+            line.getTitle = matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getTitle = this.createFunction(this.getTitle)
+    }
+    
+    * step()
+    {
+        this.root.getHistory("FRAME").unshift(this)
+        
+        const sprite = this.root.getHistory("SPRITE")[0].sprite
+        this.frame = new Frame(sprite)
+        sprite.add(this.frame)
+        
+        const title = this.getTitle()
+        this.frame.title = title ?? this.frame.index.toString()
+    }
+    
+    end()
+    {
+        const sprite = this.root.getHistory("SPRITE")
+        
+        this.frame.burn()
+        
+        this.root.getHistory("FRAME").shift(this)
     }
 }
 
@@ -2088,6 +2289,12 @@ class SizeLine extends Line
     
     * step()
     {
+        const sprite = this.root.getHistory("SPRITE")
+        if (sprite && sprite.length)
+        {
+            sprite[0].sprite.setSize(this.getWidth(), this.getHeight())
+            return
+        }
         this.root.setSize(this.getWidth(), this.getHeight())
     }
 }
@@ -2113,8 +2320,12 @@ class ClearLine extends Line
     
     * step()
     {
-        this.root.onClear()
-        this.root.ctx.clearRect(0, 0, this.root.canvas.width, this.root.canvas.height)
+        const ctx = this.root.getContext()
+        
+        if (ctx.isRoot)
+            this.root.onClear()
+        
+        ctx.clearRect(0, 0, this.root.canvas.width, this.root.canvas.height)
     }
 }
 
@@ -2174,7 +2385,8 @@ class ColorLine extends Line
     
     * step()
     {
-        this.root.ctx.fillStyle = this.getColor()
+        const ctx = this.root.getContext()
+        ctx.fillStyle = this.getColor()
     }
 }
 
@@ -2235,18 +2447,18 @@ class FillLine extends Line
     
     * step()
     {
+        const ctx = this.root.getContext()
         const x = this.getX()
         const y = this.getY()
         const w = this.getWidth()
         const h = this.getHeight()
-        const tx = x + w / 2
-        const ty = y + h / 2
-        //this.root.ctx.translate(tx, ty)
-        //this.root.ctx.rotate(45 * Math.PI / 180);
-        //this.root.ctx.translate(-tx, -ty)
-        this.root.ctx.fillRect(x, y, this.getWidth(), this.getHeight())
-        //this.root.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        this.root.onRender()
+        
+        this.beginTransform(x, y, w, h)
+        ctx.fillRect(x, y, this.getWidth(), this.getHeight())
+        this.endTransform(ctx)
+        
+        if (ctx.isRoot)
+            this.root.onRender()
     }
 }
 
@@ -2284,8 +2496,16 @@ class TextLine extends Line
     
     * step()
     {
-        this.root.ctx.fillText(this.getText(), this.getX(), this.getY())
-        this.root.onRender()
+        const ctx = this.root.getContext()
+        const x = this.getX()
+        const y = this.getY()
+        
+        this.beginTransform(x, y, 0, 0)
+        ctx.fillText(this.getText(), this.getX(), this.getY())
+        this.endTransform(ctx)
+        
+        if (ctx.isRoot)
+            this.root.onRender()
     }
 }
 
@@ -2327,7 +2547,254 @@ class AlignLine extends Line
     
     * step()
     {
-        this.root.ctx.textAlign = this.align
+        const ctx = this.root.getContext()
+        ctx.textAlign = this.align
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/53-draw.js
+//------------------------------------------------------------------------------
+
+class DrawLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("DRAW", 4)
+        if (matches)
+        {
+            const line = new DrawLine(options)
+            line.getX = matches[1]
+            line.getY = matches[2]
+            line.getSpriteTitle = matches[3]
+            line.getFrameTitle = matches[4]
+            return line
+        }
+        
+        matches = options.code.matchKeyword("DRAW", 3)
+        if (matches)
+        {
+            const line = new DrawLine(options)
+            line.getX = matches[1]
+            line.getY = matches[2]
+            line.getSpriteTitle = matches[3]
+            line.getFrameTitle = "undefined"
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getX = this.createFunction(this.getX)
+        this.getY = this.createFunction(this.getY)
+        this.getSpriteTitle = this.createFunction(this.getSpriteTitle)
+        this.getFrameTitle = this.createFunction(this.getFrameTitle)
+    }
+    
+    * step()
+    {
+        const spriteTitle = this.getSpriteTitle()
+        const frameTitle = this.getFrameTitle()
+        
+        const ctx = this.root.getContext()
+        
+        const sprite = SpriteBlock.sprites[spriteTitle]
+        
+        let frame
+        
+        if (typeof frameTitle == "number")
+        {
+            frame = sprite.frames[frameTitle]
+        }
+        else if (frameTitle)
+        {
+            for (const spriteFrame of sprite.frames)
+            {
+                if (spriteFrame.title == frameTitle)
+                {
+                    frame = spriteFrame
+                    break
+                }
+            }
+        }
+        else
+        {
+            frame = sprite.frames[0]
+        }
+        
+        const x = this.getX()
+        const y = this.getY()
+        const w = frame.image.width
+        const h = frame.image.height
+        
+        this.beginTransform(x, y, w, h)
+        ctx.drawImage(frame.image, x, y)
+        this.endTransform(ctx)
+        
+        if (ctx.isRoot)
+            this.root.onRender()
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/54-reset.js
+//------------------------------------------------------------------------------
+
+class ResetLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        if (options.code.matchKeyword("RESET"))
+            return new ResetLine(options)
+        
+        return null
+    }
+    
+    * step()
+    {
+        const ctx = this.root.getContext()
+        
+        const transforms = this.root.getHistory("TRANSFORMS")[0]
+        transforms.splice(0, transforms.length)
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/55-translate.js
+//------------------------------------------------------------------------------
+
+class TranslateLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        const matches = options.code.matchKeyword("TRANSLATE", 2)
+        if (matches)
+        {
+            const line = new TranslateLine(options)
+            line.getX = matches[1]
+            line.getY = matches[2]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getX = this.createFunction(this.getX)
+        this.getY = this.createFunction(this.getY)
+    }
+    
+    * step()
+    {
+        const ctx = this.root.getContext()
+        const x = this.getX()
+        const y = this.getX()
+        
+        this.root.getHistory("TRANSFORMS")[0].push((tx, ty) =>
+        {
+            ctx.translate(x, y)
+        })
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/56-rotate.js
+//------------------------------------------------------------------------------
+
+class RotateLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        const matches = options.code.matchKeyword("ROTATE", 1)
+        if (matches)
+        {
+            const line = new RotateLine(options)
+            line.getAngle = matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getAngle = this.createFunction(this.getAngle)
+    }
+    
+    * step()
+    {
+        const ctx = this.root.getContext()
+        const angle = this.getAngle()
+        
+        this.root.getHistory("TRANSFORMS")[0].push((tx, ty) =>
+        {
+            ctx.translate(tx, ty)
+            ctx.rotate(angle * Math.PI / 180)
+            ctx.translate(-tx, -ty)
+        })
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/57-scale.js
+//------------------------------------------------------------------------------
+
+class ScaleLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        const matches = options.code.matchKeyword("SCALE", 1)
+        if (matches)
+        {
+            const line = new ScaleLine(options)
+            line.getScale = matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getScale = this.createFunction(this.getScale)
+    }
+    
+    * step()
+    {
+        const ctx = this.root.getContext()
+        const scale = this.getScale()
+        
+        this.root.getHistory("TRANSFORMS")[0].push((tx, ty) =>
+        {
+            ctx.translate(tx, ty)
+            ctx.scale(scale, scale)
+            ctx.translate(-tx, -ty)
+        })
     }
 }
 
@@ -2914,5 +3381,67 @@ class StopLine extends Line
         for (const song of PlayLine.songs)
             if (song.title == title)
                 song.stop()
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/sprite/10-frame.js
+//------------------------------------------------------------------------------
+
+class Frame
+{
+    constructor(sprite)
+    {
+        this.sprite = sprite
+        this.index = -1
+        
+        this.canvas = document.createElement("canvas")
+        this.canvas.width = sprite.width
+        this.canvas.height = sprite.height
+        
+        this.ctx = this.canvas.getContext("2d")
+        this.ctx.refresh()
+    }
+    
+    burn()
+    {
+        this.image = new Image
+        this.image.src = this.canvas.toDataURL()
+        
+        delete this.ctx
+        delete this.canvas
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/sprite/11-sprite.js
+//------------------------------------------------------------------------------
+
+class Sprite
+{
+    constructor()
+    {
+        this.frames = []
+        this.width = 0
+        this.height = 0
+    }
+    
+    add(value)
+    {
+        if (value instanceof Frame)
+        {
+            value.index = this.frames.length
+            this.frames.push(value)
+        }
+    }
+    
+    setSize(width, height)
+    {
+        this.width = width
+        this.height = height
     }
 }

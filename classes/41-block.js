@@ -71,22 +71,14 @@ class Block extends Line
         
         if (/\bDELTATIME\b/i.test(value))
         {
-            const path = [ "parent" ]
-            let found = false
-            let line = this
-            while (line)
-            {
-                if (line.useDeltaTime === undefined)
-                {
-                    path.push("parent")
-                    line = line.parent
-                    continue
-                }
-                found = true
-                break
-            }
-            
-            value = value.replaceAll(/\bDELTATIME\b/gi, found ? `this.${path.join(".")}.getDeltaTime()` : "0")
+            const path = this.getPath(line => line.useDeltaTime)
+            value = value.replaceAll(/\bDELTATIME\b/gi, path ? `${path}.getDeltaTime()` : "0")
+        }
+        
+        if (/\bTIME\b/i.test(value))
+        {
+            const path = this.getPath(line => line.useDeltaTime)
+            value = value.replaceAll(/\bTIME\b/gi, path ? `${path}.getTime()` : "0")
         }
         
         for (const rule of Functions.rules)
@@ -98,6 +90,23 @@ class Block extends Line
             value = this.parent.evaluateFunctions(value)
         
         return value
+    }
+    
+    getPath(predicate)
+    {
+        const path = [ "parent" ]
+        let line = this
+        while (line)
+        {
+            if (!predicate(line))
+            {
+                path.push("parent")
+                line = line.parent
+                continue
+            }
+            return `this.${path.join(".")}`
+        }
+        return null
     }
     
     declare(name)

@@ -11,6 +11,7 @@ class Tausly extends Block
         
         this.canvas = document.querySelector(canvasSelector ?? "canvas")
         this.ctx = this.canvas.getContext("2d")
+        this.ctx.isRoot = true
         
         this.onRefresh = () => { }
         
@@ -55,10 +56,8 @@ class Tausly extends Block
     
     refresh()
     {
-        const styleMap = document.body.computedStyleMap()
-        this.ctx.font = styleMap.get("font").toString()
-        this.ctx.textBaseline = "top"
-        
+        this.ctx.imageSmoothingEnabled = false
+        this.ctx.refresh()
         this.onRefresh()
     }
     
@@ -242,6 +241,7 @@ class Tausly extends Block
     beforeRun()
     {
         this.history = { }
+        this.getHistory("TRANSFORMS").unshift([])
         this.audioCtx = new AudioContext
     }
     
@@ -251,7 +251,8 @@ class Tausly extends Block
         
         for (const song of PlayLine.songs)
             song.stop()
-        PlayLine.songs.splice(0, PlayLine.songs.length - 1)
+        
+        PlayLine.songs.splice(0, PlayLine.songs.length)
     }
     
     getHistory(key)
@@ -259,6 +260,38 @@ class Tausly extends Block
         if (this.history[key] === undefined)
             this.history[key] = []
         return this.history[key]
+    }
+    
+    getCanvas()
+    {
+        if (this.history)
+        {
+            const frame = this.getHistory("FRAME")
+            if (frame && frame.length)
+                return frame[0].frame.canvas
+        }
+        return this.canvas
+    }
+    
+    getContext()
+    {
+        if (this.history)
+        {
+            const frame = this.getHistory("FRAME")
+            if (frame && frame.length)
+                return frame[0].frame.ctx
+        }
+        return this.ctx
+    }
+    
+    setSize(width, height)
+    {
+        const canvas = this.getCanvas()
+        canvas.width = width
+        canvas.height = height
+        
+        if (canvas == this.canvas)
+            this.refresh()
     }
     
     goto(line, offset)
@@ -273,14 +306,6 @@ class Tausly extends Block
             if (predicate(line))
                 return line
         return null
-    }
-    
-    setSize(width, height)
-    {
-        this.canvas.width = width
-        this.canvas.height = height
-        
-        this.refresh()
     }
     
     pause()

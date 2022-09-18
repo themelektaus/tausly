@@ -30,6 +30,7 @@ class AlignLine extends Line
     
     * step()
     {
-        this.root.ctx.textAlign = this.align
+        const ctx = this.root.getContext()
+        ctx.textAlign = this.align
     }
 }

@@ -35,3 +35,10 @@ String.prototype.matchKeyword = function(keyword, argumentCount)
     
     return matches
 }
+
+CanvasRenderingContext2D.prototype.refresh = function()
+{
+    const styleMap = document.body.computedStyleMap()
+    this.font = styleMap.get("font").toString()
+    this.textBaseline = "top"
+}
