@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// * 10-regex.js
+// * classes/10-regex.js
 //------------------------------------------------------------------------------
 
 class Regex
@@ -10,32 +10,51 @@ class Regex
 
 
 //------------------------------------------------------------------------------
-// * 11-utils.js
+// * classes/11-extensions.js
 //------------------------------------------------------------------------------
 
-class Utils
+String.prototype.toCondition = function()
 {
-    static convertToCondition(x)
+    let x = this
+    x = x.replaceAll("==", "=")
+    x = x.replaceAll("==", "=")
+    x = x.replaceAll("=", "==")
+    x = x.replaceAll(">==", ">=")
+    x = x.replaceAll("<==", "<=")
+    x = x.replaceAll("!==", "!=")
+    x = x.replaceAll("<>", "!=")
+    
+    x = x.replaceAll(new RegExp("\\bAND\\b", "gi"), "&&")
+    x = x.replaceAll(new RegExp("\\bOR\\b", "gi"), "||")
+    
+    return x
+}
+    
+String.prototype.matchKeyword = function(keyword, argumentCount)
+{
+    argumentCount ??= 0
+    
+    let pattern = "^" + keyword
+    
+    for (let i = 0; i < argumentCount; i++)
     {
-        x = x.replaceAll("==", "=")
-        x = x.replaceAll("==", "=")
-        x = x.replaceAll("=", "==")
-        x = x.replaceAll(">==", ">=")
-        x = x.replaceAll("<==", "<=")
-        x = x.replaceAll("!==", "!=")
-        x = x.replaceAll("<>", "!=")
-        
-        x = x.replaceAll(new RegExp("\\bAND\\b", "gi"), "&&")
-        x = x.replaceAll(new RegExp("\\bOR\\b", "gi"), "||")
-        
-        return x
+        if (i == 0)
+            pattern += "\\s+(.+?)"
+        else
+            pattern += "\\s*\\,\\s*(.+?)"
     }
+    pattern += "$"
+    
+    const regex = new RegExp(pattern, "i")
+    const matches = this.match(regex)
+    
+    return matches
 }
 
 
 
 //------------------------------------------------------------------------------
-// * 20-step-result.js
+// * classes/20-step-result.js
 //------------------------------------------------------------------------------
 
 class StepResult
@@ -64,7 +83,7 @@ class StepResult
 
 
 //------------------------------------------------------------------------------
-// * 30-functions.js
+// * classes/30-functions.js
 //------------------------------------------------------------------------------
 
 class Functions
@@ -263,7 +282,7 @@ class Functions
 
 
 //------------------------------------------------------------------------------
-// * 40-line.js
+// * classes/40-line.js
 //------------------------------------------------------------------------------
 
 class Line
@@ -312,7 +331,7 @@ class Line
 
 
 //------------------------------------------------------------------------------
-// * 41-block.js
+// * classes/41-block.js
 //------------------------------------------------------------------------------
 
 class Block extends Line
@@ -504,7 +523,7 @@ class Block extends Line
 
 
 //------------------------------------------------------------------------------
-// * 50-tausly.js
+// * classes/50-tausly.js
 //------------------------------------------------------------------------------
 
 class Tausly extends Block
@@ -591,8 +610,8 @@ class Tausly extends Block
                 for (let _line of codeLine.split(new RegExp(`(\:)${Regex.outsideQuotes}`)))
                 {
                     _line = _line.trim()
-                    if (_line)
-                    tempCodeLines.push(_line)
+                    if (_line && _line != ":")
+                        tempCodeLines.push(_line)
                 }
             }
         }
@@ -680,9 +699,9 @@ class Tausly extends Block
             this.compile()
         }
         
-        const lines = this.getAllLines()
+        this.beforeRun()
         
-        this.gosubHistory = []
+        const lines = this.getAllLines()
         
         for (const line of [ this, ...this.getAllLines() ])
             if (line.reset)
@@ -743,7 +762,31 @@ class Tausly extends Block
             this.runtimeIndex++
         }
         
+        this.afterRun()
+        
         this.running = false
+    }
+    
+    beforeRun()
+    {
+        this.history = { }
+        this.audioCtx = new AudioContext
+    }
+    
+    afterRun()
+    {
+        this.audioCtx = undefined
+        
+        for (const song of PlayLine.songs)
+            song.stop()
+        PlayLine.songs.splice(0, PlayLine.songs.length - 1)
+    }
+    
+    getHistory(key)
+    {
+        if (this.history[key] === undefined)
+            this.history[key] = []
+        return this.history[key]
     }
     
     goto(line, offset)
@@ -794,7 +837,362 @@ class Tausly extends Block
 
 
 //------------------------------------------------------------------------------
-// * block/01-if.js
+// * classes/audio/01-audio-context.js
+//------------------------------------------------------------------------------
+
+AudioContext.prototype.createReverb = async function(url)
+{
+    const reverbNode = this.createConvolver()
+    
+    if (!AudioContext.reverbNodeBuffer)
+        AudioContext.reverbNodeBuffer = { }
+    
+    if (!AudioContext.reverbNodeBuffer[url])
+    {
+        await new Promise(resolve =>
+        {
+            fetch(url).then(x => x.arrayBuffer()).then(data =>
+            {
+                this.decodeAudioData(data, buffer =>
+                {
+                    AudioContext.reverbNodeBuffer[url] = buffer
+                    resolve()
+                })
+            })
+        })
+    }
+    reverbNode.buffer = AudioContext.reverbNodeBuffer[url]
+    return reverbNode
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/audio/05-blend.js
+//------------------------------------------------------------------------------
+
+class Blend
+{
+    constructor(blendNode)
+    {
+        this.blendNode = blendNode
+        this.value = 0
+    }
+    
+    get value()
+    {
+        return this.blendNode.node2.gain.value
+    }
+    
+    set value(val)
+    {
+        this.blendNode.node1.gain.value = 1 - val
+        this.blendNode.node2.gain.value = val
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/audio/06-blend-node.js
+//------------------------------------------------------------------------------
+
+class BlendNode
+{
+    constructor(ctx)
+    {
+        this.node1 = ctx.createGain()
+        this.node2 = ctx.createGain()
+        this.blend = new Blend(this)
+    }
+    
+    connect(node)
+    {
+        this.node1.connect(node)
+        this.node2.connect(node)
+    }
+    
+    disconnect(node)
+    {
+        this.node1.disconnect(node)
+        this.node2.disconnect(node)
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/audio/10-note.js
+//------------------------------------------------------------------------------
+
+class Note
+{
+    static Map = {
+        "C": 1,
+        "C#": 2, "Db": 2,
+        "D": 3,
+        "D#": 4, "Eb": 4,
+        "E": 5,
+        "F": 6,
+        "F#": 7, "Gb": 7,
+        "G": 8,
+        "G#": 9, "Ab": 9,
+        "A": 10,
+        "A#": 11, "Bb": 11,
+        "B": 12
+    }
+    
+    constructor(note)
+    {
+        this.note = note
+        this.length = 1
+    }
+    
+    getFrequency()
+    {
+        const x = Note.Map[this.note.slice(0, -1)]
+        const y = this.note.charAt(this.note.length - 1)
+        const distance = x - 1 + (y * 12)
+        return 440 * Math.pow(2, (distance - 57) / 12)
+    }
+    
+    async play()
+    {
+        const instrument = this.instrument
+        const song = instrument.song
+        
+        const length = this.length / song.timeSignature * (120 / song.bpm)
+        
+        let oscillator
+        let gainNode
+        
+        if (this.note)
+        {
+            const ctx = song.ctx
+            const time = ctx.currentTime
+            const gain = instrument.gain
+            const attack = instrument.attack / 1000
+            const release = instrument.release / 1000
+        
+            gainNode = ctx.createGain()
+            
+            gainNode.gain.setValueAtTime(0, time)
+            gainNode.gain.linearRampToValueAtTime(gain, time + attack)
+            
+            gainNode.gain.setValueAtTime(gain, time + length - release)
+            gainNode.gain.linearRampToValueAtTime(0, time + length)
+            
+            gainNode.connect(instrument.node1)
+            gainNode.connect(instrument.reverbNode)
+        
+            oscillator = ctx.createOscillator()
+            oscillator.type = instrument.type;
+            oscillator.frequency.value = this.getFrequency()
+            oscillator.connect(gainNode)
+            oscillator.start()
+        }
+        
+        await new Promise(resolve =>
+        {
+            setTimeout(() =>
+            {
+                if (oscillator)
+                {
+                    oscillator.stop()
+                    oscillator.disconnect(gainNode)
+                    oscillator = undefined
+                }
+                if (gainNode)
+                {
+                    gainNode.disconnect(instrument.node1)
+                    gainNode.disconnect(instrument.reverbNode)
+                    gainNode = undefined
+                }
+                resolve()
+            }, length * 1000)
+        })
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/audio/11-instrument.js
+//------------------------------------------------------------------------------
+
+class Instrument extends BlendNode
+{
+    constructor(song)
+    {
+        super(song.ctx)
+        this.song = song
+        this.sheet = ""
+        this.index = -1
+        this.notes = []
+        this.gain = 1
+        this.type = "sine"
+        this.attack = 1
+        this.release = 20
+    }
+    
+    clone(song)
+    {
+        const clone = new Instrument(song)
+        clone.blend.value = this.blend.value
+        clone.sheet = this.sheet
+        clone.index = this.index
+        clone.notes = this.notes
+        clone.gain = this.gain
+        clone.type = this.type
+        clone.attack = this.attack
+        clone.release = this.release
+        return clone
+    }
+    
+    build()
+    {
+        this.notes.splice(0, this.notes.length - 1)
+        
+        const sheetNotes = this.sheet.trim()
+            .replaceAll("\r", " ")
+            .replaceAll("\n", " ")
+            .replaceAll("\t", " ")
+            .split(" ")
+        
+        for (const sheetNote of sheetNotes)
+        {
+            if (!sheetNote)
+                continue
+            
+            if (sheetNote == "--")
+            {
+                const previousNote = this.notes[this.notes.length - 1]
+                if (previousNote.note == "--")
+                {
+                    previousNote.length++
+                    continue
+                }
+                
+                const note = new Note
+                note.instrument = this
+                this.notes.push(note)
+                continue
+            }
+            
+            if (sheetNote == "..")
+            {
+                const previousNote = this.notes[this.notes.length - 1]
+                previousNote.length++
+                continue
+            }
+            
+            const note = new Note(sheetNote)
+            note.instrument = this
+            this.notes.push(note)
+        }
+    }
+    
+    async play()
+    {
+        this.build()
+        
+        const song = this.song
+        const ctx = song.ctx
+        
+        if (!this.reverbNode)
+        {
+            this.reverbNode = await ctx.createReverb("reverb-impulse-response.m4a")
+            this.reverbNode.connect(this.node2)
+        }
+        
+        this.connect(song)
+        
+        let index = 0
+        this.stopped = false
+        
+        while (!this.stopped)
+        {
+            await this.notes[index++].play()
+            if (index == this.notes.length)
+            {
+                if (song.repeat)
+                {
+                    index = 0
+                    continue
+                }
+                this.stopped = true
+            }
+        }
+        
+        this.disconnect(song)
+    }
+    
+    stop()
+    {
+        this.stopped = true
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/audio/12-song.js
+//------------------------------------------------------------------------------
+
+class Song extends GainNode
+{
+    constructor(ctx)
+    {
+        super(ctx)
+        this.ctx = ctx
+        this.bpm = 120
+        this.timeSignature = 4
+        this.repeat = false
+        this.instruments = []
+    }
+    
+    clone()
+    {
+        const clone = new Song(this.ctx)
+        clone.gain.value = this.gain.value
+        clone.bpm = this.bpm
+        clone.timeSignature = this.timeSignature
+        clone.repeat = this.repeat
+        for (const instrument of this.instruments)
+            clone.instruments.push(instrument.clone(clone))
+        return clone
+    }
+    
+    add(value)
+    {
+        if (value instanceof Instrument)
+        {
+            value.index = this.instruments.length
+            this.instruments.push(value)
+        }
+    }
+    
+    async play()
+    {
+        const promises = []
+        
+        for (const instrument of this.instruments)
+            promises.push(instrument.play())
+        
+        await Promise.all(promises)
+    }
+    
+    stop()
+    {
+        for (const instrument of this.instruments)
+            instrument.stop()
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/block/01-if.js
 //------------------------------------------------------------------------------
 
 class IfBlock extends Block
@@ -805,7 +1203,7 @@ class IfBlock extends Block
     {
         let matches
         
-        matches = options.code.match(/^IF\s+NOT\s+(.+)$/i)
+        matches = options.code.matchKeyword("IF\\s+NOT", 1)
         if (matches)
         {
             let statement = matches[1]
@@ -815,11 +1213,11 @@ class IfBlock extends Block
             
             const line = new IfBlock(options)
             line.not = true
-            line.getCondition = Utils.convertToCondition(statement)
+            line.getCondition = statement.toCondition()
             return line
         }
         
-        matches = options.code.match(/^IF\s+(.+)$/i)
+        matches = options.code.matchKeyword("IF", 1)
         if (matches)
         {
             let statement = matches[1]
@@ -828,7 +1226,7 @@ class IfBlock extends Block
                 statement = statement.substr(0, statement.length - 4).trim()
             
             const line = new IfBlock(options)
-            line.getCondition = Utils.convertToCondition(statement)
+            line.getCondition = statement.toCondition()
             return line
         }
         
@@ -855,7 +1253,7 @@ class IfBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * block/02-else.js
+// * classes/block/02-else.js
 //------------------------------------------------------------------------------
 
 class ElseBlock extends Block
@@ -864,10 +1262,10 @@ class ElseBlock extends Block
     
     static parse(options)
     {
-        if (!/^ELSE$/i.test(options.code))
-            return null
+        if (options.code.matchKeyword("ELSE"))
+            return new ElseBlock(options)
         
-        return new ElseBlock(options)
+        return null
     }
     
     setup(parents)
@@ -886,7 +1284,7 @@ class ElseBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * block/10-for.js
+// * classes/block/10-for.js
 //------------------------------------------------------------------------------
 
 class ForBlock extends Block
@@ -896,14 +1294,16 @@ class ForBlock extends Block
     static parse(options)
     {
         const matches = options.code.match(/^FOR\s+([^ ]+)\s*\=\s*([0-9]+)\s+TO\s+(.+)$/i)
-        if (!matches)
-            return null
+        if (matches)
+        {
+            const block = new ForBlock(options)
+            block.name = matches[1]
+            block.from = +matches[2]
+            block.getTo = matches[3]
+            return block
+        }
         
-        const block = new ForBlock(options)
-        block.name = matches[1]
-        block.from = +matches[2]
-        block.getTo = matches[3]
-        return block
+        return null
     }
     
     constructor(options)
@@ -961,7 +1361,7 @@ class ForBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * block/11-while.js
+// * classes/block/11-while.js
 //------------------------------------------------------------------------------
 
 class WhileBlock extends Block
@@ -970,13 +1370,27 @@ class WhileBlock extends Block
     
     static parse(options)
     {
-        const matches = options.code.match(/^WHILE\s+(.+)$/i)
-        if (!matches)
-            return null
+        let matches
         
-        const line = new WhileBlock(options)
-        line.getCondition = Utils.convertToCondition(matches[1])
-        return line
+        matches = options.code.matchKeyword("WHILE\\s+NOT", 1)
+        if (matches)
+        {
+            const line = new WhileBlock(options)
+            line.not = true
+            line.getCondition = matches[1].toCondition()
+            return line
+        }
+        
+        matches = options.code.matchKeyword("WHILE", 1)
+        if (matches)
+        {
+            const line = new WhileBlock(options)
+            line.not = false
+            line.getCondition = matches[1].toCondition()
+            return line
+        }
+        
+        return null
     }
     
     constructor(options)
@@ -992,7 +1406,7 @@ class WhileBlock extends Block
     
     * step()
     {
-        if (!this.skip && this.getCondition())
+        if (!this.skip && this.getCondition() == !this.not)
             return
         
         delete this.skip
@@ -1019,7 +1433,7 @@ class WhileBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * block/12-loop.js
+// * classes/block/12-loop.js
 //------------------------------------------------------------------------------
 
 class LoopBlock extends Block
@@ -1028,10 +1442,10 @@ class LoopBlock extends Block
     
     static parse(options)
     {
-        if (!/^LOOP$/i.test(options.code))
-            return null
+        if (options.code.matchKeyword("LOOP"))
+            return new LoopBlock(options)
         
-        return new LoopBlock(options)
+        return null
     }
     
     constructor(options)
@@ -1069,7 +1483,101 @@ class LoopBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * line/01-echo.js
+// * classes/block/20-song.js
+//------------------------------------------------------------------------------
+
+class SongBlock extends Block
+{
+    static _ = Line.classes.add(this.name)
+    static songs = { }
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("SONG", 1)
+        if (matches)
+        {
+            const line = new SongBlock(options)
+            line.getTitle = matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getTitle = this.createFunction(this.getTitle)
+    }
+    
+    * step()
+    {
+        this.root.getHistory("SONG").unshift(this)
+        
+        this.song = new Song(this.root.audioCtx)
+        
+        const title = this.getTitle()
+        SongBlock.songs[title] = this.song
+    }
+    
+    end()
+    {
+        this.root.getHistory("SONG").shift(this)
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/block/21-instrument.js
+//------------------------------------------------------------------------------
+
+class InstrumentBlock extends Block
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("INSTRUMENT", 1)
+        if (matches)
+        {
+            const line = new InstrumentBlock(options)
+            line.getTitle = matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getTitle = this.createFunction(this.getTitle)
+    }
+    
+    * step()
+    {
+        this.root.getHistory("INSTRUMENT").unshift(this)
+        
+        const song = this.root.getHistory("SONG")
+        this.instrument = new Instrument(song[0].song)
+    }
+    
+    end()
+    {
+        const song = this.root.getHistory("SONG")
+        song[0].song.add(this.instrument)
+        
+        this.root.getHistory("INSTRUMENT").shift(this)
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/01-echo.js
 //------------------------------------------------------------------------------
 
 class EchoLine extends Line
@@ -1078,13 +1586,15 @@ class EchoLine extends Line
     
     static parse(options)
     {
-        const matches = options.code.match(/^ECHO\s+(.*)$/i)
-        if (!matches)
-            return null
+        const matches = options.code.matchKeyword("ECHO", 1)
+        if (matches)
+        {
+            const line = new EchoLine(options)
+            line.getData = matches[1]
+            return line
+        }
         
-        const line = new EchoLine(options)
-        line.getData = matches[1]
-        return line
+        return null
     }
     
     compile()
@@ -1101,7 +1611,7 @@ class EchoLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/02-sleep.js
+// * classes/line/02-sleep.js
 //------------------------------------------------------------------------------
 
 class SleepLine extends Line
@@ -1110,13 +1620,25 @@ class SleepLine extends Line
     
     static parse(options)
     {
-        const matches = options.code.match(/^SLEEP\s+(.+)$/i)
-        if (!matches)
-            return null
+        let matches
         
-        const line = new SleepLine(options)
-        line.getMilliseconds = matches[1]
-        return line
+        matches = options.code.matchKeyword("SLEEP", 1)
+        if (matches)
+        {
+            const line = new SleepLine(options)
+            line.getMilliseconds = matches[1]
+            return line
+        }
+        
+        matches = options.code.matchKeyword("SLEEP")
+        if (matches)
+        {
+            const line = new SleepLine(options)
+            line.getMilliseconds = 1
+            return line
+        }
+        
+        return null
     }
     
     compile()
@@ -1142,7 +1664,7 @@ class SleepLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/10-goto.js
+// * classes/line/10-goto.js
 //------------------------------------------------------------------------------
 
 class GotoLine extends Line
@@ -1151,13 +1673,15 @@ class GotoLine extends Line
     
     static parse(options)
     {
-        const matches = options.code.match(/^GOTO\s+(.+)$/i)
-        if (!matches)
-            return null
+        const matches = options.code.matchKeyword("GOTO", 1)
+        if (matches)
+        {
+            const line = new GotoLine(options)
+            line.label = matches[1]
+            return line
+        }
         
-        const line = new GotoLine(options)
-        line.label = matches[1]
-        return line
+        return null
     }
     
     * step()
@@ -1177,7 +1701,7 @@ class GotoLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/11-gosub.js
+// * classes/line/11-gosub.js
 //------------------------------------------------------------------------------
 
 class GosubLine extends Line
@@ -1186,18 +1710,20 @@ class GosubLine extends Line
     
     static parse(options)
     {
-        const matches = options.code.match(/^GOSUB\s+(.+)$/i)
-        if (!matches)
-            return null
+        const matches = options.code.matchKeyword("GOSUB", 1)
+        if (matches)
+        {
+            const line = new GosubLine(options)
+            line.label = matches[1]
+            return line
+        }
         
-        const line = new GosubLine(options)
-        line.label = matches[1]
-        return line
+        return null
     }
     
     * step()
     {
-        this.root.gosubHistory.push(this)
+        this.root.getHistory("GOSUB").push(this)
         
         const line = this.root.findLine(line =>
         {
@@ -1214,7 +1740,7 @@ class GosubLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/12-return.js
+// * classes/line/12-return.js
 //------------------------------------------------------------------------------
 
 class ReturnLine extends Line
@@ -1223,15 +1749,15 @@ class ReturnLine extends Line
     
     static parse(options)
     {
-        if (!/^RETURN$/i.test(options.code))
-            return null
+        if (options.code.matchKeyword("RETURN"))
+            return new ReturnLine(options)
         
-        return new ReturnLine(options)
+        return null
     }
     
     * step()
     {
-        const line = this.root.gosubHistory.pop()
+        const line = this.root.getHistory("GOSUB").pop()
         
         if (!line)
             return
@@ -1243,7 +1769,7 @@ class ReturnLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/15-end.js
+// * classes/line/15-end.js
 //------------------------------------------------------------------------------
 
 class EndLine extends Line
@@ -1252,10 +1778,10 @@ class EndLine extends Line
     
     static parse(options)
     {
-        if (!/^END$/i.test(options.code))
-            return null
+        if (options.code.matchKeyword("END"))
+            return new EndLine(options)
         
-        return new EndLine(options)
+        return null
     }
     
     setup(parents)
@@ -1277,7 +1803,7 @@ class EndLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/18-next.js
+// * classes/line/18-next.js
 //------------------------------------------------------------------------------
 
 class NextLine extends Line
@@ -1286,10 +1812,10 @@ class NextLine extends Line
     
     static parse(options)
     {
-        if (!/^NEXT$/i.test(options.code))
-            return null
+        if (options.code.matchKeyword("NEXT"))
+            return new NextLine(options)
         
-        return new NextLine(options)
+        return null
     }
     
     * step()
@@ -1309,7 +1835,7 @@ class NextLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/19-break.js
+// * classes/line/19-break.js
 //------------------------------------------------------------------------------
 
 class BreakLine extends Line
@@ -1318,10 +1844,10 @@ class BreakLine extends Line
     
     static parse(options)
     {
-        if (!/^BREAK$/i.test(options.code))
-            return null
+        if (options.code.matchKeyword("BREAK"))
+            return new BreakLine(options)
         
-        return new BreakLine(options)
+        return null
     }
     
     * step()
@@ -1341,7 +1867,7 @@ class BreakLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/30-normalize.js
+// * classes/line/30-normalize.js
 //------------------------------------------------------------------------------
 
 class NormalizeLine extends Line
@@ -1350,13 +1876,15 @@ class NormalizeLine extends Line
     
     static parse(options)
     {
-        const matches = options.code.match(/^NORMALIZE\s+(.+)$/i)
-        if (!matches)
-            return null
+        const matches = options.code.matchKeyword("NORMALIZE", 1)
+        if (matches)
+        {
+            const line = new NormalizeLine(options)
+            line.dimName = matches[1]
+            return line
+        }
         
-        const line = new NormalizeLine(options)
-        line.dimName = matches[1]
-        return line
+        return null
     }
     
     compile()
@@ -1382,7 +1910,7 @@ class NormalizeLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/31-smooth-damp.js
+// * classes/line/31-smooth-damp.js
 //------------------------------------------------------------------------------
 
 class SmoothDampLine extends Line
@@ -1391,35 +1919,26 @@ class SmoothDampLine extends Line
     
     static parse(options)
     {
-        let matches
+        let matches = options.code.matchKeyword("SMOOTHDAMP", 6)
         
-        matches = options.code.match(/^SMOOTHDAMP\s+(.+)\s*\,\s*(.+)\s*\,\s*(.+)\s*\,\s*(.+)\s*\,\s*(.+)\s*\,\s*(.+)$/i)
-        if (matches)
+        if (!matches)
         {
-            const line = new SmoothDampLine(options)
-            line.current = matches[1]
-            line.target = matches[2]
-            line.currentVelocity = matches[3]
-            line.getSmoothTime = matches[4]
-            line.getDeltaTime = matches[5]
-            line.getMaxSpeed = matches[6]
-            return line
+            matches = options.code.matchKeyword("SMOOTHDAMP", 5)
+            if (matches)
+                matches[6] = "undefined"
         }
         
-        matches = options.code.match(/^SMOOTHDAMP\s+(.+)\s*\,\s*(.+)\s*\,\s*(.+)\s*\,\s*(.+)\s*\,\s*(.+)$/i)
-        if (matches)
-        {
-            const line = new SmoothDampLine(options)
-            line.current = matches[1]
-            line.target = matches[2]
-            line.currentVelocity = matches[3]
-            line.getSmoothTime = matches[4]
-            line.getDeltaTime = matches[5]
-            line.getMaxSpeed = "undefined"
-            return line
-        }
+        if (!matches)
+            return null
         
-        return null
+        const line = new SmoothDampLine(options)
+        line.current = matches[1]
+        line.target = matches[2]
+        line.currentVelocity = matches[3]
+        line.getSmoothTime = matches[4]
+        line.getDeltaTime = matches[5]
+        line.getMaxSpeed = matches[6]
+        return line
     }
     
     compile()
@@ -1540,7 +2059,7 @@ class SmoothDampLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/40-size.js
+// * classes/line/40-size.js
 //------------------------------------------------------------------------------
 
 class SizeLine extends Line
@@ -1549,14 +2068,16 @@ class SizeLine extends Line
     
     static parse(options)
     {
-        const matches = options.code.match(/^SIZE\s(.+)\s*\,\s*(.+)$/i)
-        if (!matches)
-            return null
+        const matches = options.code.matchKeyword("SIZE", 2)
+        if (matches)
+        {
+            const line = new SizeLine(options)
+            line.getWidth = matches[1]
+            line.getHeight = matches[2]
+            return line
+        }
         
-        const line = new SizeLine(options)
-        line.getWidth = matches[1]
-        line.getHeight = matches[2]
-        return line
+        return null
     }
     
     compile()
@@ -1574,7 +2095,7 @@ class SizeLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/41-clear.js
+// * classes/line/41-clear.js
 //------------------------------------------------------------------------------
 
 class ClearLine extends Line
@@ -1583,10 +2104,11 @@ class ClearLine extends Line
     
     static parse(options)
     {
-        if (!/^CLEAR$/i.test(options.code))
-            return null
+        const matches = options.code.matchKeyword("CLEAR")
+        if (matches)
+            return new ClearLine(options)
         
-        return new ClearLine(options)
+        return null
     }
     
     * step()
@@ -1599,7 +2121,7 @@ class ClearLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/42-color.js
+// * classes/line/42-color.js
 //------------------------------------------------------------------------------
 
 class ColorLine extends Line
@@ -1610,7 +2132,7 @@ class ColorLine extends Line
     {
         let matches
         
-        matches = options.code.match(/^COLOR\s+([0-9]+)\s*\,\s*([0-9]+)\s*\,\s*([0-9]+)\s*\,\s*([0-9]+)$/i)
+        matches = options.code.matchKeyword("COLOR", 4)
         if (matches)
         {
             const line = new ColorLine(options)
@@ -1618,7 +2140,7 @@ class ColorLine extends Line
             return line
         }
         
-        matches = options.code.match(/^COLOR\s+([0-9]+)\s*\,\s*([0-9]+)\s*\,\s*([0-9]+)$/i)
+        matches = options.code.matchKeyword("COLOR", 3)
         if (matches)
         {
             const line = new ColorLine(options)
@@ -1626,7 +2148,7 @@ class ColorLine extends Line
             return line
         }
         
-        matches = options.code.match(/^COLOR\s+(.+)$/i)
+        matches = options.code.matchKeyword("COLOR", 1)
         if (matches)
         {
             const line = new ColorLine(options)
@@ -1659,7 +2181,7 @@ class ColorLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/50-fill.js
+// * classes/line/50-fill.js
 //------------------------------------------------------------------------------
 
 class FillLine extends Line
@@ -1668,17 +2190,9 @@ class FillLine extends Line
     
     static parse(options)
     {
-        if (/^FILL$/i.test(options.code))
-        {
-            const line = new FillLine(options)
-            line.getX = "0"
-            line.getY = "0"
-            line.getWidth = -1
-            line.getHeight = -1
-            return line
-        }
+        let matches
         
-        const matches = options.code.match(/^FILL\s(.+)\s*\,\s*(.+)\s*\,\s*(.+)\s*\,\s*(.+)$/i)
+        matches = options.code.matchKeyword("FILL", 4)
         if (matches)
         {
             const line = new FillLine(options)
@@ -1686,6 +2200,17 @@ class FillLine extends Line
             line.getY = matches[2]
             line.getWidth = matches[3]
             line.getHeight = matches[4]
+            return line
+        }
+        
+        matches = options.code.matchKeyword("FILL")
+        if (matches)
+        {
+            const line = new FillLine(options)
+            line.getX = "0"
+            line.getY = "0"
+            line.getWidth = -1
+            line.getHeight = -1
             return line
         }
         
@@ -1728,7 +2253,7 @@ class FillLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/51-text.js
+// * classes/line/51-text.js
 //------------------------------------------------------------------------------
 
 class TextLine extends Line
@@ -1737,15 +2262,17 @@ class TextLine extends Line
     
     static parse(options)
     {
-        const matches = options.code.match(/^TEXT\s+(.+?)\s*\,\s*(.+?)\s*\,\s*(.+?)$/i)
-        if (!matches)
-            return null
+        const matches = options.code.matchKeyword("TEXT", 3)
+        if (matches)
+        {
+            const line = new TextLine(options)
+            line.getX = matches[1]
+            line.getY = matches[2]
+            line.getText = matches[3]
+            return line
+        }
         
-        const line = new TextLine(options)
-        line.getX = matches[1]
-        line.getY = matches[2]
-        line.getText = matches[3]
-        return line
+        return null
     }
     
     compile()
@@ -1765,7 +2292,7 @@ class TextLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/52-align.js
+// * classes/line/52-align.js
 //------------------------------------------------------------------------------
 
 class AlignLine extends Line
@@ -1774,21 +2301,21 @@ class AlignLine extends Line
     
     static parse(options)
     {
-        if (/^ALIGN\s+LEFT$/i.test(options.code))
+        if (options.code.matchKeyword("ALIGN\\s+LEFT"))
         {
             const line = new AlignLine(options)
             line.align = "start"
             return line
         }
         
-        if (/^ALIGN\s+CENTER$/i.test(options.code))
+        if (options.code.matchKeyword("ALIGN\\s+CENTER"))
         {
             const line = new AlignLine(options)
             line.align = "center"
             return line
         }
         
-        if (/^ALIGN\s+RIGHT$/i.test(options.code))
+        if (options.code.matchKeyword("ALIGN\\s+RIGHT"))
         {
             const line = new AlignLine(options)
             line.align = "right"
@@ -1807,7 +2334,7 @@ class AlignLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/60-dim.js
+// * classes/line/60-dim.js
 //------------------------------------------------------------------------------
 
 class DimLine extends Line
@@ -1877,7 +2404,7 @@ class DimLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/70-label.js
+// * classes/line/70-label.js
 //------------------------------------------------------------------------------
 
 class LabelLine extends Line
@@ -1898,7 +2425,7 @@ class LabelLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/71-init.js
+// * classes/line/71-init.js
 //------------------------------------------------------------------------------
 
 class InitLine extends Line
@@ -1949,7 +2476,7 @@ class InitLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/72-set.js
+// * classes/line/72-set.js
 //------------------------------------------------------------------------------
 
 class SetLine extends Line
@@ -1959,13 +2486,15 @@ class SetLine extends Line
     static parse(options)
     {
         const matches = options.code.match(/^SET\s+([^ ]+)\s*\=\s*(.+)$/i)
-        if (!matches)
-            return null
+        if (matches)
+        {
+            const line = new SetLine(options)
+            line.name = matches[1]
+            line.getValue = matches[2]
+            return line
+        }
         
-        const line = new SetLine(options)
-        line.name = matches[1]
-        line.getValue = matches[2]
-        return line
+        return null
     }
     
     prepare()
@@ -1989,7 +2518,7 @@ class SetLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/73-.js
+// * classes/line/73-.js
 //------------------------------------------------------------------------------
 
 class VarLine extends Line
@@ -2041,5 +2570,349 @@ class VarLine extends Line
     * step()
     {
         this.parent.set(this.name, this.getValue(), this.getX(), this.getY(), this.operator)
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/80-gain.js
+//------------------------------------------------------------------------------
+
+class GainLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("GAIN", 1)
+        if (matches)
+        {
+            const line = new GainLine(options)
+            line.value = (+matches[1] / 100)
+            return line
+        }
+        
+        return null
+    }
+    
+    * step()
+    {
+        const instrument = this.root.getHistory("INSTRUMENT")
+        if (instrument && instrument.length)
+        {
+            instrument[0].instrument.gain = this.value
+            return
+        }
+        
+        const song = this.root.getHistory("SONG")
+        song[0].song.gain.value = this.value
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/81-bpm.js
+//------------------------------------------------------------------------------
+
+class BpmLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("BPM", 1)
+        if (matches)
+        {
+            const line = new BpmLine(options)
+            line.value = +matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    * step()
+    {
+        const song = this.root.getHistory("SONG")
+        song[0].song.bpm = this.value
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/82-time-signature.js
+//------------------------------------------------------------------------------
+
+class TimeSignatureLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("TIME SIGNATURE", 1)
+        if (matches)
+        {
+            const line = new TimeSignatureLine(options)
+            line.value = +matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    * step()
+    {
+        const song = this.root.getHistory("SONG")
+        song[0].song.timeSignature = this.value
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/83-repeat.js
+//------------------------------------------------------------------------------
+
+class RepeatLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("REPEAT", 1)
+        if (matches)
+        {
+            const line = new RepeatLine(options)
+            line.getValue = matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getValue = this.createFunction(this.getValue)
+    }
+    
+    * step()
+    {
+        const song = this.root.getHistory("SONG")
+        song[0].song.repeat = this.getValue()
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/84-type.js
+//------------------------------------------------------------------------------
+
+class TypeLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("TYPE", 1)
+        if (matches)
+        {
+            const line = new TypeLine(options)
+            line.getValue = matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getValue = this.createFunction(this.getValue)
+    }
+    
+    * step()
+    {
+        const instrument = this.root.getHistory("INSTRUMENT")
+        instrument[0].instrument.type = this.getValue()
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/85-reverb.js
+//------------------------------------------------------------------------------
+
+class ReverbLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("REVERB", 1)
+        if (matches)
+        {
+            const line = new ReverbLine(options)
+            line.value = (+matches[1] / 100)
+            return line
+        }
+        
+        return null
+    }
+    
+    * step()
+    {
+        const instrument = this.root.getHistory("INSTRUMENT")
+        instrument[0].instrument.blend.value = this.value
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/86-sheet.js
+//------------------------------------------------------------------------------
+
+class SheetLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("SHEET", 1)
+        if (matches)
+        {
+            const line = new SheetLine(options)
+            line.getLine = matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getLine = this.createFunction(this.getLine)
+    }
+    
+    * step()
+    {
+        const instrument = this.root.getHistory("INSTRUMENT")
+        instrument[0].instrument.sheet += this.getLine() + " "
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/87-play.js
+//------------------------------------------------------------------------------
+
+class PlayLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    static songs = []
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("PLAY", 1)
+        if (matches)
+        {
+            const line = new PlayLine(options)
+            line.getSongTitle = matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getSongTitle = this.createFunction(this.getSongTitle)
+    }
+    
+    * step()
+    {
+        new Promise(x => this.play().then(x))
+    }
+    
+    async play()
+    {
+        const title = this.getSongTitle()
+        const song = SongBlock.songs[title].clone()
+        song.title = title
+        PlayLine.songs.push(song)
+        
+        const ctx = this.root.audioCtx
+        
+        const master = ctx.createGain()
+        master.connect(ctx.destination)
+        
+        song.connect(master)
+        await song.play()
+        song.disconnect(master)
+        
+        master.disconnect(ctx.destination)
+        
+        const index = PlayLine.songs.indexOf(song)
+        PlayLine.songs.splice(index, 1)
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/88-stop.js
+//------------------------------------------------------------------------------
+
+class StopLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("STOP", 1)
+        if (matches)
+        {
+            const line = new StopLine(options)
+            line.getSongTitle = matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getSongTitle = this.createFunction(this.getSongTitle)
+    }
+    
+    * step()
+    {
+        const title = this.getSongTitle()
+        for (const song of PlayLine.songs)
+            if (song.title == title)
+                song.stop()
     }
 }
