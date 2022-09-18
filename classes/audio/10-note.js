@@ -65,24 +65,21 @@ class Note
             oscillator.start()
         }
         
-        await new Promise(resolve =>
+        await Promise.timeout(resolve =>
         {
-            setTimeout(() =>
+            if (oscillator)
             {
-                if (oscillator)
-                {
-                    oscillator.stop()
-                    oscillator.disconnect(gainNode)
-                    oscillator = undefined
-                }
-                if (gainNode)
-                {
-                    gainNode.disconnect(instrument.node1)
-                    gainNode.disconnect(instrument.reverbNode)
-                    gainNode = undefined
-                }
-                resolve()
-            }, length * 1000)
-        })
+                oscillator.stop()
+                oscillator.disconnect(gainNode)
+                oscillator = undefined
+            }
+            if (gainNode)
+            {
+                gainNode.disconnect(instrument.node1)
+                gainNode.disconnect(instrument.reverbNode)
+                gainNode = undefined
+            }
+            resolve()
+        }, length * 1000)
     }
 }

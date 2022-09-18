@@ -47,6 +47,8 @@ INIT MusicPlaying = FALSE
 
 INIT SpacePressed = FALSE
 
+GOTO Play Music
+
 WHILE NOT INPUT("ESCAPE")
   IF INPUT("M")
     IF MPressed = FALSE
@@ -55,6 +57,7 @@ WHILE NOT INPUT("ESCAPE")
         MusicPlaying = FALSE
         STOP "BGM"
       ELSE
+        Play Music:
         MusicPlaying = TRUE
         PLAY "BGM"
       END

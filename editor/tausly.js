@@ -58,6 +58,24 @@ CanvasRenderingContext2D.prototype.refresh = function()
     this.textBaseline = "top"
 }
 
+Promise.timeout = function(func, ms)
+{
+    return new Promise(resolve => setTimeout(() => func(resolve), ms ?? 0))
+}
+
+Promise.delay = function(ms)
+{
+    return Promise.timeout(x => x(), ms)
+}
+
+Promise.wait = async function(func)
+{
+    const task = () => new Promise(func)
+    while (true)
+        if (await task())
+            break
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -722,10 +740,7 @@ class Tausly extends Block
     
     async run(code)
     {
-        const task = () => new Promise(resolve => setTimeout(() => resolve(!this.running)))
-        while (true)
-            if (await task())
-                break
+        await Promise.wait(resolve => resolve(!this.running))
         
         this.running = true
         
@@ -758,7 +773,7 @@ class Tausly extends Block
             {
                 const step = line.step()
                 
-                const task = () => new Promise(resolve =>
+                await Promise.wait(resolve => 
                 {
                     const next = step.next()
                     const result = next.value
@@ -789,10 +804,6 @@ class Tausly extends Block
                     
                     setTimeout(() => resolve(false))
                 })
-                
-                while (true)
-                    if (await task())
-                        break
             }
             
             this.runtimeIndex++
@@ -1054,25 +1065,22 @@ class Note
             oscillator.start()
         }
         
-        await new Promise(resolve =>
+        await Promise.timeout(resolve =>
         {
-            setTimeout(() =>
+            if (oscillator)
             {
-                if (oscillator)
-                {
-                    oscillator.stop()
-                    oscillator.disconnect(gainNode)
-                    oscillator = undefined
-                }
-                if (gainNode)
-                {
-                    gainNode.disconnect(instrument.node1)
-                    gainNode.disconnect(instrument.reverbNode)
-                    gainNode = undefined
-                }
-                resolve()
-            }, length * 1000)
-        })
+                oscillator.stop()
+                oscillator.disconnect(gainNode)
+                oscillator = undefined
+            }
+            if (gainNode)
+            {
+                gainNode.disconnect(instrument.node1)
+                gainNode.disconnect(instrument.reverbNode)
+                gainNode = undefined
+            }
+            resolve()
+        }, length * 1000)
     }
 }
 
@@ -1129,7 +1137,7 @@ class Instrument extends BlendNode
             if (sheetNote == "--")
             {
                 const previousNote = this.notes[this.notes.length - 1]
-                if (previousNote.note == "--")
+                if (previousNote && previousNote.note == "--")
                 {
                     previousNote.length++
                     continue
@@ -1182,9 +1190,12 @@ class Instrument extends BlendNode
                     index = 0
                     continue
                 }
-                this.stopped = true
+                break
             }
         }
+        
+        if (!this.stopped)
+            await Promise.delay(3000)
         
         this.disconnect(song)
     }
@@ -1633,6 +1644,14 @@ class InstrumentBlock extends Block
     {
         let matches
         
+        matches = options.code.matchKeyword("INSTRUMENT")
+        if (matches)
+        {
+            const line = new InstrumentBlock(options)
+            line.getTitle = "undefined"
+            return line
+        }
+        
         matches = options.code.matchKeyword("INSTRUMENT", 1)
         if (matches)
         {
@@ -1646,6 +1665,7 @@ class InstrumentBlock extends Block
     
     compile()
     {
+        // Not used yet
         this.getTitle = this.createFunction(this.getTitle)
     }
     
@@ -1887,15 +1907,13 @@ class GotoLine extends Line
     
     * step()
     {
-        const line = this.root.findLine(line =>
+        this.root.goto(this.root.findLine(line =>
         {
             if (line instanceof LabelLine)
                 if (line.name == this.label)
                     return true
             return false
-        })
-        
-        this.root.goto(line)
+        }))
     }
 }
 
@@ -1950,8 +1968,22 @@ class ReturnLine extends Line
     
     static parse(options)
     {
-        if (options.code.matchKeyword("RETURN"))
-            return new ReturnLine(options)
+        let matches
+        
+        matches = options.code.matchKeyword("RETURN\\sTO", 1)
+        if (matches)
+        {
+            const line = new ReturnLine(options)
+            line.label = matches[1]
+            return line
+        }
+        
+        matches = options.code.matchKeyword("RETURN")
+        if (matches)
+        {
+            const line = new ReturnLine(options)
+            return line
+        }
         
         return null
     }
@@ -1960,8 +1992,17 @@ class ReturnLine extends Line
     {
         const line = this.root.getHistory("GOSUB").pop()
         
-        if (!line)
+        if (this.label)
+        {
+            this.root.goto(this.root.findLine(line =>
+            {
+                if (line instanceof LabelLine)
+                    if (line.name == this.label)
+                        return true
+                return false
+            }))
             return
+        }
         
         this.root.goto(line, 1)
     }
@@ -3381,6 +3422,70 @@ class StopLine extends Line
         for (const song of PlayLine.songs)
             if (song.title == title)
                 song.stop()
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/89-attack.js
+//------------------------------------------------------------------------------
+
+class AttackLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("ATTACK", 1)
+        if (matches)
+        {
+            const line = new AttackLine(options)
+            line.value = +matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    * step()
+    {
+        const instrument = this.root.getHistory("INSTRUMENT")
+        instrument[0].instrument.attack = this.value
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/90-release.js
+//------------------------------------------------------------------------------
+
+class ReleaseLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("RELEASE", 1)
+        if (matches)
+        {
+            const line = new ReleaseLine(options)
+            line.value = +matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    * step()
+    {
+        const instrument = this.root.getHistory("INSTRUMENT")
+        instrument[0].instrument.release = this.value
     }
 }
 

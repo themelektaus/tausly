@@ -72,6 +72,8 @@ window.onload = () =>
 {
     const editor = ace.edit("code");
     editor.setOptions({
+        tabSize: 2,
+        useSoftTabs: false,
         behavioursEnabled: false,
         fixedWidthGutter: true,
         showFoldWidgets: false,

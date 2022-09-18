@@ -45,7 +45,7 @@ class Instrument extends BlendNode
             if (sheetNote == "--")
             {
                 const previousNote = this.notes[this.notes.length - 1]
-                if (previousNote.note == "--")
+                if (previousNote && previousNote.note == "--")
                 {
                     previousNote.length++
                     continue
@@ -98,9 +98,12 @@ class Instrument extends BlendNode
                     index = 0
                     continue
                 }
-                this.stopped = true
+                break
             }
         }
+        
+        if (!this.stopped)
+            await Promise.delay(3000)
         
         this.disconnect(song)
     }

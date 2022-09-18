@@ -6,6 +6,14 @@ class InstrumentBlock extends Block
     {
         let matches
         
+        matches = options.code.matchKeyword("INSTRUMENT")
+        if (matches)
+        {
+            const line = new InstrumentBlock(options)
+            line.getTitle = "undefined"
+            return line
+        }
+        
         matches = options.code.matchKeyword("INSTRUMENT", 1)
         if (matches)
         {
@@ -19,6 +27,7 @@ class InstrumentBlock extends Block
     
     compile()
     {
+        // Not used yet
         this.getTitle = this.createFunction(this.getTitle)
     }
     

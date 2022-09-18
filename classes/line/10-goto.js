@@ -17,14 +17,12 @@ class GotoLine extends Line
     
     * step()
     {
-        const line = this.root.findLine(line =>
+        this.root.goto(this.root.findLine(line =>
         {
             if (line instanceof LabelLine)
                 if (line.name == this.label)
                     return true
             return false
-        })
-        
-        this.root.goto(line)
+        }))
     }
 }

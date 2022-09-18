@@ -157,10 +157,7 @@ class Tausly extends Block
     
     async run(code)
     {
-        const task = () => new Promise(resolve => setTimeout(() => resolve(!this.running)))
-        while (true)
-            if (await task())
-                break
+        await Promise.wait(resolve => resolve(!this.running))
         
         this.running = true
         
@@ -193,7 +190,7 @@ class Tausly extends Block
             {
                 const step = line.step()
                 
-                const task = () => new Promise(resolve =>
+                await Promise.wait(resolve => 
                 {
                     const next = step.next()
                     const result = next.value
@@ -224,10 +221,6 @@ class Tausly extends Block
                     
                     setTimeout(() => resolve(false))
                 })
-                
-                while (true)
-                    if (await task())
-                        break
             }
             
             this.runtimeIndex++

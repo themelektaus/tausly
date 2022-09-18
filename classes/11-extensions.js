@@ -42,3 +42,21 @@ CanvasRenderingContext2D.prototype.refresh = function()
     this.font = styleMap.get("font").toString()
     this.textBaseline = "top"
 }
+
+Promise.timeout = function(func, ms)
+{
+    return new Promise(resolve => setTimeout(() => func(resolve), ms ?? 0))
+}
+
+Promise.delay = function(ms)
+{
+    return Promise.timeout(x => x(), ms)
+}
+
+Promise.wait = async function(func)
+{
+    const task = () => new Promise(func)
+    while (true)
+        if (await task())
+            break
+}

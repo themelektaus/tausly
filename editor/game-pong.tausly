@@ -10,6 +10,122 @@
 
 
 ------------------------------------------------------------
+ * Audio
+------------------------------------------------------------
+
+SONG "Cursor"
+  GAIN 70 : BPM 240
+  TIME SIGNATURE 16
+  INSTRUMENT : SHEET "C4 C5 C6" : END
+END
+
+SONG "Accept"
+  GAIN 80 : BPM 180
+  TIME SIGNATURE 16
+  INSTRUMENT
+    TYPE "square"
+    REVERB 15
+    SHEET "C6 C7"
+  END
+END
+
+SONG "Player Hit"
+  GAIN 50 : BPM 240
+  TIME SIGNATURE 16
+  INSTRUMENT
+    REVERB 5
+    TYPE "square"
+    SHEET "C4"
+  END
+END
+
+SONG "Border Hit"
+  GAIN 40 : BPM 240
+  TIME SIGNATURE 16
+  INSTRUMENT
+    REVERB 10
+  	TYPE "square"
+  	SHEET "C3"
+  END
+END
+
+SONG "Music 1"
+  GAIN 50 : BPM 120
+  TIME SIGNATURE 8
+  REPEAT TRUE
+  INSTRUMENT
+    GAIN 40
+    TYPE "sawtooth"
+    RELEASE 120
+    REVERB 25
+    SHEET "F1 -- -- -- -- -- -- --"
+    SHEET "F1 -- -- -- -- -- -- --"
+    SHEET "F1 -- -- -- -- -- -- --"
+    SHEET "F1 -- -- -- -- -- -- --"
+  END
+  INSTRUMENT
+    GAIN 20
+    TYPE "triangle"
+    ATTACK 50
+    RELEASE 50
+    REVERB 5
+    SHEET "F5 -- F5 -- F5 -- F4 --"
+    SHEET "F5 -- F5 -- F5 -- F4 --"
+    SHEET "F5 -- F5 -- F5 -- F4 --"
+    SHEET "F5 -- F5 -- F5 -- F4 --"
+  END
+END
+
+SONG "Music 2"
+  GAIN 50 : BPM 120
+  TIME SIGNATURE 8
+  REPEAT TRUE
+  INSTRUMENT
+    GAIN 80
+    TYPE "sawtooth"
+    RELEASE 120
+    REVERB 15
+    SHEET "F1 -- -- -- -- -- -- --"
+    SHEET "F1 -- -- -- -- -- -- --"
+    SHEET "F1 -- -- -- -- -- -- --"
+    SHEET "F1 -- -- -- -- -- -- --"
+  END
+  INSTRUMENT
+    GAIN 90
+    TYPE "sawtooth"
+    ATTACK 20
+    RELEASE 200
+    REVERB 10
+    SHEET "-- -- -- -- F2 -- -- --"
+    SHEET "-- -- -- -- F2 -- -- --"
+    SHEET "-- -- -- -- F2 -- -- --"
+    SHEET "-- -- -- -- F2 -- -- --"
+  END
+  INSTRUMENT
+    GAIN 10
+    TYPE "triangle"
+    ATTACK 50
+    RELEASE 50
+    REVERB 5
+    SHEET "F5 -- F5 -- F5 -- F4 --"
+    SHEET "F5 -- F5 -- F5 -- F4 --"
+    SHEET "F5 -- F5 -- F5 -- F4 --"
+    SHEET "F5 -- F5 -- F5 -- F4 --"
+  END
+  INSTRUMENT
+    GAIN 30
+    TYPE "square"
+    REVERB 15
+    SHEET "F4 .. -- E4 D4 -- C4 --"
+    SHEET "F5 -- -- -- -- -- -- --"
+    SHEET "F3 -- -- -- -- C4 D4 --"
+    SHEET "C4 -- -- -- -- -- -- --"
+  END
+END
+
+
+
+------------------------------------------------------------
  * Start
 ------------------------------------------------------------
 
@@ -20,6 +136,10 @@ INIT W = 10
 INIT H = 80
 INIT MinSmoothness = 600
 INIT MaxSmoothness = 1200
+
+DIM(2, 5) Player
+DIM(5) Ball
+DIM(2) BallDir
 
 
 
@@ -44,8 +164,6 @@ INIT _plus = 4
  * Player
 ------------------------------------------------------------
 
-DIM(2, 5) Player
-
 Player(0)(_bot) = FALSE
 Player(1)(_bot) = TRUE
 
@@ -55,6 +173,7 @@ Player(1)(_x) = WIDTH - W * 4
 FOR i = 0 TO 1
   Player(i)(_y) = HEIGHT / 2
   Player(i)(_speed) = 0.5
+  Player(i)(_velocity) = 0
   IF Player(i)(_bot) = TRUE
     Player(i)(_botSmoothness) = 0.1
     Player(i)(_y) += XRANDOM(H / 2)
@@ -67,28 +186,29 @@ END
  * Ball
 ------------------------------------------------------------
 
-DIM(5) Ball
 Ball(_x) = WIDTH / 2
 Ball(_y) = HEIGHT / 2
 Ball(_size) = 10
 Ball(_speed) = 0.3
 Ball(_plus) = 0.01
 
-DIM(2) BallDir
 BallDir(0) = XRANDOM(1)
+BallDir(1) = 0
 
 
 
 ------------------------------------------------------------
- * Game Loop
+ * Titlescreen
 ------------------------------------------------------------
 
-GOSUB Render
-SLEEP 500
+STOP "Music 2"
+PLAY "Music 1"
+
+SET MenuIndex = 0
 
 LOOP
-  GOSUB Update
-  GOSUB Render
+  GOSUB Titlescreen Update
+  GOSUB Titlescreen Render
   SLEEP FRAMETIME(60)
   LastDeltaTime = DELTATIME
 END
@@ -96,17 +216,103 @@ END
 
 
 ------------------------------------------------------------
- * Update
+ * InGame
 ------------------------------------------------------------
+
+STOP "Music 1"
+PLAY "Music 2"
+
+LOOP
+  GOSUB InGame Update
+  GOSUB InGame Render
+  SLEEP FRAMETIME(60)
+  LastDeltaTime = DELTATIME
+END
+
+
+
+------------------------------------------------------------
+ * Titlescreen Update
+------------------------------------------------------------
+
+IF INPUT("SPACE") OR INPUT("ENTER")
+  IF MenuIndex = 0
+    PLAY "Accept"
+    COLOR "#033"
+    FILL
+    SLEEP 250
+    GOSUB InGame Render
+    SLEEP 250
+    RETURN TO InGame
+  END
+  RETURN
+END
+
+IF INPUT("W")
+  IF MenuIndex = 1
+    MenuIndex = 0
+    PLAY "Cursor"
+  END
+  RETURN
+END
+
+IF INPUT("S")
+  IF MenuIndex = 0
+    MenuIndex = 1
+    PLAY "Cursor"
+  END
+  RETURN
+END
+
+RETURN
+
+
+
+------------------------------------------------------------
+ * Titlescreen Render
+------------------------------------------------------------
+
+COLOR "#033"
+FILL
+
+ALIGN CENTER
+
+IF MenuIndex = 0
+  COLOR "white"
+ELSE
+  COLOR "grey"
+END
+TEXT WIDTH / 2, HEIGHT / 2 - 30, "Start Game"
+
+IF MenuIndex = 1
+  COLOR "white"
+ELSE
+  COLOR "grey"
+END
+TEXT WIDTH / 2, HEIGHT / 2 + 30, "Options"
+
+RETURN
+
+
+
+------------------------------------------------------------
+ * InGame Update
+------------------------------------------------------------
+
+IF INPUT("ESCAPE")
+  RETURN TO Player
+END
 
 IF Ball(_y) < Ball(_size) / 2
   Ball(_y) = Ball(_size) / 2
   BallDir(1) *= -1
+  Play "Border Hit"
 END
 
 IF Ball(_y) > HEIGHT - Ball(_size) / 2
   Ball(_y) = HEIGHT - Ball(_size) / 2
   BallDir(1) *= -1
+  Play "Border Hit"
 END
 
 FOR i = 0 TO 1
@@ -208,18 +414,19 @@ FOR j = 0 TO Iterations
 END
 
 IF Ball(_x) + Ball(_size) < 0
-  GOSUB Render
+  GOSUB InGame Render
   GOTO Lose
 END
 
 IF Ball(_x) > WIDTH + Ball(_size)
-  GOSUB Render
+  GOSUB InGame Render
   GOTO Win
 END
 
 RETURN
 
 Hit:
+Play "Player Hit"
 BallDir(1) = HitDelta / H * 2
 Ball(_speed) += Ball(_plus)
 NORMALIZE BallDir
@@ -228,7 +435,7 @@ RETURN
 
 
 ------------------------------------------------------------
- * Render
+ * InGame Render
 ------------------------------------------------------------
 
 COLOR "#033"
@@ -246,6 +453,7 @@ FILL Ball(_x) - Ball(_size) / 2, _
      Ball(_size)
 
 RETURN
+
 
 
 
