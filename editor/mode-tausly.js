@@ -23,7 +23,7 @@ define(
                 start: [
                     {
                         token: 'keyword.method.tausly',
-                        regex: '\\b(?:ECHO|SLEEP|NORMALIZE|SMOOTHDAMP|SIZE|CLEAR|COLOR|FILL|TEXT|ALIGN\\sLEFT|ALIGN\\sCENTER|ALIGN\\sRIGHT|DIM|LABEL|INIT|SET|DIM|GAIN|BPM|TIME\\sSIGNATURE|REPEAT|TYPE|REVERB|SHEET|PLAY|STOP|RESET|DRAW|TRANSLATE|ROTATE|SCALE|ATTACK|RELEASE|CURSOR\\sSHOW|CURSOR\\sHIDE)\\b',
+                        regex: '\\b(?:ECHO|SLEEP|NORMALIZE|SMOOTHDAMP|SIZE|CLEAR|COLOR|FILL|TEXT|ALIGN\\sLEFT|ALIGN\\sCENTER|ALIGN\\sRIGHT|DIM|LABEL|INIT|SET|DIM|GAIN|BPM|TIME\\sSIGNATURE|REPEAT|TYPE|REVERB|SHEET|PLAY|STOP|RESET|DRAW|TRANSLATE|ROTATE|SCALE|ATTACK|RELEASE|CURSOR\\sSHOW|CURSOR\\sHIDE|FUNC|RETURNS)\\b',
                         caseInsensitive: true
                     },
                     {
@@ -41,7 +41,7 @@ define(
                     },
                     {
                         token: 'keyword.const.tausly',
-                        regex: '\\b(?:DELTATIME|TIME|WIDTH|HEIGHT|TRUE|FALSE|NULL|MOUSEX|MOUSEY)\\b'
+                        regex: '\\b(?:DELTATIME|TIME|WIDTH|HEIGHT|TRUE|FALSE|NULL|MOUSEX|MOUSEY|VALUE)\\b'
                     },
                     {
                         token: 'punctuation.definition.string.begin.shell',
@@ -61,11 +61,11 @@ define(
                     },
                     {
                         token: 'keyword.label.tausly',
-                        regex: '.*:\\s*$'
+                        regex: /.+\:\s*$/
                     },
                     {
                         token: 'keyword.label.tausly',
-                        regex: '^\\s*\\*.*'
+                        regex: /^\s*\*.*/
                     },
                     {
                         token: 'keyword.key.tausly',
@@ -78,8 +78,12 @@ define(
                 ],
                 label: [
                     {
+                        token: "keyword.none.tausly",
+                        regex: /\s+/
+                    },
+                    {
                         token: "keyword.jump.label.tausly",
-                        regex: /\s+[^\r\n\:]+/
+                        regex: /[^\r\n\:]+/
                     },
                     {
                         token: "",

@@ -2,16 +2,26 @@ SIZE 640, 640
 
 DIM(10,10) Map
 
-Map(0) = 0,0,0,0,0,0,0,0,0,0
-Map(1) = 0,1,2,0,0,0,0,0,0,0
-Map(2) = 0,0,0,0,0,0,2,0,0,0
-Map(3) = 0,0,3,0,2,0,0,0,1,0
-Map(4) = 0,0,0,0,0,0,0,0,0,0
-Map(5) = 0,0,0,0,0,0,0,3,0,0
-Map(6) = 0,0,0,0,0,0,0,0,0,0
-Map(7) = 0,0,0,4,4,0,0,0,0,0
-Map(8) = 0,0,0,4,4,0,0,0,0,0
-Map(9) = 0,0,0,0,0,0,0,0,0,0
+INIT GenerateRandomMap = TRUE
+
+IF GenerateRandomMap
+  FOR y = 1 TO 8
+    FOR x = 1 TO 8
+      Map(y)(x) = RANDOM(-20, 4)
+    END
+  END
+ELSE
+  Map(0) = 0,0,0,0,0,0,0,0,0,0
+  Map(1) = 0,1,2,0,0,0,0,0,0,0
+  Map(2) = 0,0,0,0,0,0,2,0,0,0
+  Map(3) = 0,0,3,0,2,0,0,0,1,0
+  Map(4) = 0,0,0,0,0,0,0,0,0,0
+  Map(5) = 0,0,0,0,0,0,0,3,0,0
+  Map(6) = 0,0,0,0,0,0,0,0,0,0
+  Map(7) = 0,0,0,4,4,0,0,0,0,0
+  Map(8) = 0,0,0,4,4,0,0,0,0,0
+  Map(9) = 0,0,0,0,0,0,0,0,0,0
+END
 
 SPRITE "Castle"
   SIZE 13, 12
@@ -37,7 +47,15 @@ SPRITE "Castle"
   END
 END
 
-GOTO Render
+SPRITE "Hero"
+  SIZE 12, 12
+  FRAME
+    GOSUB GFX Hero Colors
+    GOSUB GFX Hero Pixels
+  END
+END
+
+GOTO Songs
 
 ------------------------------------------------------------
 GFX Colors 1:
@@ -87,24 +105,111 @@ PIXELMAP "===+     +==="
 RETURN
 
 ------------------------------------------------------------
-Render:
+GFX Hero Colors:
+COLORMAP "#", "#000"
+COLORMAP ".", "#fc9"
+COLORMAP "-", "#99c"
+RETURN
 
-INIT X = WIDTH / 2
-INIT Y = HEIGHT / 2
+------------------------------------------------------------
+GFX Hero Pixels:
+PIXELMAP "    ####    "
+PIXELMAP "  ##....##  "
+PIXELMAP " #........# "
+PIXELMAP " #........# "
+PIXELMAP " #.##..##.# "
+PIXELMAP " #........# "
+PIXELMAP " #...##...# "
+PIXELMAP "  #......#  "
+PIXELMAP " #-######-# "
+PIXELMAP "#.#------#.#"
+PIXELMAP " ##--##--## "
+PIXELMAP "   ##  ##   "
+RETURN
+
+------------------------------------------------------------
+Songs:
+SONG "Spawn"
+  TIME SIGNATURE 32
+  INSTRUMENT
+    TYPE "triangle"
+    SHEET "B4 G4 B3"
+  END
+END
+
+------------------------------------------------------------
+INIT X
+INIT Y
+
+INIT RealX
+INIT RealY
+
+INIT TargetX
+INIT TargetY
+
+INIT VelX
+INIT VelY
+
+FUNC GetReal RETURNS VALUE * 64 + 26
+
+------------------------------------------------------------
+INIT Spawn = TRUE
+GOSUB Render
+Spawn = FALSE
+SLEEP 500
+
+------------------------------------------------------------
+BEGIN GAMELOOP
+  GOSUB Update
+  GoSUB Render
+END
+
+------------------------------------------------------------
+Update:
+
+IF ABS(RealX - GetReal(TargetX)) <= 10 _
+AND ABS(RealY - GetReal(TargetY)) <= 10 THEN
+  SET OldTargetX = TargetX 
+  IF INPUT("A") : TargetX -= 1 : END
+  IF INPUT("D") : TargetX += 1 : END
+  IF OldTargetX = TargetX THEN
+    IF INPUT("W") : TargetY -= 1 : END
+    IF INPUT("S") : TargetY += 1 : END
+  END
+END
+
+SMOOTHDAMP RealX, GetReal(TargetX), VelX, 0.1
+SMOOTHDAMP RealY, GetReal(TargetY), VelY, 0.1
+
+RETURN
+
+------------------------------------------------------------
+Render:
 
 COLOR "#192219"
 FILL
 
 BEGIN TRANSFORM
+  
   SCALE 4
+  
   FOR y = 0 TO 9
     FOR x = 0 TO 9
-      IF Map(y)(x) <> 0 THEN
-        DRAW x * 64 + 26, _
-             y * 64 + 26, _
+      IF Map(y)(x) > 0 THEN
+        DRAW GetReal(x), _
+             GetReal(y), _
              "Castle", _
              Map(y)(x) - 1
+        IF Spawn = TRUE
+          PLAY "Spawn"
+          SLEEP 250
+        END
       END
     END
   END
+  
+  DRAW RealX, RealY, "Hero"
+  
 END
+
+RETURN

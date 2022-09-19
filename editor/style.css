@@ -1,5 +1,5 @@
 :root {
-    --side-width: 44.25rem;
+    --side-width: 44.5rem;
     
     --bg-color: #111916;
     
@@ -9,6 +9,11 @@
     --code-color-6: rgba(102, 136, 102, .6);
     --code-color-2: rgba(102, 136, 102, .2);
     --code-color-1: rgba(102, 136, 102, .1);
+}
+
+* {
+    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(0, 0, 0, 0.4);
+    scrollbar-width: thin;
 }
 
 ::-webkit-scrollbar {
@@ -349,7 +354,7 @@ canvas {
 
 #code.ace-tm .ace_jump {
     font-weight: bold;
-    color: rgb(255, 125, 255);
+    color: rgb(205, 105, 205);
 }
 
 #code.ace-tm .ace_label {
@@ -362,11 +367,11 @@ canvas {
 }
 
 #code.ace-tm .ace_const {
-    color: lightsteelblue;
+    color: #8ad;
 }
 
 #code.ace-tm .ace_func {
-    color: orange;
+    color: #e60;
 }
 
 #code.ace-tm .ace_string {

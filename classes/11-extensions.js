@@ -38,9 +38,15 @@ String.prototype.matchKeyword = function(keyword, argumentCount)
 
 CanvasRenderingContext2D.prototype.refresh = function()
 {
-    const styleMap = document.body.computedStyleMap()
-    this.font = styleMap.get("font").toString()
-    this.textBaseline = "top"
+    if (document.body.computedStyleMap)
+    {
+        const styleMap = document.body.computedStyleMap()
+        this.font = styleMap.get("font").toString()
+    }
+    else
+    {
+        this.font = '17.6px dejavu'
+    }
 }
 
 Promise.timeout = function(func, ms)

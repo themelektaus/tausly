@@ -10,7 +10,7 @@ class InitLine extends Line
         if (matches)
         {
             const line = new InitLine(options)
-            line.name = matches[1]
+            line.varName = matches[1]
             line.getValue = matches[2]
             return line
         }
@@ -19,7 +19,7 @@ class InitLine extends Line
         if (matches)
         {
             const line = new InitLine(options)
-            line.name = matches[1]
+            line.varName = matches[1]
             line.getValue = "0"
             return line
         }
@@ -29,7 +29,7 @@ class InitLine extends Line
     
     prepare()
     {
-        this.parent.declare(this.name)
+        this.parent.declare(this.varName)
     }
     
     compile()
@@ -39,6 +39,6 @@ class InitLine extends Line
     
     * step()
     {
-        this.parent.init(this.name, this.getValue())
+        this.parent.init(this.varName, this.getValue())
     }
 }

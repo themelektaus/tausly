@@ -3,6 +3,22 @@ class Functions
     static rules =
     [
         [
+            /\bVALUE\b/gi,
+            "Functions._FIRSTARGUMENT_.apply(this, arguments)"
+        ],
+        [
+            /\bFRAMETIME\b/gi,
+            "this.root.getFrameTime()"
+        ],
+        [
+            /\bDELTATIME\b/gi,
+            "this.root.lastDeltaTime"
+        ],
+        [
+            /\bTIME\b/gi,
+            "this.root.lastTime"
+        ],
+        [
             /\bTRUE\b/gi,
             "Functions._TRUE_()"
         ],
@@ -23,7 +39,7 @@ class Functions
             "Functions._HEIGHT_.apply(this)"
         ],
         [
-            /\bCEIL\b\s*\(([^\)]+)\)/gi,
+            /\bCEIL\b\s*\((.*?)\)/gi,
             "Functions._CEIL_($1)"
         ],
         [
@@ -31,15 +47,15 @@ class Functions
             "Functions._CLAMP_($1, $2, $3)"
         ],
         [
-            /\bFLOOR\b\s*\(([^\)]+)\)/gi,
+            /\bFLOOR\b\s*\((.*?)\)/gi,
             "Functions._FLOOR_($1)"
         ],
         [
-            /\bINPUT\b\s*\(([^\)]+)\)/gi,
+            /\bINPUT\b\s*\((.*?)\)/gi,
             "Functions._INPUT_.call(this, $1)"
         ],
         [
-            /\bINT\b\s*\(([^\)]+)\)/gi,
+            /\bINT\b\s*\((.*?)\)/gi,
             "Functions._INT_($1)"
         ],
         [
@@ -51,7 +67,7 @@ class Functions
             "Functions._MIN_($1, $2)"
         ],
         [
-            /\bXRANDOM\b\s*\(([^\)]+)\)/gi,
+            /\bXRANDOM\b\s*\((.*?)\)/gi,
             "Functions._XRANDOM_($1)"
         ],
         [
@@ -59,11 +75,11 @@ class Functions
             "Functions._RANDOM_($1, $2)"
         ],
         [
-            /\bROUND\b\s*\(([^\)]+)\)/gi,
+            /\bROUND\b\s*\((.*?)\)/gi,
             "Functions._ROUND_($1)"
         ],
         [
-            /\bFPS\b\s*\(([^\)]+)\)/gi,
+            /\bFPS\b\s*\((.*?)\)/gi,
             "Functions._FPS_($1)"
         ],
         [
@@ -71,15 +87,15 @@ class Functions
             "Functions._FPS_.apply(this)"
         ],
         [
-            /\bLEN\b\s*\(([^\)]+)\)/gi,
+            /\bLEN\b\s*\((.*?)\)/gi,
             "Functions._LEN_($1)"
         ],
         [
-            /\bABS\b\s*\(([^\)]+)\)/gi,
+            /\bABS\b\s*\((.*?)\)/gi,
             "Functions._ABS_($1)"
         ],
         [
-            /\bSUM\b\s*\(([^\)]+)\)/gi,
+            /\bSUM\b\s*\((.*?)\)/gi,
             "Functions._SUM_($1)"
         ],
         [
@@ -91,6 +107,11 @@ class Functions
             "Functions._MOUSEY_.apply(this)"
         ]
     ]
+    
+    static _FIRSTARGUMENT_()
+    {
+        return arguments[0]
+    }
     
     static _TRUE_()
     {

@@ -13,7 +13,7 @@ class VarLine extends Line
             
             const x = matches[1].split('(')
             
-            line.name = x[0]
+            line.varName = x[0]
             
             line.getX = "undefined"
             line.getY = "undefined"
@@ -51,6 +51,6 @@ class VarLine extends Line
     
     * step()
     {
-        this.parent.set(this.name, this.getValue(), this.getX(), this.getY(), this.operator)
+        this.parent.set(this.varName, this.getValue(), this.getX(), this.getY(), this.operator)
     }
 }

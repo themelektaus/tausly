@@ -56,9 +56,15 @@ String.prototype.matchKeyword = function(keyword, argumentCount)
 
 CanvasRenderingContext2D.prototype.refresh = function()
 {
-    const styleMap = document.body.computedStyleMap()
-    this.font = styleMap.get("font").toString()
-    this.textBaseline = "top"
+    if (document.body.computedStyleMap)
+    {
+        const styleMap = document.body.computedStyleMap()
+        this.font = styleMap.get("font").toString()
+    }
+    else
+    {
+        this.font = '17.6px dejavu'
+    }
 }
 
 Promise.timeout = function(func, ms)
@@ -119,6 +125,22 @@ class Functions
     static rules =
     [
         [
+            /\bVALUE\b/gi,
+            "Functions._FIRSTARGUMENT_.apply(this, arguments)"
+        ],
+        [
+            /\bFRAMETIME\b/gi,
+            "this.root.getFrameTime()"
+        ],
+        [
+            /\bDELTATIME\b/gi,
+            "this.root.lastDeltaTime"
+        ],
+        [
+            /\bTIME\b/gi,
+            "this.root.lastTime"
+        ],
+        [
             /\bTRUE\b/gi,
             "Functions._TRUE_()"
         ],
@@ -139,7 +161,7 @@ class Functions
             "Functions._HEIGHT_.apply(this)"
         ],
         [
-            /\bCEIL\b\s*\(([^\)]+)\)/gi,
+            /\bCEIL\b\s*\((.*?)\)/gi,
             "Functions._CEIL_($1)"
         ],
         [
@@ -147,15 +169,15 @@ class Functions
             "Functions._CLAMP_($1, $2, $3)"
         ],
         [
-            /\bFLOOR\b\s*\(([^\)]+)\)/gi,
+            /\bFLOOR\b\s*\((.*?)\)/gi,
             "Functions._FLOOR_($1)"
         ],
         [
-            /\bINPUT\b\s*\(([^\)]+)\)/gi,
+            /\bINPUT\b\s*\((.*?)\)/gi,
             "Functions._INPUT_.call(this, $1)"
         ],
         [
-            /\bINT\b\s*\(([^\)]+)\)/gi,
+            /\bINT\b\s*\((.*?)\)/gi,
             "Functions._INT_($1)"
         ],
         [
@@ -167,7 +189,7 @@ class Functions
             "Functions._MIN_($1, $2)"
         ],
         [
-            /\bXRANDOM\b\s*\(([^\)]+)\)/gi,
+            /\bXRANDOM\b\s*\((.*?)\)/gi,
             "Functions._XRANDOM_($1)"
         ],
         [
@@ -175,11 +197,11 @@ class Functions
             "Functions._RANDOM_($1, $2)"
         ],
         [
-            /\bROUND\b\s*\(([^\)]+)\)/gi,
+            /\bROUND\b\s*\((.*?)\)/gi,
             "Functions._ROUND_($1)"
         ],
         [
-            /\bFPS\b\s*\(([^\)]+)\)/gi,
+            /\bFPS\b\s*\((.*?)\)/gi,
             "Functions._FPS_($1)"
         ],
         [
@@ -187,15 +209,15 @@ class Functions
             "Functions._FPS_.apply(this)"
         ],
         [
-            /\bLEN\b\s*\(([^\)]+)\)/gi,
+            /\bLEN\b\s*\((.*?)\)/gi,
             "Functions._LEN_($1)"
         ],
         [
-            /\bABS\b\s*\(([^\)]+)\)/gi,
+            /\bABS\b\s*\((.*?)\)/gi,
             "Functions._ABS_($1)"
         ],
         [
-            /\bSUM\b\s*\(([^\)]+)\)/gi,
+            /\bSUM\b\s*\((.*?)\)/gi,
             "Functions._SUM_($1)"
         ],
         [
@@ -207,6 +229,11 @@ class Functions
             "Functions._MOUSEY_.apply(this)"
         ]
     ]
+    
+    static _FIRSTARGUMENT_()
+    {
+        return arguments[0]
+    }
     
     static _TRUE_()
     {
@@ -394,11 +421,13 @@ class Block extends Line
         super(options)
         this.lines = []
         this.variableNames = new Set()
+        this.functionNames = new Set()
     }
     
     reset()
     {
         this.variables = { }
+        this.functions = { }
     }
     
     getAllLines()
@@ -418,7 +447,39 @@ class Block extends Line
     {
         let value = `${expression}`
         value = this.evaluateFunctions(value)
+        value = this.evaluateCustomFunctions(value)
         value = this.evaluateVariables(value)
+        return value
+    }
+    
+    evaluateFunctions(value)
+    {
+        for (const rule of Functions.rules)
+            value = value.replaceAll(rule[0], rule[1])
+        
+        value = value.replaceAll(/((?<!_)\()([0-9]+)(\))/g, "[$2]")
+        
+        if (this.parent)
+            value = this.parent.evaluateFunctions(value)
+        
+        return value
+    }
+    
+    evaluateCustomFunctions(value)
+    {
+        if (this.functionNames)
+        {
+            const names = Array.from(this.functionNames)
+            for (const name of names)
+            {
+                const regex = new RegExp(`(\\b${name}\\b)(\\()(.*?)(\\))`, 'g')
+                value = value.replaceAll(regex, `this.parent.getFunc_(\"$1\")($3)`)
+            }
+        }
+        
+        if (this.parent)
+            value = this.parent.evaluateCustomFunctions(value)
+        
         return value
     }
     
@@ -439,35 +500,14 @@ class Block extends Line
             
             for (const name of names)
             {
-                replaceAll(`((?<!_)\\()(\\b${name}\\b)(\\))`, `[$2]`)
+                if (!value.includes("getFunc_"))
+                    replaceAll(`((?<!_)\\()(\\b${name}\\b)(\\))`, `[$2]`)
                 replaceAll(`((?<!_)\\b${name}\\b)`, `this.parent.get(\"$1\")`)
             }
         }
         
         if (this.parent)
             value = this.parent.evaluateVariables(value)
-        
-        return value
-    }
-    
-    evaluateFunctions(value)
-    {
-        if (/\bFRAMETIME\b/i.test(value))
-            value = value.replaceAll(/\bFRAMETIME\b/gi, "this.root.getFrameTime()")
-        
-        if (/\bDELTATIME\b/i.test(value))
-            value = value.replaceAll(/\bDELTATIME\b/gi, "this.root.lastDeltaTime")
-        
-        if (/\bTIME\b/i.test(value))
-            value = value.replaceAll(/\bTIME\b/gi, "this.root.lastTime")
-        
-        for (const rule of Functions.rules)
-            value = value.replaceAll(rule[0], rule[1])
-        
-        value = value.replaceAll(/((?<!_)\()([0-9]+)(\))/g, "[$2]")
-        
-        if (this.parent)
-            value = this.parent.evaluateFunctions(value)
         
         return value
     }
@@ -487,6 +527,31 @@ class Block extends Line
             return `this.${path.join(".")}`
         }
         return null
+    }
+    
+    declareFunc(name)
+    {
+        this.functionNames.add(name)
+    }
+    
+    initFunc(name, f)
+    {
+        this.functions[name] = f
+    }
+    
+    getFunc_(name)
+    {
+        if (this.functions[name] !== undefined)
+            return this.functions[name]
+            
+        if (this.parent)
+        {
+            const value = this.parent.getFunc_(name)
+            if (value !== undefined)
+                return value
+        }
+        
+        return undefined
     }
     
     declare(name)
@@ -1099,7 +1164,7 @@ class Instrument
         this.sheet = ""
         this.index = -1
         this.notes = []
-        this.gain = 1
+        this.gain = .8
         this.type = "sine"
         this.attack = 2
         this.release = 20
@@ -3199,7 +3264,7 @@ class InitLine extends Line
         if (matches)
         {
             const line = new InitLine(options)
-            line.name = matches[1]
+            line.varName = matches[1]
             line.getValue = matches[2]
             return line
         }
@@ -3208,7 +3273,7 @@ class InitLine extends Line
         if (matches)
         {
             const line = new InitLine(options)
-            line.name = matches[1]
+            line.varName = matches[1]
             line.getValue = "0"
             return line
         }
@@ -3218,7 +3283,7 @@ class InitLine extends Line
     
     prepare()
     {
-        this.parent.declare(this.name)
+        this.parent.declare(this.varName)
     }
     
     compile()
@@ -3228,7 +3293,7 @@ class InitLine extends Line
     
     * step()
     {
-        this.parent.init(this.name, this.getValue())
+        this.parent.init(this.varName, this.getValue())
     }
 }
 
@@ -3248,7 +3313,7 @@ class SetLine extends Line
         if (matches)
         {
             const line = new SetLine(options)
-            line.name = matches[1]
+            line.varName = matches[1]
             line.getValue = matches[2]
             return line
         }
@@ -3258,7 +3323,7 @@ class SetLine extends Line
     
     prepare()
     {
-        this.parent.declare(this.name)
+        this.parent.declare(this.varName)
     }
     
     compile()
@@ -3269,8 +3334,8 @@ class SetLine extends Line
     * step()
     {
         const value = this.getValue()
-        this.parent.init(this.name, value)
-        this.parent.set(this.name, value)
+        this.parent.init(this.varName, value)
+        this.parent.set(this.varName, value)
     }
 }
 
@@ -3295,7 +3360,7 @@ class VarLine extends Line
             
             const x = matches[1].split('(')
             
-            line.name = x[0]
+            line.varName = x[0]
             
             line.getX = "undefined"
             line.getY = "undefined"
@@ -3333,7 +3398,49 @@ class VarLine extends Line
     
     * step()
     {
-        this.parent.set(this.name, this.getValue(), this.getX(), this.getY(), this.operator)
+        this.parent.set(this.varName, this.getValue(), this.getX(), this.getY(), this.operator)
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/74-func.js
+//------------------------------------------------------------------------------
+
+class FuncLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.match(/^FUNC\s+(.+?)\s+RETURNS\s(.*?)$/)
+        if (matches)
+        {
+            const line = new FuncLine(options)
+            line.funcName = matches[1]
+            line.f = matches[2]
+            return line
+        }
+        
+        return null
+    }
+    
+    prepare()
+    {
+        this.parent.declareFunc(this.funcName)
+    }
+    
+    compile()
+    {
+        this.f = this.createFunction(this.f)
+    }
+    
+    * step()
+    {
+        this.parent.initFunc(this.funcName, this.f)
     }
 }
 

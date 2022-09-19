@@ -8,7 +8,7 @@ class SetLine extends Line
         if (matches)
         {
             const line = new SetLine(options)
-            line.name = matches[1]
+            line.varName = matches[1]
             line.getValue = matches[2]
             return line
         }
@@ -18,7 +18,7 @@ class SetLine extends Line
     
     prepare()
     {
-        this.parent.declare(this.name)
+        this.parent.declare(this.varName)
     }
     
     compile()
@@ -29,7 +29,7 @@ class SetLine extends Line
     * step()
     {
         const value = this.getValue()
-        this.parent.init(this.name, value)
-        this.parent.set(this.name, value)
+        this.parent.init(this.varName, value)
+        this.parent.set(this.varName, value)
     }
 }

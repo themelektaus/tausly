@@ -170,11 +170,16 @@ window.onload = () =>
             return
         }
         
-        playButton.setAttribute("disabled", "disabled")
-        pauseButton.removeAttribute("disabled")
-        stopButton.removeAttribute("disabled")
-        
-        side.classList.remove("visible")
+        const timeout = setTimeout(() =>
+        {
+            playButton.setAttribute("disabled", "disabled")
+            pauseButton.removeAttribute("disabled")
+            stopButton.removeAttribute("disabled")
+            
+            side.classList.remove("visible")
+            
+            updateCanvasScale()
+        }, 100)
         
         tausly.setSize(640, 480)
         
@@ -183,6 +188,8 @@ window.onload = () =>
         
         tausly.run().then(() =>
         {
+            clearTimeout(timeout)
+            
             side.classList.add("visible")
             
             playButton.removeAttribute("disabled")
@@ -191,8 +198,6 @@ window.onload = () =>
             
             updateCanvasScale()
         })
-        
-        updateCanvasScale()
     }
     
     pauseButton.onclick = () =>

@@ -5,11 +5,13 @@ class Block extends Line
         super(options)
         this.lines = []
         this.variableNames = new Set()
+        this.functionNames = new Set()
     }
     
     reset()
     {
         this.variables = { }
+        this.functions = { }
     }
     
     getAllLines()
@@ -29,7 +31,39 @@ class Block extends Line
     {
         let value = `${expression}`
         value = this.evaluateFunctions(value)
+        value = this.evaluateCustomFunctions(value)
         value = this.evaluateVariables(value)
+        return value
+    }
+    
+    evaluateFunctions(value)
+    {
+        for (const rule of Functions.rules)
+            value = value.replaceAll(rule[0], rule[1])
+        
+        value = value.replaceAll(/((?<!_)\()([0-9]+)(\))/g, "[$2]")
+        
+        if (this.parent)
+            value = this.parent.evaluateFunctions(value)
+        
+        return value
+    }
+    
+    evaluateCustomFunctions(value)
+    {
+        if (this.functionNames)
+        {
+            const names = Array.from(this.functionNames)
+            for (const name of names)
+            {
+                const regex = new RegExp(`(\\b${name}\\b)(\\()(.*?)(\\))`, 'g')
+                value = value.replaceAll(regex, `this.parent.getFunc_(\"$1\")($3)`)
+            }
+        }
+        
+        if (this.parent)
+            value = this.parent.evaluateCustomFunctions(value)
+        
         return value
     }
     
@@ -50,35 +84,14 @@ class Block extends Line
             
             for (const name of names)
             {
-                replaceAll(`((?<!_)\\()(\\b${name}\\b)(\\))`, `[$2]`)
+                if (!value.includes("getFunc_"))
+                    replaceAll(`((?<!_)\\()(\\b${name}\\b)(\\))`, `[$2]`)
                 replaceAll(`((?<!_)\\b${name}\\b)`, `this.parent.get(\"$1\")`)
             }
         }
         
         if (this.parent)
             value = this.parent.evaluateVariables(value)
-        
-        return value
-    }
-    
-    evaluateFunctions(value)
-    {
-        if (/\bFRAMETIME\b/i.test(value))
-            value = value.replaceAll(/\bFRAMETIME\b/gi, "this.root.getFrameTime()")
-        
-        if (/\bDELTATIME\b/i.test(value))
-            value = value.replaceAll(/\bDELTATIME\b/gi, "this.root.lastDeltaTime")
-        
-        if (/\bTIME\b/i.test(value))
-            value = value.replaceAll(/\bTIME\b/gi, "this.root.lastTime")
-        
-        for (const rule of Functions.rules)
-            value = value.replaceAll(rule[0], rule[1])
-        
-        value = value.replaceAll(/((?<!_)\()([0-9]+)(\))/g, "[$2]")
-        
-        if (this.parent)
-            value = this.parent.evaluateFunctions(value)
         
         return value
     }
@@ -98,6 +111,31 @@ class Block extends Line
             return `this.${path.join(".")}`
         }
         return null
+    }
+    
+    declareFunc(name)
+    {
+        this.functionNames.add(name)
+    }
+    
+    initFunc(name, f)
+    {
+        this.functions[name] = f
+    }
+    
+    getFunc_(name)
+    {
+        if (this.functions[name] !== undefined)
+            return this.functions[name]
+            
+        if (this.parent)
+        {
+            const value = this.parent.getFunc_(name)
+            if (value !== undefined)
+                return value
+        }
+        
+        return undefined
     }
     
     declare(name)

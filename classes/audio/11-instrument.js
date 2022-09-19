@@ -6,7 +6,7 @@ class Instrument
         this.sheet = ""
         this.index = -1
         this.notes = []
-        this.gain = 1
+        this.gain = .8
         this.type = "sine"
         this.attack = 2
         this.release = 20
