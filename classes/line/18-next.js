@@ -10,7 +10,7 @@ class NextLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         let parent = this
         while (!parent.next)

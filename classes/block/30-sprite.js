@@ -25,7 +25,7 @@ class SpriteBlock extends Block
         this.getTitle = this.createFunction(this.getTitle)
     }
     
-    * step()
+    step()
     {
         this.root.getHistory("SPRITE").unshift(this)
         
@@ -38,5 +38,7 @@ class SpriteBlock extends Block
     end()
     {
         this.root.getHistory("SPRITE").shift(this)
+        
+        return true
     }
 }

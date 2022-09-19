@@ -9,16 +9,11 @@ class Line
         this.localIndex = options.localIndex
     }
     
-    // TODO: Set this value on compile
-    get root()
+    preCompile()
     {
-        if (!this._root)
-        {
-            this._root = this
-            while (this._root.parent)
-                this._root = this._root.parent
-        }
-        return this._root
+        this.root = this
+        while (this.root.parent)
+            this.root = this.root.parent
     }
     
     createFunction(expression)

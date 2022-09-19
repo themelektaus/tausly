@@ -22,7 +22,7 @@ class ColorMap extends Line
         this.getColor = this.createFunction(this.getColor)
     }
     
-    * step()
+    step()
     {
         const char = this.getChar()
         const color = this.getColor()

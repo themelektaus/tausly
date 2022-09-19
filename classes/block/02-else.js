@@ -16,9 +16,9 @@ class ElseBlock extends Block
         parents.shift()
     }
     
-    * step()
+    step()
     {
         if (this.parent.isTrue)
-            yield StepResult.skip()
+            return false
     }
 }

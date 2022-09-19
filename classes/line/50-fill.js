@@ -47,7 +47,7 @@ class FillLine extends Line
             this.getHeight = this.createFunction(this.getHeight)
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         const x = this.getX()

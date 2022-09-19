@@ -27,7 +27,7 @@ class ForBlock extends Block
         this.getTo = this.createFunction(this.getTo)
     }
     
-    * step()
+    step()
     {
         const from = this.from
         const to = this.getTo()
@@ -40,7 +40,7 @@ class ForBlock extends Block
             this.parent.set(this.name, from)
         
         if (this.skip || this.parent.get(this.name) > to)
-            yield StepResult.skip()
+            return false
     }
     
     next()

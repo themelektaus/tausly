@@ -28,7 +28,7 @@ class AlignLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         ctx.textAlign = this.align

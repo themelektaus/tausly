@@ -17,7 +17,7 @@ class AttackLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const instrument = this.root.getHistory("INSTRUMENT")
         instrument[0].instrument.attack = this.value

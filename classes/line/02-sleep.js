@@ -18,7 +18,7 @@ class SleepLine extends Line
         if (matches)
         {
             const line = new SleepLine(options)
-            line.getMilliseconds = 1
+            line.getMilliseconds = 0
             return line
         }
         
@@ -30,17 +30,11 @@ class SleepLine extends Line
         this.getMilliseconds = this.createFunction(this.getMilliseconds)
     }
     
-    * step()
+    step()
     {
         const milliseconds = this.getMilliseconds()
         if (milliseconds <= 0)
-        {
-            yield
-            return
-        }
-        
-        const startTime = performance.now()
-        do yield
-        while (performance.now() - startTime < milliseconds)
+            return 0
+        return milliseconds
     }
 }

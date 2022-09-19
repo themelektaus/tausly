@@ -37,7 +37,7 @@ class InitLine extends Line
         this.getValue = this.createFunction(this.getValue)
     }
     
-    * step()
+    step()
     {
         this.parent.init(this.varName, this.getValue())
     }

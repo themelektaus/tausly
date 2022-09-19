@@ -22,7 +22,7 @@ class RepeatLine extends Line
         this.getValue = this.createFunction(this.getValue)
     }
     
-    * step()
+    step()
     {
         const song = this.root.getHistory("SONG")
         song[0].song.repeat = this.getValue()

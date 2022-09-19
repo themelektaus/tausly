@@ -20,7 +20,7 @@ class EchoLine extends Line
         this.getData = this.createFunction(this.getData)
     }
     
-    * step()
+    step()
     {
         this.root.onEcho(this.getData())
     }

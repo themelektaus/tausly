@@ -26,7 +26,7 @@ class SetLine extends Line
         this.getValue = this.createFunction(this.getValue)
     }
     
-    * step()
+    step()
     {
         const value = this.getValue()
         this.parent.init(this.varName, value)

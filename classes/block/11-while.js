@@ -32,13 +32,13 @@ class WhileBlock extends Block
         this.getCondition = this.createFunction(this.getCondition)
     }
     
-    * step()
+    step()
     {
         if (!this.skip && this.getCondition() == !this.not)
             return
         
         delete this.skip
-        yield StepResult.skip()
+        return false
     }
     
     next()

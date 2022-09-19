@@ -65,6 +65,7 @@ CanvasRenderingContext2D.prototype.refresh = function()
     {
         this.font = '17.6px dejavu'
     }
+    this.textBaseline = "top"
 }
 
 Promise.timeout = function(func, ms)
@@ -77,49 +78,12 @@ Promise.delay = function(ms)
     return Promise.timeout(x => x(), ms)
 }
 
-Promise.wait = async function(func)
-{
-    const task = () => new Promise(func)
-    while (true)
-        if (await task())
-            break
-}
-
 Promise.waitFor = async function(predicate)
 {
     const task = () => new Promise(x => setTimeout(() => x(predicate())))
     while (true)
         if (await task())
             break
-}
-
-
-
-//------------------------------------------------------------------------------
-// * classes/20-step-result.js
-//------------------------------------------------------------------------------
-
-class StepResult
-{
-    static wait(milliseconds)
-    {
-        const result = new StepResult
-        result._wait = milliseconds
-        return result
-    }
-    
-    static skip()
-    {
-        const result = new StepResult
-        result._skip = true
-        return result
-    }
-    
-    constructor()
-    {
-        this._wait = 0
-        this._skip = false
-    }
 }
 
 
@@ -384,16 +348,11 @@ class Line
         this.localIndex = options.localIndex
     }
     
-    // TODO: Set this value on compile
-    get root()
+    preCompile()
     {
-        if (!this._root)
-        {
-            this._root = this
-            while (this._root.parent)
-                this._root = this._root.parent
-        }
-        return this._root
+        this.root = this
+        while (this.root.parent)
+            this.root = this.root.parent
     }
     
     createFunction(expression)
@@ -827,6 +786,9 @@ class Tausly extends Block
                 line.prepare()
         
         for (const line of lines)
+            line.preCompile()
+        
+        for (const line of lines)
             if (line.compile)
                 line.compile()
     }
@@ -843,9 +805,7 @@ class Tausly extends Block
             this.compile()
         }
         
-        const ok = await this.beforeRun()
-        if (!ok)
-            return
+        await this.beforeRun()
         
         const lines = this.getAllLines()
         
@@ -867,37 +827,15 @@ class Tausly extends Block
             {
                 const step = line.step()
                 
-                await Promise.wait(resolve => 
+                if (step === false)
                 {
-                    const next = step.next()
-                    const result = next.value
-                    const done = next.done
-                    
-                    if (result)
-                    {
-                        if (result._wait)
-                        {
-                            setTimeout(() => resolve(done), result._wait)
-                            return
-                        }
-                        
-                        if (result._skip)
-                        {
-                            const index = line.parent.lines.indexOf(line)
-                            this.runtimeIndex = line.parent.lines[index + 1].globalIndex
-                            resolve(false)
-                            return
-                        }
-                    }
-                    
-                    if (!this.paused && done)
-                    {
-                        resolve(true)
-                        return
-                    }
-                    
-                    setTimeout(() => resolve(false))
-                })
+                    const index = line.parent.lines.indexOf(line)
+                    this.runtimeIndex = line.parent.lines[index + 1].globalIndex
+                }
+                else if (step !== undefined)
+                {
+                    await Promise.delay(step === true ? 0 : step)
+                }
             }
             
             this.runtimeIndex++
@@ -920,21 +858,12 @@ class Tausly extends Block
         
         if (!this.audioCtx)
         {
-            try
-            {
-                this.audioCtx = new AudioContext
-                this.audioCtx.reverbNode = await this.audioCtx.getReverbNode()
-            }
-            catch
-            {
-                return false
-            }
+            this.audioCtx = new AudioContext
+            this.audioCtx.reverbNode = await this.audioCtx.getReverbNode()
         }
         
         if (this.audioCtx.reverbNode)
             this.audioCtx.reverbNode.connect(this.audioCtx.destination)
-        
-        return true
     }
     
     afterRun()
@@ -1401,7 +1330,7 @@ class IfBlock extends Block
         this.getCondition = this.createFunction(this.getCondition)
     }
     
-    * step()
+    step()
     {
         this.parent.isTrue = this.getCondition()
         
@@ -1409,7 +1338,7 @@ class IfBlock extends Block
             this.parent.isTrue = !this.parent.isTrue
         
         if (!this.parent.isTrue)
-            yield StepResult.skip()
+            return false
     }
 }
 
@@ -1437,10 +1366,10 @@ class ElseBlock extends Block
         parents.shift()
     }
     
-    * step()
+    step()
     {
         if (this.parent.isTrue)
-            yield StepResult.skip()
+            return false
     }
 }
 
@@ -1462,7 +1391,7 @@ class BeginBlock extends Block
         return null
     }
     
-    * step()
+    step()
     {
         this.transforms = []
         this.root.getHistory("TRANSFORMS").unshift(this.transforms)
@@ -1509,7 +1438,7 @@ class ForBlock extends Block
         this.getTo = this.createFunction(this.getTo)
     }
     
-    * step()
+    step()
     {
         const from = this.from
         const to = this.getTo()
@@ -1522,7 +1451,7 @@ class ForBlock extends Block
             this.parent.set(this.name, from)
         
         if (this.skip || this.parent.get(this.name) > to)
-            yield StepResult.skip()
+            return false
     }
     
     next()
@@ -1585,13 +1514,13 @@ class WhileBlock extends Block
         this.getCondition = this.createFunction(this.getCondition)
     }
     
-    * step()
+    step()
     {
         if (!this.skip && this.getCondition() == !this.not)
             return
         
         delete this.skip
-        yield StepResult.skip()
+        return false
     }
     
     next()
@@ -1644,21 +1573,20 @@ class GameloopBlock extends Block
         return null
     }
     
-    * step()
+    step()
     {
         if (this.skip)
         {
             delete this.skip
-            yield StepResult.skip()
-            return
+            return false
         }
         
         this.root.beginDeltaTime()
         
         const milliseconds = this.root.getFrameTime(this.fps)
-        const startTime = performance.now()
-        do yield
-        while (performance.now() - startTime < milliseconds)
+        if (milliseconds <= 0)
+            return 0
+        return milliseconds
     }
     
     next()
@@ -1701,13 +1629,13 @@ class LoopBlock extends Block
         return null
     }
     
-    * step()
+    step()
     {
         if (!this.skip)
             return
         
         delete this.skip
-        yield StepResult.skip()
+        return false
     }
     
     next()
@@ -1758,7 +1686,7 @@ class SongBlock extends Block
         this.getTitle = this.createFunction(this.getTitle)
     }
     
-    * step()
+    step()
     {
         this.root.getHistory("SONG").unshift(this)
         
@@ -1813,7 +1741,7 @@ class InstrumentBlock extends Block
         this.getTitle = this.createFunction(this.getTitle)
     }
     
-    * step()
+    step()
     {
         this.root.getHistory("INSTRUMENT").unshift(this)
         
@@ -1863,7 +1791,7 @@ class SpriteBlock extends Block
         this.getTitle = this.createFunction(this.getTitle)
     }
     
-    * step()
+    step()
     {
         this.root.getHistory("SPRITE").unshift(this)
         
@@ -1876,6 +1804,8 @@ class SpriteBlock extends Block
     end()
     {
         this.root.getHistory("SPRITE").shift(this)
+        
+        return true
     }
 }
 
@@ -1917,7 +1847,7 @@ class FrameBlock extends Block
         this.getTitle = this.createFunction(this.getTitle)
     }
     
-    * step()
+    step()
     {
         this.root.getHistory("FRAME").unshift(this)
         
@@ -1967,7 +1897,7 @@ class EchoLine extends Line
         this.getData = this.createFunction(this.getData)
     }
     
-    * step()
+    step()
     {
         this.root.onEcho(this.getData())
     }
@@ -1999,7 +1929,7 @@ class SleepLine extends Line
         if (matches)
         {
             const line = new SleepLine(options)
-            line.getMilliseconds = 1
+            line.getMilliseconds = 0
             return line
         }
         
@@ -2011,18 +1941,12 @@ class SleepLine extends Line
         this.getMilliseconds = this.createFunction(this.getMilliseconds)
     }
     
-    * step()
+    step()
     {
         const milliseconds = this.getMilliseconds()
         if (milliseconds <= 0)
-        {
-            yield
-            return
-        }
-        
-        const startTime = performance.now()
-        do yield
-        while (performance.now() - startTime < milliseconds)
+            return 0
+        return milliseconds
     }
 }
 
@@ -2049,7 +1973,7 @@ class GotoLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         this.root.goto(this.root.findLine(line =>
         {
@@ -2084,7 +2008,7 @@ class GosubLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         this.root.getHistory("GOSUB").push(this)
         
@@ -2132,7 +2056,7 @@ class ReturnLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const line = this.root.getHistory("GOSUB").pop()
         
@@ -2176,13 +2100,13 @@ class EndLine extends Line
         parents.shift()
     }
     
-    * step()
+    step()
     {
         const index = this.parent.lines.indexOf(this)
         const block = this.parent.lines[index - 1]
         
         if (block.end)
-            block.end()
+            return block.end()
     }
 }
 
@@ -2204,7 +2128,7 @@ class NextLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         let parent = this
         while (!parent.next)
@@ -2236,7 +2160,7 @@ class BreakLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         let parent = this
         while (!parent.break)
@@ -2278,7 +2202,7 @@ class NormalizeLine extends Line
         this.getDimValue = this.createFunction(this.dimName)
     }
     
-    * step()
+    step()
     {
         const dimValue = this.getDimValue()
         
@@ -2351,7 +2275,7 @@ class SmoothDampLine extends Line
         this.getMaxSpeed = this.createFunction(this.getMaxSpeed)
     }
     
-    * step()
+    step()
     {
         const current = this.getCurrent()
         const target = this.getTarget()
@@ -2486,7 +2410,7 @@ class SizeLine extends Line
         this.getHeight = this.createFunction(this.getHeight)
     }
     
-    * step()
+    step()
     {
         const sprite = this.root.getHistory("SPRITE")
         if (sprite && sprite.length)
@@ -2517,7 +2441,7 @@ class ClearLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         
@@ -2582,7 +2506,7 @@ class ColorLine extends Line
         this.getColor = this.createFunction(this.getColor)
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         ctx.fillStyle = this.getColor()
@@ -2644,7 +2568,7 @@ class FillLine extends Line
             this.getHeight = this.createFunction(this.getHeight)
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         const x = this.getX()
@@ -2693,7 +2617,7 @@ class TextLine extends Line
         this.getText = this.createFunction(this.getText)
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         const x = this.getX()
@@ -2744,7 +2668,7 @@ class AlignLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         ctx.textAlign = this.align
@@ -2798,7 +2722,7 @@ class DrawLine extends Line
         this.getFrameTitle = this.createFunction(this.getFrameTitle)
     }
     
-    * step()
+    step()
     {
         const spriteTitle = this.getSpriteTitle()
         const frameTitle = this.getFrameTitle()
@@ -2874,7 +2798,7 @@ class ResetLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         if (this.dimName)
         {
@@ -2940,7 +2864,7 @@ class TranslateLine extends Line
         this.getY = this.createFunction(this.getY)
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         const x = this.getX()
@@ -2981,7 +2905,7 @@ class RotateLine extends Line
         this.getAngle = this.createFunction(this.getAngle)
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         const angle = this.getAngle()
@@ -3023,7 +2947,7 @@ class ScaleLine extends Line
         this.getScale = this.createFunction(this.getScale)
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         const scale = this.getScale()
@@ -3101,7 +3025,7 @@ class DimLine extends Line
         this.getValue = this.createFunction(expression)
     }
     
-    * step()
+    step()
     {
         this.parent.init(this.name, this.getValue())
     }
@@ -3135,7 +3059,7 @@ class PixelMap extends Line
         this.getLine = this.createFunction(this.getLine)
     }
     
-    * step()
+    step()
     {
         const frame = this.root.getHistory("FRAME")[0]
         frame.pixelMapIndex ??= 0
@@ -3196,7 +3120,7 @@ class ColorMap extends Line
         this.getColor = this.createFunction(this.getColor)
     }
     
-    * step()
+    step()
     {
         const char = this.getChar()
         const color = this.getColor()
@@ -3236,7 +3160,7 @@ class CursorLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const parent = this.root.canvas.parentNode
         if (parent)
@@ -3310,7 +3234,7 @@ class InitLine extends Line
         this.getValue = this.createFunction(this.getValue)
     }
     
-    * step()
+    step()
     {
         this.parent.init(this.varName, this.getValue())
     }
@@ -3350,7 +3274,7 @@ class SetLine extends Line
         this.getValue = this.createFunction(this.getValue)
     }
     
-    * step()
+    step()
     {
         const value = this.getValue()
         this.parent.init(this.varName, value)
@@ -3415,7 +3339,7 @@ class VarLine extends Line
         this.getValue = this.createFunction(value)
     }
     
-    * step()
+    step()
     {
         this.parent.set(this.varName, this.getValue(), this.getX(), this.getY(), this.operator)
     }
@@ -3457,7 +3381,7 @@ class FuncLine extends Line
         this.f = this.createFunction(this.f)
     }
     
-    * step()
+    step()
     {
         this.parent.initFunc(this.funcName, this.f)
     }
@@ -3488,7 +3412,7 @@ class GainLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const instrument = this.root.getHistory("INSTRUMENT")
         if (instrument && instrument.length)
@@ -3527,7 +3451,7 @@ class BpmLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const song = this.root.getHistory("SONG")
         song[0].song.bpm = this.value
@@ -3559,7 +3483,7 @@ class TimeSignatureLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const song = this.root.getHistory("SONG")
         song[0].song.timeSignature = this.value
@@ -3596,7 +3520,7 @@ class RepeatLine extends Line
         this.getValue = this.createFunction(this.getValue)
     }
     
-    * step()
+    step()
     {
         const song = this.root.getHistory("SONG")
         song[0].song.repeat = this.getValue()
@@ -3633,7 +3557,7 @@ class TypeLine extends Line
         this.getValue = this.createFunction(this.getValue)
     }
     
-    * step()
+    step()
     {
         const instrument = this.root.getHistory("INSTRUMENT")
         instrument[0].instrument.type = this.getValue()
@@ -3665,7 +3589,7 @@ class ReverbLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const instrument = this.root.getHistory("INSTRUMENT")
         instrument[0].instrument.reverb = this.value
@@ -3702,7 +3626,7 @@ class SheetLine extends Line
         this.getLine = this.createFunction(this.getLine)
     }
     
-    * step()
+    step()
     {
         const instrument = this.root.getHistory("INSTRUMENT")
         instrument[0].instrument.sheet += this.getLine() + " "
@@ -3740,9 +3664,9 @@ class PlayLine extends Line
         this.getSongTitle = this.createFunction(this.getSongTitle)
     }
     
-    * step()
+    step()
     {
-        new Promise(x => this.play().then(x))
+        this.play()
     }
     
     async play()
@@ -3805,7 +3729,7 @@ class StopLine extends Line
         this.getSongTitle = this.createFunction(this.getSongTitle)
     }
     
-    * step()
+    step()
     {
         const title = this.getSongTitle()
         for (const song of PlayLine.songs)
@@ -3839,7 +3763,7 @@ class AttackLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const instrument = this.root.getHistory("INSTRUMENT")
         instrument[0].instrument.attack = this.value
@@ -3871,7 +3795,7 @@ class ReleaseLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const instrument = this.root.getHistory("INSTRUMENT")
         instrument[0].instrument.release = this.value

@@ -15,7 +15,7 @@ class GosubLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         this.root.getHistory("GOSUB").push(this)
         

@@ -15,7 +15,7 @@ class GotoLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         this.root.goto(this.root.findLine(line =>
         {

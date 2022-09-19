@@ -20,7 +20,7 @@ class RotateLine extends Line
         this.getAngle = this.createFunction(this.getAngle)
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         const angle = this.getAngle()

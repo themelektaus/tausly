@@ -16,12 +16,12 @@ class EndLine extends Line
         parents.shift()
     }
     
-    * step()
+    step()
     {
         const index = this.parent.lines.indexOf(this)
         const block = this.parent.lines[index - 1]
         
         if (block.end)
-            block.end()
+            return block.end()
     }
 }

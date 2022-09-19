@@ -39,7 +39,7 @@ class DrawLine extends Line
         this.getFrameTitle = this.createFunction(this.getFrameTitle)
     }
     
-    * step()
+    step()
     {
         const spriteTitle = this.getSpriteTitle()
         const frameTitle = this.getFrameTitle()

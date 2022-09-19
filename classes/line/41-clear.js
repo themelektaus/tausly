@@ -11,7 +11,7 @@ class ClearLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         

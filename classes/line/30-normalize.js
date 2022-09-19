@@ -20,7 +20,7 @@ class NormalizeLine extends Line
         this.getDimValue = this.createFunction(this.dimName)
     }
     
-    * step()
+    step()
     {
         const dimValue = this.getDimValue()
         

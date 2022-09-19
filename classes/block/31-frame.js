@@ -30,7 +30,7 @@ class FrameBlock extends Block
         this.getTitle = this.createFunction(this.getTitle)
     }
     
-    * step()
+    step()
     {
         this.root.getHistory("FRAME").unshift(this)
         

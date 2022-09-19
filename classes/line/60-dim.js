@@ -56,7 +56,7 @@ class DimLine extends Line
         this.getValue = this.createFunction(expression)
     }
     
-    * step()
+    step()
     {
         this.parent.init(this.name, this.getValue())
     }

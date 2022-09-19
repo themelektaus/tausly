@@ -28,7 +28,7 @@ class FuncLine extends Line
         this.f = this.createFunction(this.f)
     }
     
-    * step()
+    step()
     {
         this.parent.initFunc(this.funcName, this.f)
     }

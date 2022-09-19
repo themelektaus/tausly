@@ -22,7 +22,7 @@ class SheetLine extends Line
         this.getLine = this.createFunction(this.getLine)
     }
     
-    * step()
+    step()
     {
         const instrument = this.root.getHistory("INSTRUMENT")
         instrument[0].instrument.sheet += this.getLine() + " "

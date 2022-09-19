@@ -49,7 +49,7 @@ class VarLine extends Line
         this.getValue = this.createFunction(value)
     }
     
-    * step()
+    step()
     {
         this.parent.set(this.varName, this.getValue(), this.getX(), this.getY(), this.operator)
     }

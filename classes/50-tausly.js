@@ -173,6 +173,9 @@ class Tausly extends Block
                 line.prepare()
         
         for (const line of lines)
+            line.preCompile()
+        
+        for (const line of lines)
             if (line.compile)
                 line.compile()
     }
@@ -189,9 +192,7 @@ class Tausly extends Block
             this.compile()
         }
         
-        const ok = await this.beforeRun()
-        if (!ok)
-            return
+        await this.beforeRun()
         
         const lines = this.getAllLines()
         
@@ -213,37 +214,15 @@ class Tausly extends Block
             {
                 const step = line.step()
                 
-                await Promise.wait(resolve => 
+                if (step === false)
                 {
-                    const next = step.next()
-                    const result = next.value
-                    const done = next.done
-                    
-                    if (result)
-                    {
-                        if (result._wait)
-                        {
-                            setTimeout(() => resolve(done), result._wait)
-                            return
-                        }
-                        
-                        if (result._skip)
-                        {
-                            const index = line.parent.lines.indexOf(line)
-                            this.runtimeIndex = line.parent.lines[index + 1].globalIndex
-                            resolve(false)
-                            return
-                        }
-                    }
-                    
-                    if (!this.paused && done)
-                    {
-                        resolve(true)
-                        return
-                    }
-                    
-                    setTimeout(() => resolve(false))
-                })
+                    const index = line.parent.lines.indexOf(line)
+                    this.runtimeIndex = line.parent.lines[index + 1].globalIndex
+                }
+                else if (step !== undefined)
+                {
+                    await Promise.delay(step === true ? 0 : step)
+                }
             }
             
             this.runtimeIndex++
@@ -266,21 +245,12 @@ class Tausly extends Block
         
         if (!this.audioCtx)
         {
-            try
-            {
-                this.audioCtx = new AudioContext
-                this.audioCtx.reverbNode = await this.audioCtx.getReverbNode()
-            }
-            catch
-            {
-                return false
-            }
+            this.audioCtx = new AudioContext
+            this.audioCtx.reverbNode = await this.audioCtx.getReverbNode()
         }
         
         if (this.audioCtx.reverbNode)
             this.audioCtx.reverbNode.connect(this.audioCtx.destination)
-        
-        return true
     }
     
     afterRun()

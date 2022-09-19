@@ -20,7 +20,7 @@ class ScaleLine extends Line
         this.getScale = this.createFunction(this.getScale)
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         const scale = this.getScale()

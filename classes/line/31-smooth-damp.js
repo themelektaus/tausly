@@ -50,7 +50,7 @@ class SmoothDampLine extends Line
         this.getMaxSpeed = this.createFunction(this.getMaxSpeed)
     }
     
-    * step()
+    step()
     {
         const current = this.getCurrent()
         const target = this.getTarget()

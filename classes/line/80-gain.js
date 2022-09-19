@@ -17,7 +17,7 @@ class GainLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const instrument = this.root.getHistory("INSTRUMENT")
         if (instrument && instrument.length)

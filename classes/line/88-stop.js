@@ -22,7 +22,7 @@ class StopLine extends Line
         this.getSongTitle = this.createFunction(this.getSongTitle)
     }
     
-    * step()
+    step()
     {
         const title = this.getSongTitle()
         for (const song of PlayLine.songs)

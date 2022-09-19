@@ -21,7 +21,7 @@ class CursorLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const parent = this.root.canvas.parentNode
         if (parent)

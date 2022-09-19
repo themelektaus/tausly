@@ -41,7 +41,7 @@ class IfBlock extends Block
         this.getCondition = this.createFunction(this.getCondition)
     }
     
-    * step()
+    step()
     {
         this.parent.isTrue = this.getCondition()
         
@@ -49,6 +49,6 @@ class IfBlock extends Block
             this.parent.isTrue = !this.parent.isTrue
         
         if (!this.parent.isTrue)
-            yield StepResult.skip()
+            return false
     }
 }

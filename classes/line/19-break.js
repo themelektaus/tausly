@@ -10,7 +10,7 @@ class BreakLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         let parent = this
         while (!parent.break)

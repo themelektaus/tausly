@@ -47,6 +47,7 @@ CanvasRenderingContext2D.prototype.refresh = function()
     {
         this.font = '17.6px dejavu'
     }
+    this.textBaseline = "top"
 }
 
 Promise.timeout = function(func, ms)
@@ -57,14 +58,6 @@ Promise.timeout = function(func, ms)
 Promise.delay = function(ms)
 {
     return Promise.timeout(x => x(), ms)
-}
-
-Promise.wait = async function(func)
-{
-    const task = () => new Promise(func)
-    while (true)
-        if (await task())
-            break
 }
 
 Promise.waitFor = async function(predicate)

@@ -17,7 +17,7 @@ class BpmLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const song = this.root.getHistory("SONG")
         song[0].song.bpm = this.value

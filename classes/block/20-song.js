@@ -23,7 +23,7 @@ class SongBlock extends Block
         this.getTitle = this.createFunction(this.getTitle)
     }
     
-    * step()
+    step()
     {
         this.root.getHistory("SONG").unshift(this)
         

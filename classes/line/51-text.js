@@ -24,7 +24,7 @@ class TextLine extends Line
         this.getText = this.createFunction(this.getText)
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         const x = this.getX()

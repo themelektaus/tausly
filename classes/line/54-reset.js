@@ -23,7 +23,7 @@ class ResetLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         if (this.dimName)
         {

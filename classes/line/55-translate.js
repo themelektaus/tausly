@@ -22,7 +22,7 @@ class TranslateLine extends Line
         this.getY = this.createFunction(this.getY)
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         const x = this.getX()

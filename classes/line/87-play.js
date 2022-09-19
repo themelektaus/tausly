@@ -23,9 +23,9 @@ class PlayLine extends Line
         this.getSongTitle = this.createFunction(this.getSongTitle)
     }
     
-    * step()
+    step()
     {
-        new Promise(x => this.play().then(x))
+        this.play()
     }
     
     async play()

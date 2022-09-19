@@ -24,7 +24,7 @@ class ReturnLine extends Line
         return null
     }
     
-    * step()
+    step()
     {
         const line = this.root.getHistory("GOSUB").pop()
         

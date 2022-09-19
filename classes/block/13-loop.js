@@ -13,13 +13,13 @@ class LoopBlock extends Block
         return null
     }
     
-    * step()
+    step()
     {
         if (!this.skip)
             return
         
         delete this.skip
-        yield StepResult.skip()
+        return false
     }
     
     next()

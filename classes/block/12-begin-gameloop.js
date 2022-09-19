@@ -25,21 +25,20 @@ class GameloopBlock extends Block
         return null
     }
     
-    * step()
+    step()
     {
         if (this.skip)
         {
             delete this.skip
-            yield StepResult.skip()
-            return
+            return false
         }
         
         this.root.beginDeltaTime()
         
         const milliseconds = this.root.getFrameTime(this.fps)
-        const startTime = performance.now()
-        do yield
-        while (performance.now() - startTime < milliseconds)
+        if (milliseconds <= 0)
+            return 0
+        return milliseconds
     }
     
     next()

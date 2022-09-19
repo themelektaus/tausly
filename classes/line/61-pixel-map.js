@@ -20,7 +20,7 @@ class PixelMap extends Line
         this.getLine = this.createFunction(this.getLine)
     }
     
-    * step()
+    step()
     {
         const frame = this.root.getHistory("FRAME")[0]
         frame.pixelMapIndex ??= 0

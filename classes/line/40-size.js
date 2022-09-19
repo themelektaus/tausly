@@ -22,7 +22,7 @@ class SizeLine extends Line
         this.getHeight = this.createFunction(this.getHeight)
     }
     
-    * step()
+    step()
     {
         const sprite = this.root.getHistory("SPRITE")
         if (sprite && sprite.length)

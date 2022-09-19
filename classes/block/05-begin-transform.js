@@ -10,7 +10,7 @@ class BeginBlock extends Block
         return null
     }
     
-    * step()
+    step()
     {
         this.transforms = []
         this.root.getHistory("TRANSFORMS").unshift(this.transforms)

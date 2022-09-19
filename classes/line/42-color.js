@@ -46,7 +46,7 @@ class ColorLine extends Line
         this.getColor = this.createFunction(this.getColor)
     }
     
-    * step()
+    step()
     {
         const ctx = this.root.getContext()
         ctx.fillStyle = this.getColor()

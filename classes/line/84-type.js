@@ -22,7 +22,7 @@ class TypeLine extends Line
         this.getValue = this.createFunction(this.getValue)
     }
     
-    * step()
+    step()
     {
         const instrument = this.root.getHistory("INSTRUMENT")
         instrument[0].instrument.type = this.getValue()
