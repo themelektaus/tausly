@@ -299,7 +299,6 @@ canvas {
 
 #code.ace-tm {
     background: #111916;
-    color: inherit;
     text-shadow: none;
     line-height: 1.2em;
 }
@@ -335,15 +334,20 @@ canvas {
     background: var(--code-color-8);
 }
 
-#code.ace-tm .ace_method  {
-    color: greenyellow;
+#code.ace-tm {
+    color: #7a7;
 }
 
-#code.ace-tm .ace_block  {
-    color: greenyellow;
+#code.ace-tm .ace_method {
+    /* color: #cfc; */
+    color: #7fa;
 }
 
-#code.ace-tm .ace_jump  {
+#code.ace-tm .ace_block {
+    color: #9d3;
+}
+
+#code.ace-tm .ace_jump {
     font-weight: bold;
     color: rgb(255, 125, 255);
 }
@@ -361,7 +365,7 @@ canvas {
     color: lightsteelblue;
 }
 
-#code.ace-tm .ace_func  {
+#code.ace-tm .ace_func {
     color: orange;
 }
 
@@ -370,7 +374,7 @@ canvas {
 }
 
 #code.ace-tm .ace_key {
-    color: yellow;
+    color: #ee6;
 }
 
 #code.ace-tm .ace_operator {

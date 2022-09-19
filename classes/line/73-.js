@@ -41,7 +41,12 @@ class VarLine extends Line
     {
         this.getX = this.createFunction(this.getX)
         this.getY = this.createFunction(this.getY)
-        this.getValue = this.createFunction(this.getValue)
+        
+        let value = this.getValue
+        if (value.includes(","))
+            value = `[ ${value} ]`
+        
+        this.getValue = this.createFunction(value)
     }
     
     * step()

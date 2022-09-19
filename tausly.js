@@ -3026,6 +3026,106 @@ class DimLine extends Line
 
 
 //------------------------------------------------------------------------------
+// * classes/line/61-pixel-map.js
+//------------------------------------------------------------------------------
+
+class PixelMap extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        const matches = options.code.matchKeyword("PIXELMAP", 1)
+        if (matches)
+        {
+            const line = new PixelMap(options)
+            line.getLine = matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getLine = this.createFunction(this.getLine)
+    }
+    
+    * step()
+    {
+        const frame = this.root.getHistory("FRAME")[0]
+        frame.pixelMapIndex ??= 0
+        
+        const ctx = this.root.getContext()
+        
+        const line = this.getLine()
+        
+        const fillStyle = ctx.fillStyle
+        
+        for (let x = 0; x < line.length; x++)
+        {
+            const c = line.charAt(x)
+            const color = frame.colorMap[c]
+            if (!color)
+                continue
+            
+            ctx.fillStyle = color
+            ctx.fillRect(x, frame.pixelMapIndex, 1, 1)
+        }
+        
+        ctx.fillStyle = fillStyle
+        
+        frame.pixelMapIndex++
+        
+        if (ctx.isRoot)
+            this.root.onRender()
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/line/62-color-map.js
+//------------------------------------------------------------------------------
+
+class ColorMap extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        const matches = options.code.matchKeyword("COLORMAP", 2)
+        if (matches)
+        {
+            const line = new ColorMap(options)
+            line.getChar = matches[1]
+            line.getColor = matches[2]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getChar = this.createFunction(this.getChar)
+        this.getColor = this.createFunction(this.getColor)
+    }
+    
+    * step()
+    {
+        const char = this.getChar()
+        const color = this.getColor()
+        
+        const frame = this.root.getHistory("FRAME")[0]
+        frame.colorMap ??= { }
+        frame.colorMap[char] = color
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
 // * classes/line/65-cursor.js
 //------------------------------------------------------------------------------
 
@@ -3223,7 +3323,12 @@ class VarLine extends Line
     {
         this.getX = this.createFunction(this.getX)
         this.getY = this.createFunction(this.getY)
-        this.getValue = this.createFunction(this.getValue)
+        
+        let value = this.getValue
+        if (value.includes(","))
+            value = `[ ${value} ]`
+        
+        this.getValue = this.createFunction(value)
     }
     
     * step()

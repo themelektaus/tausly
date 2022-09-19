@@ -1,0 +1,110 @@
+SIZE 640, 640
+
+DIM(10,10) Map
+
+Map(0) = 0,0,0,0,0,0,0,0,0,0
+Map(1) = 0,1,2,0,0,0,0,0,0,0
+Map(2) = 0,0,0,0,0,0,2,0,0,0
+Map(3) = 0,0,3,0,2,0,0,0,1,0
+Map(4) = 0,0,0,0,0,0,0,0,0,0
+Map(5) = 0,0,0,0,0,0,0,3,0,0
+Map(6) = 0,0,0,0,0,0,0,0,0,0
+Map(7) = 0,0,0,4,4,0,0,0,0,0
+Map(8) = 0,0,0,4,4,0,0,0,0,0
+Map(9) = 0,0,0,0,0,0,0,0,0,0
+
+SPRITE "Castle"
+  SIZE 13, 12
+  FRAME
+    GOSUB GFX Colors 1
+    GOSUB GFX Roof 1
+    GOSUB GFX Base
+  END
+  FRAME
+    GOSUB GFX Colors 1
+    GOSUB GFX Roof 2
+    GOSUB GFX Base
+  END
+  FRAME
+    GOSUB GFX Colors 2
+    GOSUB GFX Roof 1
+    GOSUB GFX Base
+  END
+  FRAME
+    GOSUB GFX Colors 2
+    GOSUB GFX Roof 2
+    GOSUB GFX Base
+  END
+END
+
+GOTO Render
+
+------------------------------------------------------------
+GFX Colors 1:
+COLORMAP "#", "#999"
+COLORMAP "=", "#642"
+COLORMAP "+", "#559"
+COLORMAP "|", "#444"
+COLORMAP "O", "#C00"
+RETURN
+
+------------------------------------------------------------
+GFX Colors 2:
+COLORMAP "#", "#667"
+COLORMAP "=", "#334"
+COLORMAP "+", "#A73"
+COLORMAP "|", "#334"
+COLORMAP "O", "#4AA"
+RETURN
+
+------------------------------------------------------------
+GFX Roof 1:
+PIXELMAP "      |OOO   "
+PIXELMAP "      |OO    "
+PIXELMAP "      |      "
+PIXELMAP " ##  ###  ## "
+PIXELMAP " ##  ###  ## "
+RETURN
+
+------------------------------------------------------------
+GFX Roof 2:
+PIXELMAP "    +++++    "
+PIXELMAP "   +++++++   "
+PIXELMAP "  +++++++++  "
+PIXELMAP "  #########  "
+PIXELMAP " +++++++++++ "
+RETURN
+
+------------------------------------------------------------
+GFX Base:
+PIXELMAP " =========== "
+PIXELMAP " ########### "
+PIXELMAP " ####+++#### "
+PIXELMAP " ###+   +### "
+PIXELMAP " ##+     +## "
+PIXELMAP " ##+     +## "
+PIXELMAP "===+     +==="
+RETURN
+
+------------------------------------------------------------
+Render:
+
+INIT X = WIDTH / 2
+INIT Y = HEIGHT / 2
+
+COLOR "#192219"
+FILL
+
+BEGIN TRANSFORM
+  SCALE 4
+  FOR y = 0 TO 9
+    FOR x = 0 TO 9
+      IF Map(y)(x) <> 0 THEN
+        DRAW x * 64 + 26, _
+             y * 64 + 26, _
+             "Castle", _
+             Map(y)(x) - 1
+      END
+    END
+  END
+END
