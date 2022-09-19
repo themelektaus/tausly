@@ -821,6 +821,9 @@ class Tausly extends Block
         
         while (!this.stopped && this.runtimeIndex < lines.length)
         {
+            if (this.paused)
+                await Promise.waitFor(() => !this.paused)
+            
             const line = lines[this.runtimeIndex]
             
             if (line.step)
