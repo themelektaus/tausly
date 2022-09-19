@@ -179,7 +179,7 @@ class Tausly extends Block
     
     async run(code)
     {
-        await Promise.wait(resolve => resolve(!this.running))
+        await Promise.waitFor(() => !this.running)
         
         this.running = true
         
@@ -189,7 +189,9 @@ class Tausly extends Block
             this.compile()
         }
         
-        await this.beforeRun()
+        const ok = await this.beforeRun()
+        if (!ok)
+            return
         
         const lines = this.getAllLines()
         
@@ -264,12 +266,21 @@ class Tausly extends Block
         
         if (!this.audioCtx)
         {
-            this.audioCtx = new AudioContext
-            this.audioCtx.reverbNode = await this.audioCtx.getReverbNode()
+            try
+            {
+                this.audioCtx = new AudioContext
+                this.audioCtx.reverbNode = await this.audioCtx.getReverbNode()
+            }
+            catch
+            {
+                return false
+            }
         }
         
         if (this.audioCtx.reverbNode)
             this.audioCtx.reverbNode.connect(this.audioCtx.destination)
+        
+        return true
     }
     
     afterRun()

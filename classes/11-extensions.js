@@ -51,7 +51,7 @@ CanvasRenderingContext2D.prototype.refresh = function()
 
 Promise.timeout = function(func, ms)
 {
-    return new Promise(resolve => setTimeout(() => func(resolve), ms ?? 0))
+    return new Promise(x => setTimeout(() => func(x), ms ?? 0))
 }
 
 Promise.delay = function(ms)
@@ -62,6 +62,14 @@ Promise.delay = function(ms)
 Promise.wait = async function(func)
 {
     const task = () => new Promise(func)
+    while (true)
+        if (await task())
+            break
+}
+
+Promise.waitFor = async function(predicate)
+{
+    const task = () => new Promise(x => setTimeout(() => x(predicate())))
     while (true)
         if (await task())
             break
