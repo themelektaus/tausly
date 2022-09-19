@@ -27,12 +27,6 @@ class WhileBlock extends Block
         return null
     }
     
-    constructor(options)
-    {
-        super(options)
-        this.useDeltaTime = true
-    }
-    
     compile()
     {
         this.getCondition = this.createFunction(this.getCondition)

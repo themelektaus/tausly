@@ -7,9 +7,7 @@ class Line
         this.parent = options.parent
         this.globalIndex = options.globalIndex
         this.localIndex = options.localIndex
-        this.startTime = null
     }
-    
     
     // TODO: Set this value on compile
     get root()
@@ -21,25 +19,6 @@ class Line
                 this._root = this._root.parent
         }
         return this._root
-    }
-    
-    getTime()
-    {
-        if (this.startTime)
-            return this.startTime
-        return 0
-    }
-    
-    resetDeltaTime()
-    {
-        this.startTime = performance.now()
-    }
-    
-    getDeltaTime()
-    {
-        if (this.startTime)
-            return performance.now() - this.startTime
-        return 0
     }
     
     createFunction(expression)

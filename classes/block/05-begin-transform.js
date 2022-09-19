@@ -4,7 +4,7 @@ class BeginBlock extends Block
     
     static parse(options)
     {
-        if (options.code.matchKeyword("BEGIN"))
+        if (options.code.matchKeyword("BEGIN\\sTRANSFORM"))
             return new BeginBlock(options)
         
         return null

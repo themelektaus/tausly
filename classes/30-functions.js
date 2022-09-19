@@ -67,6 +67,10 @@ class Functions
             "Functions._FPS_($1)"
         ],
         [
+            /\bFPS\b/gi,
+            "Functions._FPS_.apply(this)"
+        ],
+        [
             /\bLEN\b\s*\(([^\)]+)\)/gi,
             "Functions._LEN_($1)"
         ],
@@ -179,6 +183,9 @@ class Functions
     static _FPS_dt_ = []
     static _FPS_(dt)
     {
+        if (dt === undefined)
+            dt = this.root.lastDeltaTime
+        
         Functions._FPS_dt_.unshift(dt)
         while (Functions._FPS_dt_.length > 200)
             Functions._FPS_dt_.pop()

@@ -17,12 +17,6 @@ class ForBlock extends Block
         return null
     }
     
-    constructor(options)
-    {
-        super(options)
-        this.useDeltaTime = true
-    }
-    
     prepare()
     {
         this.parent.declare(this.name)

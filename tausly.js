@@ -183,6 +183,10 @@ class Functions
             "Functions._FPS_($1)"
         ],
         [
+            /\bFPS\b/gi,
+            "Functions._FPS_.apply(this)"
+        ],
+        [
             /\bLEN\b\s*\(([^\)]+)\)/gi,
             "Functions._LEN_($1)"
         ],
@@ -295,6 +299,9 @@ class Functions
     static _FPS_dt_ = []
     static _FPS_(dt)
     {
+        if (dt === undefined)
+            dt = this.root.lastDeltaTime
+        
         Functions._FPS_dt_.unshift(dt)
         while (Functions._FPS_dt_.length > 200)
             Functions._FPS_dt_.pop()
@@ -340,9 +347,7 @@ class Line
         this.parent = options.parent
         this.globalIndex = options.globalIndex
         this.localIndex = options.localIndex
-        this.startTime = null
     }
-    
     
     // TODO: Set this value on compile
     get root()
@@ -354,25 +359,6 @@ class Line
                 this._root = this._root.parent
         }
         return this._root
-    }
-    
-    getTime()
-    {
-        if (this.startTime)
-            return this.startTime
-        return 0
-    }
-    
-    resetDeltaTime()
-    {
-        this.startTime = performance.now()
-    }
-    
-    getDeltaTime()
-    {
-        if (this.startTime)
-            return performance.now() - this.startTime
-        return 0
     }
     
     createFunction(expression)
@@ -408,7 +394,6 @@ class Block extends Line
         super(options)
         this.lines = []
         this.variableNames = new Set()
-        this.useDeltaTime = false
     }
     
     reset()
@@ -467,22 +452,14 @@ class Block extends Line
     
     evaluateFunctions(value)
     {
-        value = value.replaceAll(
-            /\bFRAMETIME\b\s*\(([0-9]+)\)/gi,
-            "(1000 - DELTATIME * $1) / ($1 + DELTATIME) - 2.5 * ((1000 / $1) - DELTATIME) / (1000 / $1)"
-        )
+        if (/\bFRAMETIME\b/i.test(value))
+            value = value.replaceAll(/\bFRAMETIME\b/gi, "this.root.getFrameTime()")
         
         if (/\bDELTATIME\b/i.test(value))
-        {
-            const path = this.getPath(line => line.useDeltaTime)
-            value = value.replaceAll(/\bDELTATIME\b/gi, path ? `${path}.getDeltaTime()` : "0")
-        }
+            value = value.replaceAll(/\bDELTATIME\b/gi, "this.root.lastDeltaTime")
         
         if (/\bTIME\b/i.test(value))
-        {
-            const path = this.getPath(line => line.useDeltaTime)
-            value = value.replaceAll(/\bTIME\b/gi, path ? `${path}.getTime()` : "0")
-        }
+            value = value.replaceAll(/\bTIME\b/gi, "this.root.lastTime")
         
         for (const rule of Functions.rules)
             value = value.replaceAll(rule[0], rule[1])
@@ -810,7 +787,6 @@ class Tausly extends Block
         while (!this.stopped && this.runtimeIndex < lines.length)
         {
             const line = lines[this.runtimeIndex]
-            line.resetDeltaTime()
             
             if (line.step)
             {
@@ -861,6 +837,9 @@ class Tausly extends Block
     {
         this.mouse = { x: this.canvas.width / 2, y: this.canvas.height / 2 }
         this.history = { }
+        
+        this.time = 0
+        this.lastDeltaTime = 0
         
         this.getHistory("TRANSFORMS").unshift([])
         
@@ -951,12 +930,9 @@ class Tausly extends Block
     
     resume()
     {
-        let line = this.getAllLines()[this.runtimeIndex]
-        while (line)
-        {
-            line.resetDeltaTime()
-            line = line.parent
-        }
+        this.time = performance.now()
+        this.lastTime = this.time
+        this.lastDeltaTime = 0
         this.paused = false
     }
     
@@ -964,6 +940,28 @@ class Tausly extends Block
     {
         this.resume()
         this.stopped = true
+    }
+    
+    beginDeltaTime()
+    {
+        this.time = performance.now()
+    }
+    
+    endDeltaTime()
+    {
+        this.lastTime = this.time
+        this.lastDeltaTime = this.getDeltaTime()
+    }
+    
+    getDeltaTime()
+    {
+        return performance.now() - this.time
+    }
+    
+    getFrameTime(fps)
+    {
+        const dt = this.getDeltaTime()
+        return (1000 - dt * fps) / (fps + dt) - 2.5 * ((1000 / fps) - dt) / (1000 / fps)
     }
 }
 
@@ -1365,7 +1363,7 @@ class ElseBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * classes/block/05-begin.js
+// * classes/block/05-begin-transform.js
 //------------------------------------------------------------------------------
 
 class BeginBlock extends Block
@@ -1374,7 +1372,7 @@ class BeginBlock extends Block
     
     static parse(options)
     {
-        if (options.code.matchKeyword("BEGIN"))
+        if (options.code.matchKeyword("BEGIN\\sTRANSFORM"))
             return new BeginBlock(options)
         
         return null
@@ -1415,12 +1413,6 @@ class ForBlock extends Block
         }
         
         return null
-    }
-    
-    constructor(options)
-    {
-        super(options)
-        this.useDeltaTime = true
     }
     
     prepare()
@@ -1504,12 +1496,6 @@ class WhileBlock extends Block
         return null
     }
     
-    constructor(options)
-    {
-        super(options)
-        this.useDeltaTime = true
-    }
-    
     compile()
     {
         this.getCondition = this.createFunction(this.getCondition)
@@ -1544,7 +1530,76 @@ class WhileBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * classes/block/12-loop.js
+// * classes/block/12-begin-gameloop.js
+//------------------------------------------------------------------------------
+
+class GameloopBlock extends Block
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("BEGIN\\sGAMELOOP", 1)
+        if (matches)
+        {
+            const line = new GameloopBlock(options)
+            line.fps = +matches[1]
+            return line
+        }
+        
+        matches = options.code.matchKeyword("BEGIN\\sGAMELOOP")
+        if (matches)
+        {
+            const line = new GameloopBlock(options)
+            line.fps = 60
+            return line
+        }
+        
+        return null
+    }
+    
+    * step()
+    {
+        if (this.skip)
+        {
+            delete this.skip
+            yield StepResult.skip()
+            return
+        }
+        
+        this.root.beginDeltaTime()
+        
+        const milliseconds = this.root.getFrameTime(this.fps)
+        const startTime = performance.now()
+        do yield
+        while (performance.now() - startTime < milliseconds)
+    }
+    
+    next()
+    {
+        this.end()
+    }
+    
+    break()
+    {
+        this.skip = true
+        this.next()
+    }
+    
+    end()
+    {
+        this.root.endDeltaTime()
+        
+        this.root.goto(this)
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * classes/block/13-loop.js
 //------------------------------------------------------------------------------
 
 class LoopBlock extends Block
@@ -1554,15 +1609,12 @@ class LoopBlock extends Block
     static parse(options)
     {
         if (options.code.matchKeyword("LOOP"))
-            return new LoopBlock(options)
+        {
+            const line = new LoopBlock(options)
+            return line
+        }
         
         return null
-    }
-    
-    constructor(options)
-    {
-        super(options)
-        this.useDeltaTime = true
     }
     
     * step()
@@ -2175,11 +2227,25 @@ class SmoothDampLine extends Line
         {
             matches = options.code.matchKeyword("SMOOTHDAMP", 5)
             if (matches)
+            {
                 matches[6] = "undefined"
+            }
         }
         
         if (!matches)
+        {
+            matches = options.code.matchKeyword("SMOOTHDAMP", 4)
+            if (matches)
+            {
+                matches[5] = "DELTATIME"
+                matches[6] = "undefined"
+            }
+        }
+        
+        if (!matches)
+        {
             return null
+        }
         
         const line = new SmoothDampLine(options)
         line.current = matches[1]

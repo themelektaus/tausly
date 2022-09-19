@@ -5,7 +5,6 @@ class Block extends Line
         super(options)
         this.lines = []
         this.variableNames = new Set()
-        this.useDeltaTime = false
     }
     
     reset()
@@ -64,22 +63,14 @@ class Block extends Line
     
     evaluateFunctions(value)
     {
-        value = value.replaceAll(
-            /\bFRAMETIME\b\s*\(([0-9]+)\)/gi,
-            "(1000 - DELTATIME * $1) / ($1 + DELTATIME) - 2.5 * ((1000 / $1) - DELTATIME) / (1000 / $1)"
-        )
+        if (/\bFRAMETIME\b/i.test(value))
+            value = value.replaceAll(/\bFRAMETIME\b/gi, "this.root.getFrameTime()")
         
         if (/\bDELTATIME\b/i.test(value))
-        {
-            const path = this.getPath(line => line.useDeltaTime)
-            value = value.replaceAll(/\bDELTATIME\b/gi, path ? `${path}.getDeltaTime()` : "0")
-        }
+            value = value.replaceAll(/\bDELTATIME\b/gi, "this.root.lastDeltaTime")
         
         if (/\bTIME\b/i.test(value))
-        {
-            const path = this.getPath(line => line.useDeltaTime)
-            value = value.replaceAll(/\bTIME\b/gi, path ? `${path}.getTime()` : "0")
-        }
+            value = value.replaceAll(/\bTIME\b/gi, "this.root.lastTime")
         
         for (const rule of Functions.rules)
             value = value.replaceAll(rule[0], rule[1])

@@ -206,7 +206,6 @@ class Tausly extends Block
         while (!this.stopped && this.runtimeIndex < lines.length)
         {
             const line = lines[this.runtimeIndex]
-            line.resetDeltaTime()
             
             if (line.step)
             {
@@ -257,6 +256,9 @@ class Tausly extends Block
     {
         this.mouse = { x: this.canvas.width / 2, y: this.canvas.height / 2 }
         this.history = { }
+        
+        this.time = 0
+        this.lastDeltaTime = 0
         
         this.getHistory("TRANSFORMS").unshift([])
         
@@ -347,12 +349,9 @@ class Tausly extends Block
     
     resume()
     {
-        let line = this.getAllLines()[this.runtimeIndex]
-        while (line)
-        {
-            line.resetDeltaTime()
-            line = line.parent
-        }
+        this.time = performance.now()
+        this.lastTime = this.time
+        this.lastDeltaTime = 0
         this.paused = false
     }
     
@@ -360,5 +359,27 @@ class Tausly extends Block
     {
         this.resume()
         this.stopped = true
+    }
+    
+    beginDeltaTime()
+    {
+        this.time = performance.now()
+    }
+    
+    endDeltaTime()
+    {
+        this.lastTime = this.time
+        this.lastDeltaTime = this.getDeltaTime()
+    }
+    
+    getDeltaTime()
+    {
+        return performance.now() - this.time
+    }
+    
+    getFrameTime(fps)
+    {
+        const dt = this.getDeltaTime()
+        return (1000 - dt * fps) / (fps + dt) - 2.5 * ((1000 / fps) - dt) / (1000 / fps)
     }
 }

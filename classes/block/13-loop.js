@@ -5,15 +5,12 @@ class LoopBlock extends Block
     static parse(options)
     {
         if (options.code.matchKeyword("LOOP"))
-            return new LoopBlock(options)
+        {
+            const line = new LoopBlock(options)
+            return line
+        }
         
         return null
-    }
-    
-    constructor(options)
-    {
-        super(options)
-        this.useDeltaTime = true
     }
     
     * step()

@@ -16,8 +16,6 @@
 CLEAR
 SIZE 800, 600
 
-INIT LastDeltaTime
-
 INIT TS = 50
 INIT G = 9.81
 
@@ -94,11 +92,9 @@ INIT CollisionY
 GOSUB Render
 SLEEP 500
 
-LOOP
+BEGIN GAMELOOP
   GOSUB Update
   GOSUB Render
-  SLEEP FRAMETIME(60)
-  LastDeltaTime = DELTATIME
 END
 
 
@@ -123,14 +119,13 @@ IF Move <> 0
   Smoothness *= 2
 END
 
-SMOOTHDAMP Current, Target, Velocity, _
-           Smoothness, LastDeltaTime
+SMOOTHDAMP Current, Target, Velocity, Smoothness
 
 Player(_x) = Current
 Player(_moveVelocity) = Velocity
 
-Player(_y) += Player(_downVelocity) * LastDeltaTime * 0.04
-Player(_downVelocity) += G * LastDeltaTime * 0.005
+Player(_y) += Player(_downVelocity) * DELTATIME * 0.04
+Player(_downVelocity) += G * DELTATIME * 0.005
 
 Player(_grounded) = FALSE
 

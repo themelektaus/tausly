@@ -132,8 +132,6 @@ END
 
 CLEAR
 SIZE 800, 600
-INIT LastTime
-INIT LastDeltaTime
 INIT W = 10
 INIT H = 80
 INIT MinSmoothness = 600
@@ -210,11 +208,9 @@ PLAY "Music 1"
 
 SET MenuIndex = 0
 
-LOOP
+BEGIN GAMELOOP
   GOSUB Titlescreen Update
   GOSUB Titlescreen Render
-  SLEEP FRAMETIME(60)
-  LastDeltaTime = DELTATIME
 END
 
 
@@ -226,12 +222,9 @@ END
 STOP "Music 1"
 PLAY "Music 2"
 
-LOOP
+BEGIN GAMELOOP
   GOSUB InGame Update
   GOSUB InGame Render
-  SLEEP FRAMETIME(60)
-  LastTime = TIME
-  LastDeltaTime = DELTATIME
 END
 
 
@@ -342,7 +335,7 @@ FOR i = 0 TO 1
       SET Max = Player(i)(_speed) * 1000
       SMOOTHDAMP Y, TargetY, Velocity, _
                  Player(i)(_botSmoothness), _
-                 LastDeltaTime, Max
+                 DELTATIME, Max
     END
   ELSE
     SET Move = 0
@@ -353,7 +346,7 @@ FOR i = 0 TO 1
       IF INPUT("I") : Move -= 1 : END
       IF INPUT("K") : Move += 1 : END
     END
-    Y += Move * LastDeltaTime * Player(i)(_speed)
+    Y += Move * DELTATIME * Player(i)(_speed)
   END
   
   IF Y < H / 2
@@ -373,7 +366,7 @@ END
 
 SET Iterations = ROUND(Ball(_speed) * 10)
 
-SET Step = LastDeltaTime * Ball(_speed) * (1 / Iterations)
+SET Step = DELTATIME * Ball(_speed) * (1 / Iterations)
 SET StepX = BallDir(0) * Step
 SET StepY = BallDir(1) * Step
 
@@ -453,8 +446,8 @@ FOR i = 0 TO 1
   FILL Player(i)(_x), Player(i)(_y) - H / 2, W, H
 END
 
-BEGIN
-  SCALE ABS(LastTime % 500 - 250) / 250 * 0.5 + 1
+BEGIN TRANSFORM
+  SCALE ABS(TIME % 500 - 250) / 250 * 0.5 + 1
   COLOR "yellow"
   FILL Ball(_x) - Ball(_size) / 2, _
        Ball(_y) - Ball(_size) / 2, _

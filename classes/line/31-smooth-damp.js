@@ -10,11 +10,25 @@ class SmoothDampLine extends Line
         {
             matches = options.code.matchKeyword("SMOOTHDAMP", 5)
             if (matches)
+            {
                 matches[6] = "undefined"
+            }
         }
         
         if (!matches)
+        {
+            matches = options.code.matchKeyword("SMOOTHDAMP", 4)
+            if (matches)
+            {
+                matches[5] = "DELTATIME"
+                matches[6] = "undefined"
+            }
+        }
+        
+        if (!matches)
+        {
             return null
+        }
         
         const line = new SmoothDampLine(options)
         line.current = matches[1]

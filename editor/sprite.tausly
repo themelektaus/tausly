@@ -42,15 +42,13 @@ SONG "Sound 2"
   END
 END
 
-INIT D
-
 DIM(2) I
 
 INIT X : INIT Y
 INIT S : INIT T : INIT V
 INIT A
 
-LOOP
+BEGIN GAMELOOP
   
   I(1) = ROUND(TIME / 600 % 1)
   IF I(0) <> I(1)
@@ -67,18 +65,15 @@ LOOP
   T = 20
   IF INPUT("MOUSE") : T *= 2 : END
   
-  A += D / T * 2
+  A += DELTATIME / T * 2
   
-  SMOOTHDAMP S, T, V, 0.1, D
+  SMOOTHDAMP S, T, V, 0.1
   
-  BEGIN
+  BEGIN TRANSFORM
     TRANSLATE X, Y
     SCALE S
     ROTATE A
     DRAW WIDTH / 2 - 4, HEIGHT / 2 - 4, "GFX", I(0)
   END
-  
-  SLEEP FRAMETIME(60)
-  D = DELTATIME
   
 END
