@@ -245,6 +245,29 @@ window.onload = () =>
             //}, 1500)
         })
     }
+    
+    const toolsBackground = document.querySelector("#tools-background")
+    const toolImageToTausly = document.querySelector("#tool-image-to-tausly")
+    
+    document.querySelector("#tools-button").onclick = () =>
+    {
+        toolsBackground.classList.add("visible")
+    }
+    
+    document.querySelector("#tools-background").onclick = () =>
+    {
+        toolsBackground.classList.remove("visible")
+    }
+    
+    toolImageToTausly.querySelector("button").onclick = async function()
+    {
+        const fileElement = this.parentNode.querySelector("input")
+        const blob = fileElement.files[0]
+        
+        const converter = new ImageToTausly
+        const code = await converter.generateCode(blob)
+        toolImageToTausly.querySelector("pre").innerText = code
+    }
 }
 
 window.addEventListener("keydown", e =>

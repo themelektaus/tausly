@@ -399,3 +399,55 @@ canvas {
 #code.ace-tm .ace_gutter-layer > * {
   margin-left: -25px;
 }
+
+
+
+#top-right {
+    position: absolute;
+    top: .5em;
+    right: .5em;
+    z-index: 8;
+}
+
+#tools-background,
+#tools {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: all 200ms;
+}
+
+#tools-background.visible {
+    pointer-events: unset;
+}
+
+#tools-background.visible,
+#tools-background.visible + #tools {
+    opacity: 1;
+}
+
+#tools-background {
+    background: rgba(0, 0, 0, .3);
+    z-index: 9;
+}
+
+#tools {
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#tools > * {
+    pointer-events: all;
+}
+
+#tool-image-to-tausly {
+    background: var(--bg-color);
+    width: 50%;
+    height: 50%;
+}

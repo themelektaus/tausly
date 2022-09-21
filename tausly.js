@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// * classes/10-regex.js
+// * 10-regex.js
 //------------------------------------------------------------------------------
 
 class Regex
@@ -13,7 +13,7 @@ class Regex
 
 
 //------------------------------------------------------------------------------
-// * classes/11-extensions.js
+// * 11-extensions.js
 //------------------------------------------------------------------------------
 
 String.prototype.toCondition = function()
@@ -32,7 +32,7 @@ String.prototype.toCondition = function()
     
     return x
 }
-    
+
 String.prototype.matchKeyword = function(keyword, argumentCount)
 {
     argumentCount ??= 0
@@ -54,17 +54,18 @@ String.prototype.matchKeyword = function(keyword, argumentCount)
     return matches
 }
 
+Array.prototype.getLuminance = function(rgba)
+{
+    const r = .299 * (this[0] / 255) ** 2
+    const g = .587 * (this[1] / 255) ** 2
+    const b = .114 * (this[2] / 255) ** 2
+    const a = this[3] / 255
+    return Math.sqrt(r + g + b) * a
+}
+
 CanvasRenderingContext2D.prototype.refresh = function()
 {
-    if (document.body.computedStyleMap)
-    {
-        const styleMap = document.body.computedStyleMap()
-        this.font = styleMap.get("font").toString()
-    }
-    else
-    {
-        this.font = '17.6px dejavu'
-    }
+    this.font = '17.6px dejavu, monospace'
     this.textBaseline = "top"
 }
 
@@ -89,7 +90,112 @@ Promise.waitFor = async function(predicate)
 
 
 //------------------------------------------------------------------------------
-// * classes/30-functions.js
+// * 12-image-to-tausly.js
+//------------------------------------------------------------------------------
+
+class ImageToTausly
+{
+    static async loadFile(blob)
+    {
+        return await new Promise(resolve =>
+        {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+        })
+    }
+    
+    static async loadImage(src)
+    {
+        return await new Promise(resolve =>
+        {
+            const img = new Image
+            img.onload = () => resolve(img)
+            img.src = src
+        })
+    }
+    
+    async generateCode(fileElement)
+    {
+        const src = await ImageToTausly.loadFile(fileElement)
+        const img = await ImageToTausly.loadImage(src)
+        
+        const canvas = document.createElement("canvas")
+        canvas.width = img.width
+        canvas.height = img.height
+        
+        const ctx = canvas.getContext("2d")
+        ctx.imageSmoothingEnabled = false
+        ctx.drawImage(img, 0, 0)
+        
+        const imgData = ctx.getImageData(0, 0, img.width, img.height);
+        const data = imgData.data
+        
+        const colorChars = [
+            { chars: "#$&890WM", index: 0 },
+            { chars: "DEHOPSXZ", index: 0 },
+            { chars: ".-_+*:^~", index: 0 }
+        ]
+        const alternativeChar = { chars: "abcdefghijlkmnopqrstuvwxyz1234567ABCDFGIJKLNQRTUVY", index: 0 }
+        
+        const colorMap = { }
+        
+        const pixelMap = []
+        for (let i = 0; i < img.height; i++)
+            pixelMap.push([])
+        
+        for (let i = 0; i < data.length; i += 4)
+        {
+            let rgba = Array.from(data.slice(i, i + 4))
+            
+            let index = Math.max(0, Math.ceil(rgba.getLuminance() * colorChars.length) - 1)
+            let colorChar = colorChars[index]
+            if (colorChar.index >= colorChar.chars.length)
+            {
+                colorChar = alternativeChar
+                if (colorChar.index >= colorChar.chars.length)
+                    return null
+            }
+            
+            rgba[3] = (rgba[3] / 255).toFixed(3)
+            rgba = `rgba(${rgba.join(", ")})`
+            
+            if (colorMap[rgba] === undefined)
+                colorMap[rgba] = colorChar.chars.charAt(colorChar.index++)
+            
+            index = Math.floor(i / 4 / img.width)
+            pixelMap[index] += colorMap[rgba]
+        }
+        
+        let result = ""
+        result += `SPRITE "Untitled"\n`
+        result += `  SIZE ${img.width}, ${img.height}\n`
+        result += `  FRAME\n`
+        
+        const keys = Object.keys(colorMap)
+        for (const key of keys)
+            result += `    COLORMAP "${colorMap[key]}", "${key}"\n`
+        
+        for (const line of pixelMap)
+            result += `    PIXELMAP "${line}"\n`
+        
+        result += `  END\n`
+        result += `END\n`
+        
+        result += `\n`
+        result += `COLOR "#445"\n`
+        result += `FILL\n`
+        result += `SCALE 10\n`
+        result += `DRAW WIDTH / 2, HEIGHT / 2, "Untitled"\n`
+        
+        return result
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * 30-functions.js
 //------------------------------------------------------------------------------
 
 class Functions
@@ -334,7 +440,7 @@ class Functions
 
 
 //------------------------------------------------------------------------------
-// * classes/40-line.js
+// * 40-line.js
 //------------------------------------------------------------------------------
 
 class Line
@@ -378,7 +484,7 @@ class Line
 
 
 //------------------------------------------------------------------------------
-// * classes/41-block.js
+// * 41-block.js
 //------------------------------------------------------------------------------
 
 class Block extends Line
@@ -608,7 +714,7 @@ class Block extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/50-tausly.js
+// * 50-tausly.js
 //------------------------------------------------------------------------------
 
 class Tausly extends Block
@@ -627,13 +733,13 @@ class Tausly extends Block
         this.ctx = this.canvas.getContext("2d")
         this.ctx.isRoot = true
         
+        this.onResize = (width, height) => { }
         this.onRefresh = () => { }
-        
-        this.refresh()
-        
         this.onEcho = data => console.log(data)
         this.onRender = () => { }
         this.onClear = () => { }
+        
+        this.refresh()
         
         this.input = new Set()
         
@@ -918,11 +1024,17 @@ class Tausly extends Block
     setSize(width, height)
     {
         const canvas = this.getCanvas()
+        if (canvas.width == width && canvas.height == height)
+            return
+        
         canvas.width = width
         canvas.height = height
         
         if (canvas == this.canvas)
+        {
+            this.onResize(width, height)
             this.refresh()
+        }
     }
     
     goto(line, offset)
@@ -984,7 +1096,7 @@ class Tausly extends Block
 
 
 //------------------------------------------------------------------------------
-// * classes/audio/01-audio-context.js
+// * audio/01-audio-context.js
 //------------------------------------------------------------------------------
 
 AudioContext.prototype.getReverbNode = async function()
@@ -1012,7 +1124,7 @@ AudioContext.prototype.getReverbNode = async function()
 
 
 //------------------------------------------------------------------------------
-// * classes/audio/10-note.js
+// * audio/10-note.js
 //------------------------------------------------------------------------------
 
 class Note
@@ -1104,7 +1216,7 @@ class Note
 
 
 //------------------------------------------------------------------------------
-// * classes/audio/11-instrument.js
+// * audio/11-instrument.js
 //------------------------------------------------------------------------------
 
 class Instrument
@@ -1231,7 +1343,7 @@ class Instrument
 
 
 //------------------------------------------------------------------------------
-// * classes/audio/12-song.js
+// * audio/12-song.js
 //------------------------------------------------------------------------------
 
 class Song extends GainNode
@@ -1287,7 +1399,7 @@ class Song extends GainNode
 
 
 //------------------------------------------------------------------------------
-// * classes/block/01-if.js
+// * block/01-if.js
 //------------------------------------------------------------------------------
 
 class IfBlock extends Block
@@ -1348,7 +1460,7 @@ class IfBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * classes/block/02-else.js
+// * block/02-else.js
 //------------------------------------------------------------------------------
 
 class ElseBlock extends Block
@@ -1379,7 +1491,7 @@ class ElseBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * classes/block/05-begin-transform.js
+// * block/05-begin-transform.js
 //------------------------------------------------------------------------------
 
 class BeginBlock extends Block
@@ -1409,7 +1521,7 @@ class BeginBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * classes/block/10-for.js
+// * block/10-for.js
 //------------------------------------------------------------------------------
 
 class ForBlock extends Block
@@ -1480,7 +1592,7 @@ class ForBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * classes/block/11-while.js
+// * block/11-while.js
 //------------------------------------------------------------------------------
 
 class WhileBlock extends Block
@@ -1546,7 +1658,7 @@ class WhileBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * classes/block/12-begin-gameloop.js
+// * block/12-begin-gameloop.js
 //------------------------------------------------------------------------------
 
 class GameloopBlock extends Block
@@ -1614,7 +1726,7 @@ class GameloopBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * classes/block/13-loop.js
+// * block/13-loop.js
 //------------------------------------------------------------------------------
 
 class LoopBlock extends Block
@@ -1661,7 +1773,7 @@ class LoopBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * classes/block/20-song.js
+// * block/20-song.js
 //------------------------------------------------------------------------------
 
 class SongBlock extends Block
@@ -1708,7 +1820,7 @@ class SongBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * classes/block/21-instrument.js
+// * block/21-instrument.js
 //------------------------------------------------------------------------------
 
 class InstrumentBlock extends Block
@@ -1764,7 +1876,7 @@ class InstrumentBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * classes/block/30-sprite.js
+// * block/30-sprite.js
 //------------------------------------------------------------------------------
 
 class SpriteBlock extends Block
@@ -1815,7 +1927,7 @@ class SpriteBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * classes/block/31-frame.js
+// * block/31-frame.js
 //------------------------------------------------------------------------------
 
 class FrameBlock extends Block
@@ -1875,7 +1987,7 @@ class FrameBlock extends Block
 
 
 //------------------------------------------------------------------------------
-// * classes/line/01-echo.js
+// * line/01-echo.js
 //------------------------------------------------------------------------------
 
 class EchoLine extends Line
@@ -1909,7 +2021,7 @@ class EchoLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/02-sleep.js
+// * line/02-sleep.js
 //------------------------------------------------------------------------------
 
 class SleepLine extends Line
@@ -1956,7 +2068,7 @@ class SleepLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/10-goto.js
+// * line/10-goto.js
 //------------------------------------------------------------------------------
 
 class GotoLine extends Line
@@ -1991,7 +2103,7 @@ class GotoLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/11-gosub.js
+// * line/11-gosub.js
 //------------------------------------------------------------------------------
 
 class GosubLine extends Line
@@ -2030,7 +2142,7 @@ class GosubLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/12-return.js
+// * line/12-return.js
 //------------------------------------------------------------------------------
 
 class ReturnLine extends Line
@@ -2082,7 +2194,7 @@ class ReturnLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/15-end.js
+// * line/15-end.js
 //------------------------------------------------------------------------------
 
 class EndLine extends Line
@@ -2116,7 +2228,7 @@ class EndLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/18-next.js
+// * line/18-next.js
 //------------------------------------------------------------------------------
 
 class NextLine extends Line
@@ -2148,7 +2260,7 @@ class NextLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/19-break.js
+// * line/19-break.js
 //------------------------------------------------------------------------------
 
 class BreakLine extends Line
@@ -2180,7 +2292,7 @@ class BreakLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/30-normalize.js
+// * line/30-normalize.js
 //------------------------------------------------------------------------------
 
 class NormalizeLine extends Line
@@ -2223,7 +2335,7 @@ class NormalizeLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/31-smooth-damp.js
+// * line/31-smooth-damp.js
 //------------------------------------------------------------------------------
 
 class SmoothDampLine extends Line
@@ -2386,7 +2498,7 @@ class SmoothDampLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/40-size.js
+// * line/40-size.js
 //------------------------------------------------------------------------------
 
 class SizeLine extends Line
@@ -2428,7 +2540,7 @@ class SizeLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/41-clear.js
+// * line/41-clear.js
 //------------------------------------------------------------------------------
 
 class ClearLine extends Line
@@ -2458,7 +2570,7 @@ class ClearLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/42-color.js
+// * line/42-color.js
 //------------------------------------------------------------------------------
 
 class ColorLine extends Line
@@ -2519,7 +2631,7 @@ class ColorLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/50-fill.js
+// * line/50-fill.js
 //------------------------------------------------------------------------------
 
 class FillLine extends Line
@@ -2591,7 +2703,7 @@ class FillLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/51-text.js
+// * line/51-text.js
 //------------------------------------------------------------------------------
 
 class TextLine extends Line
@@ -2638,7 +2750,7 @@ class TextLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/52-align.js
+// * line/52-align.js
 //------------------------------------------------------------------------------
 
 class AlignLine extends Line
@@ -2681,7 +2793,7 @@ class AlignLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/53-draw.js
+// * line/53-draw.js
 //------------------------------------------------------------------------------
 
 class DrawLine extends Line
@@ -2773,7 +2885,7 @@ class DrawLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/54-reset.js
+// * line/54-reset.js
 //------------------------------------------------------------------------------
 
 class ResetLine extends Line
@@ -2840,7 +2952,7 @@ class ResetLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/55-translate.js
+// * line/55-translate.js
 //------------------------------------------------------------------------------
 
 class TranslateLine extends Line
@@ -2883,7 +2995,7 @@ class TranslateLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/56-rotate.js
+// * line/56-rotate.js
 //------------------------------------------------------------------------------
 
 class RotateLine extends Line
@@ -2925,7 +3037,7 @@ class RotateLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/57-scale.js
+// * line/57-scale.js
 //------------------------------------------------------------------------------
 
 class ScaleLine extends Line
@@ -2967,7 +3079,7 @@ class ScaleLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/60-dim.js
+// * line/60-dim.js
 //------------------------------------------------------------------------------
 
 class DimLine extends Line
@@ -3037,7 +3149,7 @@ class DimLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/61-pixel-map.js
+// * line/61-pixel-map.js
 //------------------------------------------------------------------------------
 
 class PixelMap extends Line
@@ -3096,7 +3208,7 @@ class PixelMap extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/62-color-map.js
+// * line/62-color-map.js
 //------------------------------------------------------------------------------
 
 class ColorMap extends Line
@@ -3137,7 +3249,7 @@ class ColorMap extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/65-cursor.js
+// * line/65-cursor.js
 //------------------------------------------------------------------------------
 
 class CursorLine extends Line
@@ -3174,7 +3286,7 @@ class CursorLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/70-label.js
+// * line/70-label.js
 //------------------------------------------------------------------------------
 
 class LabelLine extends Line
@@ -3195,7 +3307,7 @@ class LabelLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/71-init.js
+// * line/71-init.js
 //------------------------------------------------------------------------------
 
 class InitLine extends Line
@@ -3246,7 +3358,7 @@ class InitLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/72-set.js
+// * line/72-set.js
 //------------------------------------------------------------------------------
 
 class SetLine extends Line
@@ -3288,7 +3400,7 @@ class SetLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/73-.js
+// * line/73-.js
 //------------------------------------------------------------------------------
 
 class VarLine extends Line
@@ -3351,7 +3463,7 @@ class VarLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/74-func.js
+// * line/74-func.js
 //------------------------------------------------------------------------------
 
 class FuncLine extends Line
@@ -3393,7 +3505,7 @@ class FuncLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/80-gain.js
+// * line/80-gain.js
 //------------------------------------------------------------------------------
 
 class GainLine extends Line
@@ -3432,7 +3544,7 @@ class GainLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/81-bpm.js
+// * line/81-bpm.js
 //------------------------------------------------------------------------------
 
 class BpmLine extends Line
@@ -3464,7 +3576,7 @@ class BpmLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/82-time-signature.js
+// * line/82-time-signature.js
 //------------------------------------------------------------------------------
 
 class TimeSignatureLine extends Line
@@ -3496,7 +3608,7 @@ class TimeSignatureLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/83-repeat.js
+// * line/83-repeat.js
 //------------------------------------------------------------------------------
 
 class RepeatLine extends Line
@@ -3533,7 +3645,7 @@ class RepeatLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/84-type.js
+// * line/84-type.js
 //------------------------------------------------------------------------------
 
 class TypeLine extends Line
@@ -3570,7 +3682,7 @@ class TypeLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/85-reverb.js
+// * line/85-reverb.js
 //------------------------------------------------------------------------------
 
 class ReverbLine extends Line
@@ -3602,7 +3714,7 @@ class ReverbLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/86-sheet.js
+// * line/86-sheet.js
 //------------------------------------------------------------------------------
 
 class SheetLine extends Line
@@ -3639,7 +3751,7 @@ class SheetLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/87-play.js
+// * line/87-play.js
 //------------------------------------------------------------------------------
 
 class PlayLine extends Line
@@ -3705,7 +3817,7 @@ class PlayLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/88-stop.js
+// * line/88-stop.js
 //------------------------------------------------------------------------------
 
 class StopLine extends Line
@@ -3744,7 +3856,7 @@ class StopLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/89-attack.js
+// * line/89-attack.js
 //------------------------------------------------------------------------------
 
 class AttackLine extends Line
@@ -3776,7 +3888,7 @@ class AttackLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/line/90-release.js
+// * line/90-release.js
 //------------------------------------------------------------------------------
 
 class ReleaseLine extends Line
@@ -3808,7 +3920,7 @@ class ReleaseLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * classes/sprite/10-frame.js
+// * sprite/10-frame.js
 //------------------------------------------------------------------------------
 
 class Frame
@@ -3839,7 +3951,7 @@ class Frame
 
 
 //------------------------------------------------------------------------------
-// * classes/sprite/11-sprite.js
+// * sprite/11-sprite.js
 //------------------------------------------------------------------------------
 
 class Sprite
