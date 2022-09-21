@@ -14,13 +14,13 @@ class Tausly extends Block
         this.ctx = this.canvas.getContext("2d")
         this.ctx.isRoot = true
         
+        this.onResize = (width, height) => { }
         this.onRefresh = () => { }
-        
-        this.refresh()
-        
         this.onEcho = data => console.log(data)
         this.onRender = () => { }
         this.onClear = () => { }
+        
+        this.refresh()
         
         this.input = new Set()
         
@@ -305,11 +305,17 @@ class Tausly extends Block
     setSize(width, height)
     {
         const canvas = this.getCanvas()
+        if (canvas.width == width && canvas.height == height)
+            return
+        
         canvas.width = width
         canvas.height = height
         
         if (canvas == this.canvas)
+        {
+            this.onResize(width, height)
             this.refresh()
+        }
     }
     
     goto(line, offset)

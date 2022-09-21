@@ -4,7 +4,7 @@
     
     foreach ([ "", "audio/", "block/", "line/", "sprite/", ] as $folder)
     {
-        foreach (glob(__DIR__ . "/{$folder}*.js") as $file)
+        foreach (glob(__DIR__ . "/../classes/{$folder}*.js") as $file)
         {
             $contents .= "//------------------------------------------------------------------------------" . PHP_EOL;
             $contents .= "// * classes" . substr($file, strlen(__DIR__)) . PHP_EOL;

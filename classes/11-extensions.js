@@ -14,7 +14,7 @@ String.prototype.toCondition = function()
     
     return x
 }
-    
+
 String.prototype.matchKeyword = function(keyword, argumentCount)
 {
     argumentCount ??= 0
@@ -36,17 +36,18 @@ String.prototype.matchKeyword = function(keyword, argumentCount)
     return matches
 }
 
+Array.prototype.getLuminance = function(rgba)
+{
+    const r = .299 * (this[0] / 255) ** 2
+    const g = .587 * (this[1] / 255) ** 2
+    const b = .114 * (this[2] / 255) ** 2
+    const a = this[3] / 255
+    return Math.sqrt(r + g + b) * a
+}
+
 CanvasRenderingContext2D.prototype.refresh = function()
 {
-    if (document.body.computedStyleMap)
-    {
-        const styleMap = document.body.computedStyleMap()
-        this.font = styleMap.get("font").toString()
-    }
-    else
-    {
-        this.font = '17.6px dejavu'
-    }
+    this.font = '17.6px dejavu, monospace'
     this.textBaseline = "top"
 }
 
