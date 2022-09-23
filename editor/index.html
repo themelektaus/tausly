@@ -62,10 +62,22 @@
             
             <div id="tools-background"></div>
             <div id="tools">
-                <div id="tool-image-to-tausly">
-                    <input type="file">
-                    <button>Generate</button>
-                    <pre></pre>
+                <div class="tabs">
+                    <div class="tabs__bar">
+                        <div data-index="0" class="active">Image to Tausly</div>
+                        <div data-index="1"></div>
+                    </div>
+                    <div class="tabs__content">
+                        <div data-index="0" id="tool-image-to-tausly">
+                            <label class="file-upload">
+                                <input type="file">
+                            </label>
+                            <textarea readonly></textarea>
+                        </div>
+                        <div data-index="1" style="display: none; ">
+                            
+                        </div>
+                    </div>
                 </div>
             </div>
             

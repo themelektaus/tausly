@@ -435,6 +435,16 @@ canvas {
     z-index: 9;
 }
 
+#tools-background + #tools .tabs {
+    height: 0
+}
+
+#tools-background.visible + #tools .tabs {
+    height: 48em;
+}
+
+
+
 #tools {
     z-index: 10;
     display: flex;
@@ -446,8 +456,99 @@ canvas {
     pointer-events: all;
 }
 
-#tool-image-to-tausly {
+.tabs {
     background: var(--bg-color);
-    width: 50%;
-    height: 50%;
+    width: 64em;
+    display: flex;
+    flex-direction: column;
+    transition: height 200ms;
+}
+
+.tabs__bar {
+    flex: 0;
+    display: flex;
+    background: rgba(0, 0, 0, .5);
+}
+
+.tabs__bar > * {
+    background: none;
+    padding: 1em;
+}
+
+.tabs__bar > *.active {
+    background: var(--bg-color);
+}
+
+.tabs__content {
+    height: 100%;
+    padding: 1em;
+    display: flex;
+}
+
+.tabs__content > * {
+    flex: 1;
+}
+
+
+
+
+#tool-image-to-tausly {
+    display: flex;
+    flex-direction: column;
+}
+
+label.file-upload {
+    position: relative;
+    border: 3px dashed;
+    background: none;
+    display: block;
+    min-height: 4rem;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: height 200ms;
+}
+
+label.file-upload::after {
+    content: "Drop a image file here";
+    text-shadow: none;
+    pointer-events: none;
+}
+
+label.file-upload              { border-color: rgba(255, 255, 255, .25) }
+label.file-upload::after       {        color: rgba(255, 255, 255, .25) }
+label.file-upload:hover        { border-color: rgba(255, 255, 255, .35) }
+label.file-upload:hover::after {        color: rgba(255, 255, 255, .35) }
+label.file-upload.drag         { border-color: rgba(255, 255, 0, .6) }
+label.file-upload.drag::after  {        color: rgba(255, 255, 0, .6) }
+label.file-upload.drop         { border-color: rgba(  0, 255, 0, .8) }
+label.file-upload.drop::after  {        color: rgba(  0, 255, 0, .8); content: attr(data-filename); }
+
+label.file-upload.drop {
+    height: 0;
+}
+
+label.file-upload + textarea {
+    resize: none;
+    margin: 0;
+    height: 0;
+    overflow: scroll;
+    transition: padding 200ms, height 200ms;
+    font-size: 1.2em;
+    line-height: 1.3em;
+    padding: 0 1em;
+    background: none;
+    outline: none;
+    color: inherit;
+    border: none;
+}
+
+label.file-upload.drop + textarea {
+    height: 100%;
+    padding: 1em 1em;
+}
+
+label.file-upload input[type="file"] {
+    display: none;
 }

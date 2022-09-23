@@ -93,7 +93,7 @@ window.onload = () =>
     
     select.onchange = function(e)
     {
-        if (!this.value)
+        if (!this.value || this.value == "_")
         {
             this.selectedIndex = this.dataset.previousIndex
             return
@@ -246,6 +246,67 @@ window.onload = () =>
         })
     }
     
+    
+    
+    for (const listener of [ "drag", "dragstart", "dragend", "dragover", "dragenter", "dragleave", "drop" ])
+    {
+        document.body.addEventListener(listener, e =>
+        {
+            e.preventDefault();
+            e.stopPropagation();
+        })
+    }
+    
+    const fileUploadLabels = document.querySelectorAll("label.file-upload")
+    
+    for (const fileUploadLabel of fileUploadLabels)
+    {
+        const input = fileUploadLabel.querySelector("input")
+        
+        fileUploadLabel.addEventListener("click", e =>
+        {
+            if (!input.files || !input.files.length)
+                return
+            
+            e.preventDefault()
+            
+            input.value = null
+            input.dispatchEvent(new Event("change"))
+        })
+        
+        fileUploadLabel.addEventListener("dragenter", () =>
+        {
+            fileUploadLabel.classList.add("drag")
+        })
+        
+        fileUploadLabel.addEventListener("dragleave", () =>
+        {
+            fileUploadLabel.classList.remove("drag")
+        })
+        
+        fileUploadLabel.addEventListener("drop", e =>
+        {
+            input.files = e.dataTransfer.files
+            input.dispatchEvent(new Event("change"))
+        })
+        
+        input.addEventListener("change", e =>
+        {
+            fileUploadLabel.classList.remove("drag")
+            
+            if (input.files && input.files.length)
+            {
+                fileUploadLabel.dataset.filename = input.files[0].name
+                fileUploadLabel.classList.add("drop")
+                return
+            }
+            
+            fileUploadLabel.classList.remove("drop")
+        })
+    }
+    
+    
+    
     const toolsBackground = document.querySelector("#tools-background")
     const toolImageToTausly = document.querySelector("#tool-image-to-tausly")
     
@@ -259,15 +320,22 @@ window.onload = () =>
         toolsBackground.classList.remove("visible")
     }
     
-    toolImageToTausly.querySelector("button").onclick = async function()
+    toolImageToTausly.querySelector("input").addEventListener("change", async function()
     {
-        const fileElement = this.parentNode.querySelector("input")
-        const blob = fileElement.files[0]
+        const blob = this.files ? this.files[0] : null
+        if (!blob)
+            return
         
         const converter = new ImageToTausly
         const code = await converter.generateCode(blob)
-        toolImageToTausly.querySelector("pre").innerText = code
-    }
+        toolImageToTausly.querySelector("textarea").value = code
+    })
+    
+    toolImageToTausly.querySelector("textarea").addEventListener("click", e =>
+    {
+        e.target.focus()
+        e.target.select()
+    })
 }
 
 window.addEventListener("keydown", e =>

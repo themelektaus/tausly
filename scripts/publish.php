@@ -1,5 +1,7 @@
 <?php
     
+    header("Content-Type: text/plain");
+    
     $root = __DIR__ . "/..";
     
     $editor_folder = "{$root}/editor";
@@ -10,7 +12,9 @@
         if ($file == "." or $file == "..")
             continue;
         
-        unlink("{$editor_folder}/{$file}");
+        $filename = "{$editor_folder}/{$file}";
+        echo "Unlink " . $filename . PHP_EOL;
+        unlink($filename);
     }
     
     foreach (scandir($staging_folder) as $file)
@@ -21,6 +25,8 @@
         if ($file == "index.php")
             continue;
         
+        $filename = "{$staging_folder}/{$file}";
+        echo "Copy " . $filename . PHP_EOL;
         copy("{$staging_folder}/{$file}", "{$editor_folder}/{$file}");
     }
     
