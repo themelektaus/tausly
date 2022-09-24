@@ -4,12 +4,12 @@ class ForBlock extends Block
     
     static parse(options)
     {
-        const matches = options.code.match(/^FOR\s+([^ ]+)\s*\=\s*([0-9]+)\s+TO\s+(.+)$/i)
+        const matches = options.code.match(/^FOR\s+([^ ]+)\s*\=\s*(.+)\s+TO\s+(.+)$/i)
         if (matches)
         {
             const block = new ForBlock(options)
             block.name = matches[1]
-            block.from = +matches[2]
+            block.getFrom = matches[2]
             block.getTo = matches[3]
             return block
         }
@@ -24,12 +24,13 @@ class ForBlock extends Block
     
     compile()
     {
+        this.getFrom = this.createFunction(this.getFrom)
         this.getTo = this.createFunction(this.getTo)
     }
     
     step()
     {
-        const from = this.from
+        const from = this.getFrom()
         const to = this.getTo()
         
         this.parent.init(this.name, from)
@@ -40,7 +41,10 @@ class ForBlock extends Block
             this.parent.set(this.name, from)
         
         if (this.skip || this.parent.get(this.name) > to)
+        {
+            delete this.skip
             return false
+        }
     }
     
     next()

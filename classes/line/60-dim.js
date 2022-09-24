@@ -14,8 +14,11 @@ class DimLine extends Line
         
         line.x = +size[0]
         
-        if (size.length == 2)
+        if (size.length >= 2)
             line.y = +size[1]
+        
+        if (size.length == 3)
+            line.z = +size[1]
         
         line.name = matches[2]
         
@@ -31,7 +34,7 @@ class DimLine extends Line
     {
         const value = [];
         
-        for (var i = 0; i < this.x; i++)
+        for (let i = 0; i < this.x; i++)
         {
             if (!this.y)
             {
@@ -40,16 +43,40 @@ class DimLine extends Line
             }
             
             value.push([]);
-            for (var j = 0; j < this.y; j++)
-                value[i][j] = 0
+            for (let j = 0; j < this.y; j++)
+            {
+                if (!this.z)
+                {
+                    value[i][j] = 0
+                    continue
+                }
+                
+                value[i].push([]);
+                for (let k = 0; k < this.k; j++)
+                    value[i][j][k] = 0
+            }
         }
         
         let expression
         
         if (this.y)
-            expression = `[${value.join("],[")}]`
+        {
+            if (this.z)
+            {
+                let temp = []
+                for (let i = 0; i < this.x; i++)
+                    temp.push(`[${value[i].join("],[")}]`)
+                expression = `[${temp.join("],[")}]`
+            }
+            else
+            {
+                expression = `[${value.join("],[")}]`
+            }
+        }
         else
+        {
             expression = value.join(",")
+        }
         
         expression = `[${expression}]`
         

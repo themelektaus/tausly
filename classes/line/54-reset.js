@@ -37,10 +37,24 @@ class ResetLine extends Line
                         if (dim[i].length)
                         {
                             for (const j in dim[i])
-                                dim[i][j] = 0
+                            {
+                                if (dim[i][j].length)
+                                {
+                                    for (const k in dim)
+                                    {
+                                        dim[i][j][k] = 0
+                                    }
+                                }
+                                else
+                                {
+                                    dim[i][j] = 0
+                                }
+                            }
                         }
                         else
+                        {
                             dim[i] = 0
+                        }
                     }
                 }
                 else

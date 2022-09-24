@@ -30,7 +30,7 @@ class TranslateLine extends Line
         
         this.root.getHistory("TRANSFORMS")[0].push((tx, ty) =>
         {
-            ctx.translate(x - tx, y - ty)
+            ctx.translate(x, y)
         })
     }
 }

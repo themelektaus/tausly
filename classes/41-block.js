@@ -57,7 +57,7 @@ class Block extends Line
             for (const name of names)
             {
                 const regex = new RegExp(`(\\b${name}\\b)(\\()(.*?)(\\))`, 'g')
-                value = value.replaceAll(regex, `this.parent.getFunc_(\"$1\")($3)`)
+                value = value.replaceAll(regex, `this.parent.getFunc_(\"$1\").call(this, $3)`)
             }
         }
         
@@ -169,7 +169,7 @@ class Block extends Line
         return undefined
     }
     
-    set(name, value, x, y, operator, sender)
+    set(name, value, x, y, z, operator, sender)
     {
         sender ??= this
         
@@ -201,20 +201,34 @@ class Block extends Line
                 }
                 else
                 {
-                    switch (operator)
+                    if (z === undefined)
                     {
-                        case '+': this.variables[name][x][y] += value; break
-                        case '-': this.variables[name][x][y] -= value; break
-                        case '*': this.variables[name][x][y] *= value; break
-                        case '/': this.variables[name][x][y] /= value; break
-                         default: this.variables[name][x][y]  = value; break
+                        switch (operator)
+                        {
+                            case '+': this.variables[name][x][y] += value; break
+                            case '-': this.variables[name][x][y] -= value; break
+                            case '*': this.variables[name][x][y] *= value; break
+                            case '/': this.variables[name][x][y] /= value; break
+                             default: this.variables[name][x][y]  = value; break
+                        }
+                    }
+                    else
+                    {
+                        switch (operator)
+                        {
+                            case '+': this.variables[name][x][y][z] += value; break
+                            case '-': this.variables[name][x][y][z] -= value; break
+                            case '*': this.variables[name][x][y][z] *= value; break
+                            case '/': this.variables[name][x][y][z] /= value; break
+                             default: this.variables[name][x][y][z]  = value; break
+                        }
                     }
                 }
             }
             return true
         }
         
-        if (this.parent && this.parent.set(name, value, x, y, operator, sender))
+        if (this.parent && this.parent.set(name, value, x, y, z, operator, sender))
             return true
         
         console.error(`Set Variable '${name}': NOT FOUND`)

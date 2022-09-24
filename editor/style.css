@@ -452,7 +452,13 @@ canvas {
     align-items: center;
 }
 
-#tools > * {
+#tools * {
+    pointer-events: none;
+}
+#tools-background.visible + #tools * {
+    pointer-events: unset;
+}
+#tools-background.visible + #tools > * {
     pointer-events: all;
 }
 

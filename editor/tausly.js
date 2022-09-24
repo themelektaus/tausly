@@ -546,7 +546,7 @@ class Block extends Line
             for (const name of names)
             {
                 const regex = new RegExp(`(\\b${name}\\b)(\\()(.*?)(\\))`, 'g')
-                value = value.replaceAll(regex, `this.parent.getFunc_(\"$1\")($3)`)
+                value = value.replaceAll(regex, `this.parent.getFunc_(\"$1\").call(this, $3)`)
             }
         }
         
@@ -658,7 +658,7 @@ class Block extends Line
         return undefined
     }
     
-    set(name, value, x, y, operator, sender)
+    set(name, value, x, y, z, operator, sender)
     {
         sender ??= this
         
@@ -690,20 +690,34 @@ class Block extends Line
                 }
                 else
                 {
-                    switch (operator)
+                    if (z === undefined)
                     {
-                        case '+': this.variables[name][x][y] += value; break
-                        case '-': this.variables[name][x][y] -= value; break
-                        case '*': this.variables[name][x][y] *= value; break
-                        case '/': this.variables[name][x][y] /= value; break
-                         default: this.variables[name][x][y]  = value; break
+                        switch (operator)
+                        {
+                            case '+': this.variables[name][x][y] += value; break
+                            case '-': this.variables[name][x][y] -= value; break
+                            case '*': this.variables[name][x][y] *= value; break
+                            case '/': this.variables[name][x][y] /= value; break
+                             default: this.variables[name][x][y]  = value; break
+                        }
+                    }
+                    else
+                    {
+                        switch (operator)
+                        {
+                            case '+': this.variables[name][x][y][z] += value; break
+                            case '-': this.variables[name][x][y][z] -= value; break
+                            case '*': this.variables[name][x][y][z] *= value; break
+                            case '/': this.variables[name][x][y][z] /= value; break
+                             default: this.variables[name][x][y][z]  = value; break
+                        }
                     }
                 }
             }
             return true
         }
         
-        if (this.parent && this.parent.set(name, value, x, y, operator, sender))
+        if (this.parent && this.parent.set(name, value, x, y, z, operator, sender))
             return true
         
         console.error(`Set Variable '${name}': NOT FOUND`)
@@ -1530,12 +1544,12 @@ class ForBlock extends Block
     
     static parse(options)
     {
-        const matches = options.code.match(/^FOR\s+([^ ]+)\s*\=\s*([0-9]+)\s+TO\s+(.+)$/i)
+        const matches = options.code.match(/^FOR\s+([^ ]+)\s*\=\s*(.+)\s+TO\s+(.+)$/i)
         if (matches)
         {
             const block = new ForBlock(options)
             block.name = matches[1]
-            block.from = +matches[2]
+            block.getFrom = matches[2]
             block.getTo = matches[3]
             return block
         }
@@ -1550,12 +1564,13 @@ class ForBlock extends Block
     
     compile()
     {
+        this.getFrom = this.createFunction(this.getFrom)
         this.getTo = this.createFunction(this.getTo)
     }
     
     step()
     {
-        const from = this.from
+        const from = this.getFrom()
         const to = this.getTo()
         
         this.parent.init(this.name, from)
@@ -1566,7 +1581,10 @@ class ForBlock extends Block
             this.parent.set(this.name, from)
         
         if (this.skip || this.parent.get(this.name) > to)
+        {
+            delete this.skip
             return false
+        }
     }
     
     next()
@@ -2021,7 +2039,41 @@ class EchoLine extends Line
 
 
 //------------------------------------------------------------------------------
-// * line/02-sleep.js
+// * line/02-log.js
+//------------------------------------------------------------------------------
+
+class LogLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        const matches = options.code.matchKeyword("LOG", 1)
+        if (matches)
+        {
+            const line = new LogLine(options)
+            line.getData = matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getData = this.createFunction(this.getData)
+    }
+    
+    step()
+    {
+        console.log(this.getData())
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * line/03-sleep.js
 //------------------------------------------------------------------------------
 
 class SleepLine extends Line
@@ -2927,10 +2979,24 @@ class ResetLine extends Line
                         if (dim[i].length)
                         {
                             for (const j in dim[i])
-                                dim[i][j] = 0
+                            {
+                                if (dim[i][j].length)
+                                {
+                                    for (const k in dim)
+                                    {
+                                        dim[i][j][k] = 0
+                                    }
+                                }
+                                else
+                                {
+                                    dim[i][j] = 0
+                                }
+                            }
                         }
                         else
+                        {
                             dim[i] = 0
+                        }
                     }
                 }
                 else
@@ -2987,7 +3053,7 @@ class TranslateLine extends Line
         
         this.root.getHistory("TRANSFORMS")[0].push((tx, ty) =>
         {
-            ctx.translate(x - tx, y - ty)
+            ctx.translate(x, y)
         })
     }
 }
@@ -3098,8 +3164,11 @@ class DimLine extends Line
         
         line.x = +size[0]
         
-        if (size.length == 2)
+        if (size.length >= 2)
             line.y = +size[1]
+        
+        if (size.length == 3)
+            line.z = +size[1]
         
         line.name = matches[2]
         
@@ -3115,7 +3184,7 @@ class DimLine extends Line
     {
         const value = [];
         
-        for (var i = 0; i < this.x; i++)
+        for (let i = 0; i < this.x; i++)
         {
             if (!this.y)
             {
@@ -3124,16 +3193,40 @@ class DimLine extends Line
             }
             
             value.push([]);
-            for (var j = 0; j < this.y; j++)
-                value[i][j] = 0
+            for (let j = 0; j < this.y; j++)
+            {
+                if (!this.z)
+                {
+                    value[i][j] = 0
+                    continue
+                }
+                
+                value[i].push([]);
+                for (let k = 0; k < this.k; j++)
+                    value[i][j][k] = 0
+            }
         }
         
         let expression
         
         if (this.y)
-            expression = `[${value.join("],[")}]`
+        {
+            if (this.z)
+            {
+                let temp = []
+                for (let i = 0; i < this.x; i++)
+                    temp.push(`[${value[i].join("],[")}]`)
+                expression = `[${temp.join("],[")}]`
+            }
+            else
+            {
+                expression = `[${value.join("],[")}]`
+            }
+        }
         else
+        {
             expression = value.join(",")
+        }
         
         expression = `[${expression}]`
         
@@ -3422,14 +3515,20 @@ class VarLine extends Line
             
             line.getX = "undefined"
             line.getY = "undefined"
+            line.getZ = "undefined"
             
             if (x.length >= 2)
             {
                 line.getX = x[1].split(')')[0]
                 
-                if (x.length == 3)
+                if (x.length >= 3)
                 {
                     line.getY = x[2].split(')')[0]
+                    
+                    if (x.length == 4)
+                    {
+                        line.getZ = x[3].split(')')[0]
+                    }
                 }
             }
             
@@ -3446,9 +3545,10 @@ class VarLine extends Line
     {
         this.getX = this.createFunction(this.getX)
         this.getY = this.createFunction(this.getY)
+        this.getZ = this.createFunction(this.getZ)
         
         let value = this.getValue
-        if (value.includes(","))
+        if (!/^[0-9]+$/.test(value) && /^[0-9\,]+$/.test(value))
             value = `[ ${value} ]`
         
         this.getValue = this.createFunction(value)
@@ -3456,7 +3556,7 @@ class VarLine extends Line
     
     step()
     {
-        this.parent.set(this.varName, this.getValue(), this.getX(), this.getY(), this.operator)
+        this.parent.set(this.varName, this.getValue(), this.getX(), this.getY(), this.getZ(), this.operator)
     }
 }
 

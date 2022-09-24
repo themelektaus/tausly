@@ -17,14 +17,20 @@ class VarLine extends Line
             
             line.getX = "undefined"
             line.getY = "undefined"
+            line.getZ = "undefined"
             
             if (x.length >= 2)
             {
                 line.getX = x[1].split(')')[0]
                 
-                if (x.length == 3)
+                if (x.length >= 3)
                 {
                     line.getY = x[2].split(')')[0]
+                    
+                    if (x.length == 4)
+                    {
+                        line.getZ = x[3].split(')')[0]
+                    }
                 }
             }
             
@@ -41,9 +47,10 @@ class VarLine extends Line
     {
         this.getX = this.createFunction(this.getX)
         this.getY = this.createFunction(this.getY)
+        this.getZ = this.createFunction(this.getZ)
         
         let value = this.getValue
-        if (value.includes(","))
+        if (!/^[0-9]+$/.test(value) && /^[0-9\,]+$/.test(value))
             value = `[ ${value} ]`
         
         this.getValue = this.createFunction(value)
@@ -51,6 +58,6 @@ class VarLine extends Line
     
     step()
     {
-        this.parent.set(this.varName, this.getValue(), this.getX(), this.getY(), this.operator)
+        this.parent.set(this.varName, this.getValue(), this.getX(), this.getY(), this.getZ(), this.operator)
     }
 }

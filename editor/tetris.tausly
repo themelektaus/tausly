@@ -1,0 +1,278 @@
+SIZE 280, 560
+
+SONG "Tetris A"
+  BPM 160
+  REPEAT TRUE
+	INSTRUMENT
+	  REVERB 2
+		SHEET "E5 -- B4 C5 D5 -- C5 B4"
+		SHEET "A4 -- A4 C5 E5 -- D5 C5"
+		SHEET "B4 -- -- C5 D5 -- E5 --"
+		SHEET "C5 -- A4 -- A4 -- -- --"
+		SHEET "-- D5 -- F5 A5 -- G5 F5"
+		SHEET "E5 -- -- C5 E5 -- D5 C5"
+		SHEET "B4 -- B4 C5 D5 -- E5 --"
+		SHEET "C5 -- A4 -- A4 -- -- --"
+	END
+END
+
+PLAY "Tetris A"
+
+INIT _color = 0
+INIT _current = 0
+INIT _last = 1
+
+DIM(10,20) game_fields
+INIT game_x = 40
+INIT game_y = 40
+INIT game_width = LEN(game_fields)
+INIT game_height = LEN(game_fields(0))
+INIT block_size = 28
+INIT down_speed = 3
+INIT down_speed_multiplier = 6
+INIT padding = 1
+
+DIM(8,2) fields
+DIM(8,4,4) figures
+
+fields(0)(_color) = "#101016"
+
+🧱 Tetromino "I"
+fields(1)(_color) = "#60F0F0"
+figures(1)(0) = 4,5,6,7
+figures(1)(1) = 2,6,10,14
+figures(1)(2) = 8,9,10,11
+figures(1)(3) = 1,5,9,13
+
+🧱 Tetromino "J"
+fields(2)(_color) = "#6060F0"
+figures(2)(0) = 4,8,9,10
+figures(2)(1) = 1,2,5,9
+figures(2)(2) = 4,5,6,10
+figures(2)(3) = 2,6,9,10
+
+🧱 Tetromino "L"
+fields(3)(_color) = "#F09000"
+figures(3)(0) = 6,8,9,10
+figures(3)(1) = 1,5,9,10
+figures(3)(2) = 4,5,6,8
+figures(3)(3) = 1,2,6,10
+
+🧱 Tetromino "O"
+fields(4)(_color) = "#F0F000"
+figures(4)(0) = 5,6,9,10
+figures(4)(1) = 5,6,9,10
+figures(4)(2) = 5,6,9,10
+figures(4)(3) = 5,6,9,10
+
+🧱 Tetromino "S"
+fields(5)(_color) = "#00F000"
+figures(5)(0) = 5,6,8,9
+figures(5)(1) = 1,5,6,10
+figures(5)(2) = 5,6,8,9
+figures(5)(3) = 1,5,6,10
+
+🧱 Tetromino "T"
+fields(6)(_color) = "#F060F0"
+figures(6)(0) = 5,8,9,10
+figures(6)(1) = 0,4,5,8
+figures(6)(2) = 0,1,2,5
+figures(6)(3) = 2,5,6,10
+
+🧱 Tetromino "Z"
+fields(7)(_color) = "#F00000"
+figures(7)(0) = 4,5,9,10
+figures(7)(1) = 1,4,5,8
+figures(7)(2) = 4,5,9,10
+figures(7)(3) = 1,4,5,8
+
+INIT field_index
+INIT field
+INIT tile_i
+INIT tile
+INIT tile_x
+INIT tile_y
+
+INIT index = 1
+INIT rotation
+INIT x
+INIT y
+INIT down_timer
+INIT down_delay
+INIT intersection
+INIT broken_line
+
+DIM(2) left_key
+DIM(2) right_key
+DIM(2) up_key
+
+GOSUB SpawnTetromino
+
+BEGIN GAMELOOP
+  left_key(_current) = INPUT("LEFT")
+  right_key(_current) = INPUT("RIGHT")
+  up_key(_current) = INPUT("UP")
+  
+  IF left_key(_current) = TRUE
+    IF left_key(_last) = 0
+      left_key(_last) = 100
+      x -= 1
+      GOSUB CheckIntersection
+      IF intersection = TRUE
+      	x += 1
+      END
+    END
+  END
+  
+  IF right_key(_current) = TRUE
+    IF right_key(_last) = 0
+    	right_key(_last) = 100
+      x += 1
+      GOSUB CheckIntersection
+      IF intersection = TRUE
+      	x -= 1
+      END
+    END
+  END
+  
+  IF up_key(_current) = TRUE
+    IF up_key(_last) = FALSE
+      rotation += 1
+      IF rotation = 4 : rotation = 0 : END
+      GOSUB CheckIntersection
+      IF intersection = TRUE
+      	rotation -= 1
+      	IF rotation = -1 : rotation = 3 : END
+      END
+    END
+  END
+  
+  left_key(_last) = MAX(0, left_key(_last) - DELTATIME)
+  right_key(_last) = MAX(0, right_key(_last) - DELTATIME)
+  
+  up_key(_last) = up_key(_current)
+  
+  down_timer += DELTATIME
+  
+  down_delay = 1000 / down_speed
+  IF INPUT("DOWN")
+  	down_delay /= down_speed_multiplier
+  END
+  
+  if down_timer > down_delay
+    down_timer = 0
+    y += 1
+    GOSUB CheckIntersection
+    IF intersection = TRUE
+    	y -= 1
+    	GOSUB FreezeTetromino
+    	GOSUB BreakLines
+    	GOSUB SpawnTetromino
+    	GOSUB CheckIntersection
+    	IF intersection = TRUE
+    		GOTO Exit
+    	END
+    END
+  END
+  
+  COLOR "#161620"
+  FILL
+  
+  FOR i = 0 TO game_width - 1
+    FOR j = 0 TO game_height - 1
+      field_index = game_fields(i)(j)
+      field = fields(field_index)
+      COLOR field(_color)
+      FILL i * block_size + padding / 2, _
+           j * block_size + padding / 2, _
+           block_size - padding, _
+           block_size - padding
+    END
+  END
+  
+  GOSUB DrawFigure
+  
+END
+
+FreezeTetromino:
+FOR i = 0 TO 3
+  tile_i = i
+  GOSUB UpdateTileInfo
+  game_fields(tile_x)(tile_y) = index
+END
+RETURN
+
+BreakLines:
+FOR j = 0 TO game_height - 1
+	FOR i = 0 TO game_width - 1
+	  field_index = game_fields(i)(j)
+	  IF field_index = 0
+	  	BREAK
+	  END
+	END
+	IF field_index = 0
+		NEXT
+	END
+	FOR i = 0 TO game_width - 1
+		FOR k = 0 TO j
+		  SET l = j - k
+		  IF l = 0
+		    game_fields(i)(l) = 0
+		  ELSE
+		    SET m = l - 1
+	  		game_fields(i)(l) = game_fields(i)(m)
+	    END
+		END
+	END
+	BREAK
+END
+IF field_index <> 0
+	GOTO BreakLines
+END
+RETURN
+
+SpawnTetromino:
+index = RANDOM(1, 7)
+rotation = 0
+y = -1
+x = FLOOR(game_width / 2) - 2
+RETURN
+
+UpdateTileInfo:
+tile = figures(index)(rotation)(tile_i)
+tile_x = x + tile % 4
+tile_y = y + FLOOR(tile / 4)
+RETURN
+
+CheckIntersection:
+intersection = FALSE
+FOR i = 0 TO 3
+  tile_i = i
+  GOSUB UpdateTileInfo
+	IF tile_x < 0 OR tile_x >= game_width
+		intersection = TRUE
+	ELSE
+		IF tile_y >= game_height
+			intersection = TRUE
+		ELSE
+			IF game_fields(tile_x)(tile_y) > 0
+				intersection = TRUE
+			END
+		END
+	END
+END
+RETURN
+
+DrawFigure:
+COLOR fields(index)(_color)
+FOR i = 0 TO 3
+  tile_i = i
+  GOSUB UpdateTileInfo
+  FILL tile_x * block_size + padding / 2, _
+       tile_y * block_size + padding / 2, _
+       block_size - padding, _
+       block_size - padding
+END
+RETURN
+
+Exit:

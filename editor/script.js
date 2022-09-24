@@ -11,9 +11,11 @@ let log
 
 let tausly
 let canvasScaleThread
+let useLocalStorage
 
 function loadSrcFile(editor, file, callback)
 {
+    useLocalStorage = false
     fetch(file + "?" + Math.random())
         .then(x => x.text())
         .then(x =>
@@ -22,6 +24,19 @@ function loadSrcFile(editor, file, callback)
             if (callback)
                 callback()
         })
+}
+
+function loadFromLocalStorage(editor)
+{
+    const temp = localStorage.getItem("temp") ?? ""
+    editor.setValue(temp, -1)
+    useLocalStorage = true
+}
+
+function saveToLocalStorage(editor)
+{
+    const temp = editor.getValue()
+    localStorage.setItem("temp", temp)
 }
 
 function updateCanvasScale()
@@ -84,6 +99,11 @@ window.onload = () =>
     editor.renderer.setScrollMargin(8, 60)
     editor.renderer.setPadding(8)
     editor.session.setMode("ace/mode/tausly")
+    editor.getSession().on("change", () =>
+    {
+        if (useLocalStorage)
+            saveToLocalStorage(editor)
+    });
     
     side = document.querySelector("#side")
     
@@ -244,6 +264,10 @@ window.onload = () =>
             //    playButton.click()
             //}, 1500)
         })
+    }
+    else
+    {
+        loadFromLocalStorage(editor)
     }
     
     
