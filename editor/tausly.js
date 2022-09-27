@@ -546,7 +546,7 @@ class Block extends Line
             for (const name of names)
             {
                 const regex = new RegExp(`(\\b${name}\\b)(\\()(.*?)(\\))`, 'g')
-                value = value.replaceAll(regex, `this.parent.getFunc_(\"$1\").call(this, $3)`)
+                value = value.replaceAll(regex, `this.parent.getFunc_(\"$1\").apply(this, [$3])`)
             }
         }
         
