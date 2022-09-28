@@ -55,6 +55,14 @@ class Functions
             "Functions._INPUT_.call(this, $1)"
         ],
         [
+            /\bPRESS\b\s*\((.*?)\)/gi,
+            "Functions._PRESS_.call(this, $1)"
+        ],
+        [
+            /\bRELEASE\b\s*\((.*?)\)/gi,
+            "Functions._RELEASE_.call(this, $1)"
+        ],
+        [
             /\bINT\b\s*\((.*?)\)/gi,
             "Functions._INT_($1)"
         ],
@@ -105,6 +113,14 @@ class Functions
         [
             /\bMOUSEY\b/gi,
             "Functions._MOUSEY_.apply(this)"
+        ],
+        [
+            /\bREAD\b\s*\(\s*(.+?)\s*\,\s*(.+?)\s*\)/gi,
+            "Functions._READ_.call(this, $1, $2)"
+        ],
+        [
+            /\bREAD\b\s*\((.*?)\)/gi,
+            "Functions._READ_.call(this, $1)"
         ]
     ]
     
@@ -201,6 +217,16 @@ class Functions
         return this.root.input.has(key)
     }
     
+    static _PRESS_(key)
+    {
+        return this.root.press(this, key)
+    }
+    
+    static _RELEASE_(key)
+    {
+        return this.root.release(this, key)
+    }
+    
     static _FPS_dt_ = []
     static _FPS_(dt)
     {
@@ -234,5 +260,10 @@ class Functions
     static _SUM_(array)
     {
         return array.reduce((a, b) => a + b)
+    }
+    
+    static _READ_(key, defaultValue)
+    {
+        return this.root.getData(key, defaultValue)
     }
 }

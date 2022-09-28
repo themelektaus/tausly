@@ -22,7 +22,9 @@ class Tausly extends Block
         
         this.refresh()
         
-        this.input = new Set()
+        this.input = new Set
+        this._press = { }
+        this._release = { }
         
         const processKey = key =>
         {
@@ -42,6 +44,8 @@ class Tausly extends Block
             
             const key = processKey(e.key)
             this.input.add(key)
+            this._press[key] = new Set
+            delete this._release[key]
             
             //console.log("[" + key + "]")
         })
@@ -51,7 +55,10 @@ class Tausly extends Block
             if (e.repeat)
                 return
             
-            this.input.delete(processKey(e.key))
+            const key = processKey(e.key)
+            this.input.delete(processKey(key))
+            delete this._press[key]
+            this._release[key] = new Set
         })
         
         window.addEventListener("mousemove", e =>
@@ -59,6 +66,7 @@ class Tausly extends Block
             if (!this.mouse)
                 return
             
+            // TODO: Fix mouse position in editor
             const r = this.canvas.getBoundingClientRect()
             const s = r.width / this.canvas.offsetWidth
             this.mouse.x = (e.clientX - r.left) / s
@@ -67,13 +75,43 @@ class Tausly extends Block
         
         window.addEventListener("mousedown", e =>
         {
-            this.input.add("MOUSE")
+            const key = "MOUSE"
+            this.input.add(key)
+            this._press[key] = new Set
+            delete this._release[key]
         })
         
         window.addEventListener("mouseup", e =>
         {
-            this.input.delete("MOUSE")
+            const key = "MOUSE"
+            this.input.delete(key)
+            delete this._press[key]
+            this._release[key] = new Set
         })
+    }
+    
+    press(line, key)
+    {
+        if (this._press[key] === undefined)
+            return false
+        
+        if (this._press[key].has(line.globalIndex))
+            return false
+            
+        this._press[key].add(line.globalIndex)
+        return true
+    }
+    
+    release(line, key)
+    {
+        if (this._release[key] === undefined)
+            return false
+        
+        if (this._release[key].has(line.globalIndex))
+            return false
+            
+        this._release[key].add(line.globalIndex)
+        return true
     }
     
     refresh()
@@ -238,6 +276,7 @@ class Tausly extends Block
     
     async beforeRun()
     {
+        this.scope = null
         this.mouse = { x: this.canvas.width / 2, y: this.canvas.height / 2 }
         this.history = { }
         
@@ -371,5 +410,26 @@ class Tausly extends Block
     {
         const dt = this.getDeltaTime()
         return (1000 - dt * fps) / (fps + dt) - 2.5 * ((1000 / fps) - dt) / (1000 / fps)
+    }
+    
+    getData(key, defaultValue)
+    {
+        key = `${(this.scope ?? "")}.${key}`
+        const value = localStorage.getItem(key)
+        return value ? JSON.parse(value) : (defaultValue ?? 0)
+    }
+    
+    setData(key, value)
+    {
+        key = `${(this.scope ?? "")}.${key}`
+        
+        if (value)
+        {
+            value = JSON.stringify(value)
+            localStorage.setItem(key, value)
+            return
+        }
+        
+        localStorage.removeItem(key)
     }
 }

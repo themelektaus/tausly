@@ -4,6 +4,9 @@ class VarLine extends Line
     
     static parse(options)
     {
+        if (options.code.split("=").length > 10)
+            return null
+        
         let matches
         
         matches = options.code.match(/^([^ ]+)\s*(?:(|\+|\-|\*|\/))\=\s*(.+)$/)

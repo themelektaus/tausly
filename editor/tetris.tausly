@@ -1,9 +1,57 @@
+                                                            
+                             _|_                            
+                              |                             
+                              |                             
+                              |                             
+                             (_)                            
+                             | |                            
+                             |_|                            
+                             J#L                            
+                             |#|                            
+                            /###\                           
+                          ,:######.                         
+                        .::##:#####:.                       
+                     ,:::###  ## ####;;.                    
+                  ..:::####  ####.####:::.                  
+                ,:: #####'  ##### :####;:::.                
+               ;: #####'   #####   :#####'#.;               
+              j #####'   ######    :##### ##:l              
+              |#####    ######     ###### ###|              
+              :####    ######     ######  ###;              
+              l####   ######     ######  ###:;              
+               \###  :#####     #####  .###:/               
+                `##  #####    .####  .#####´                
+                  \' :####  .##### .#####/                  
+                  \======================/                  
+                   |.==.==.===.===.==.==|                   
+                   \====================/                   
+                    |                  |                    
+                    |                  |                    
+          MMMMMM MMMMMM MMMMMM MMMML  MMMMM MMMMMM          
+            MM   MM '     MM   M   M   'M   MM              
+            MM   MMMM     MM   MMMMP    M   MMMMMM          
+            MM   MM .     MM   M  M,   .M       MM          
+            MM   MM :     MM   M  'M,  :M       MM          
+            MM   MMMMMM   MM   M   'M MMMMM MMMMMM          
+                    |                  |                    
+                    |                  |                    
+                    |                  |                    
+                                                            
+------------------------------------------------------------
+ * Setup
+------------------------------------------------------------
 SIZE 616, 560
 
+------------------------------------------------------------
+ * Dim Keys
+------------------------------------------------------------
 INIT _color = 0
 INIT _current = 0
 INIT _last = 1
 
+------------------------------------------------------------
+ * Config
+------------------------------------------------------------
 DIM(10,20) game_fields
 INIT game_x = 40
 INIT game_y = 40
@@ -11,14 +59,18 @@ INIT game_width = LEN(game_fields)
 INIT game_height = LEN(game_fields(0))
 INIT block_size = 28
 INIT down_speed = 1
-INIT down_speed_multiplier = 12
+INIT down_speed_mult = 12
 INIT padding = 1
 INIT side_tick = 250
 INIT side_tick_hold = 50
 INIT coyote_down_time = 500
 
-FUNC GetDownSpeed RETURNS down_speed * (FLOOR(score / 20) + 1)
+FUNC GetDownSpeed _
+  RETURNS down_speed * (FLOOR(score / 20) + 1)
 
+------------------------------------------------------------
+ * Fields / Figures
+------------------------------------------------------------
 DIM(8,2) fields
 DIM(8,4,4) figures
 
@@ -66,6 +118,9 @@ figures(7)(1) = 2,5,6,9
 figures(7)(2) = 4,5,9,10
 figures(7)(3) = 1,4,5,8
 
+------------------------------------------------------------
+ * Variables
+------------------------------------------------------------
 INIT field_index
 INIT field
 INIT tile_i
@@ -100,36 +155,33 @@ FOR f = 0 TO 3
   index_queue(f) = RANDOM(1, 7)
 END
 
+------------------------------------------------------------
+ * Input
+------------------------------------------------------------
 DIM(2,2) side_keys
-DIM(2) up_key
-DIM(2) space_key
-DIM(2) shift_key
+INIT x_key
 
-GOSUB SpawnTetromino
+------------------------------------------------------------
+ * Start
+------------------------------------------------------------
+GOSUB Spawn Tetromino
 
+------------------------------------------------------------
+ * Game Loop
+   This is an infinite loop which sleeps at the end as long
+   as needed. In the end it runs through 60 times a second.
+------------------------------------------------------------
 BEGIN GAMELOOP
   
-  shift_key(_current) = INPUT("SHIFT")
-  IF shift_key(_current) = TRUE
-    IF shift_key(_last) = FALSE
-      IF switch = 0
-	    	switch = 1
-	      GOSUB SpawnTetromino
-	      switch = 2
-	    END
+  IF PRESS("SHIFT")
+    IF switch = 0
+      switch = 1
+      GOSUB Spawn Tetromino
+      switch = 2
     END
   END
-  shift_key(_last) = shift_key(_current)
   
-  space_key(_current) = INPUT("SPACE")
-  IF space_key(_current) = TRUE
-    IF space_key(_last) = FALSE
-      fast_down = TRUE
-    END
-  END
-  space_key(_last) = space_key(_current)
-  
-  IF fast_down = TRUE
+  IF PRESS("SPACE")
     GOTO FastDown
   END
   
@@ -145,7 +197,7 @@ BEGIN GAMELOOP
           side_keys(i)(_last) = side_tick_hold
         END
         IF i = 0 : x -= 1 : ELSE : x += 1 : END
-        GOSUB CheckIntersection
+        GOSUB Check Intersection
         IF intersection = TRUE
           IF i = 0 : x += 1 : ELSE : x -= 1 : END
         END
@@ -161,66 +213,62 @@ BEGIN GAMELOOP
     side_keys(i)(_last) = MAX(side_max, side_keys(i)(_last))
   END
   
-  up_key(_current) = INPUT("UP")
-  IF up_key(_current) = TRUE
-    IF up_key(_last) = FALSE
-      rotation += 1
-      IF rotation = 4 : rotation = 0 : END
-      GOSUB CheckIntersection
-      IF intersection = FALSE : GOTO RotationOK : END
-      x += 1 : GOSUB CheckIntersection
-      IF intersection = FALSE : GOTO RotationOK : END
-      x += 1 : GOSUB CheckIntersection
-      IF intersection = FALSE : GOTO RotationOK : END
-      x -= 3 : GOSUB CheckIntersection
-      IF intersection = FALSE : GOTO RotationOK : END
-      x -= 1 : GOSUB CheckIntersection
-      IF intersection = FALSE : GOTO RotationOK : END
-      x += 2
-      rotation -= 1
-      IF rotation = -1 : rotation = 3 : END
-      
-      RotationOK:
-    END
+  x_key = PRESS("X")
+  IF x_key OR PRESS("UP") OR PRESS("C")
+    IF x_key : rotation -= 1 : ELSE : rotation += 1 : END
+    GOSUB Fix Rotation
+    GOSUB Check Intersection
+    IF intersection = FALSE : GOTO Rotation OK : END
+    x += 1 : GOSUB Check Intersection
+    IF intersection = FALSE : GOTO Rotation OK : END
+    x += 1 : GOSUB Check Intersection
+    IF intersection = FALSE : GOTO Rotation OK : END
+    x -= 3 : GOSUB Check Intersection
+    IF intersection = FALSE : GOTO Rotation OK : END
+    x -= 1 : GOSUB Check Intersection
+    IF intersection = FALSE : GOTO Rotation OK : END
+    x += 2
+    IF x_key : rotation += 1 : ELSE : rotation -= 1 : END
+    GOSUB Fix Rotation
+    Rotation OK:
   END
-  up_key(_last) = up_key(_current)
   
   GOTO SkipFastDown
   
   FastDown:
   down_timer = 0
   down_delay = 0
-  WHILE fast_down = TRUE
+  LOOP
     y += 1
-    GOSUB CheckIntersection
-    IF intersection = TRUE
-      fast_down = FALSE
-      y -= 1
-      GOSUB Render
-      SLEEP 1000 / GetDownSpeed() / down_speed_multiplier
-      GOTO Freeze
+    GOSUB Check Intersection
+    IF intersection = FALSE
+      NEXT
     END
+    y -= 1
+    GOSUB Render
+    SLEEP 1000 / GetDownSpeed() / down_speed_mult
+    GOTO Freeze
+    BREAK
   END
   
   SkipFastDown:
   IF down_timer > down_delay
     y += 1
-    GOSUB CheckIntersection
+    GOSUB Check Intersection
     IF intersection = TRUE
       y -= 1
       IF coyote_down_timer > coyote_down_time
         Freeze:
-        GOSUB FreezeTetromino
-        GOSUB BreakLines
-        GOSUB SpawnTetromino
-        GOSUB CheckIntersection
+        GOSUB Freeze Tetromino
+        GOSUB Solve Lines
+        GOSUB Spawn Tetromino
+        GOSUB Check Intersection
         IF intersection = TRUE
           GOTO Exit
         END
       ELSE
         IF INPUT("DOWN")
-          coyote_down_timer += DELTATIME * _
-            down_speed_multiplier
+          coyote_down_timer += DELTATIME * down_speed_mult
         ELSE
           coyote_down_timer += DELTATIME
         END
@@ -232,7 +280,7 @@ BEGIN GAMELOOP
     down_timer += DELTATIME
     down_delay = 1000 / GetDownSpeed()
     IF INPUT("DOWN")
-      down_delay /= down_speed_multiplier
+      down_delay /= down_speed_mult
     END
   END
   
@@ -240,19 +288,30 @@ BEGIN GAMELOOP
   
 END
 
-FreezeTetromino:
+------------------------------------------------------------
+ * Fix Rotation
+------------------------------------------------------------
+IF rotation = -1 : rotation = 3 : END
+IF rotation = 4 : rotation = 0 : END
+RETURN
+
+------------------------------------------------------------
+ * Freeze Tetromino
+------------------------------------------------------------
 switch = 0
 coyote_down_timer = 0
 FOR i = 0 TO 3
   tile_i = i
-  GOSUB UpdateTileInfo
+  GOSUB Update Tile Info
   game_fields(tile_x)(tile_y) = index
 END
 RETURN
 
-BreakLines:
+------------------------------------------------------------
+ * Solve Lines
+------------------------------------------------------------
 broken_lines = 0
-BreakNextLine:
+Solve Next Line:
 FOR j = 0 TO game_height - 1
   FOR i = 0 TO game_width - 1
     field_index = game_fields(i)(j)
@@ -278,7 +337,7 @@ FOR j = 0 TO game_height - 1
 END
 IF field_index <> 0
   broken_lines += 1
-  GOTO BreakNextLine
+  GOTO Solve Next Line
 END
 IF broken_lines > 0
   IF broken_lines = 4
@@ -293,40 +352,46 @@ END
 score += broken_lines * broken_lines
 RETURN
 
-SpawnTetromino:
+------------------------------------------------------------
+ * Spawn Tetromino
+------------------------------------------------------------
 IF switch = 1
   IF memory > 0
     SET old_memory = memory
     memory = index_queue(0)
     index_queue(0) = old_memory
-    GOTO SpawnTetrominoSkip
+    GOTO Skip Spawning Tetromino
   ELSE
     memory = index_queue(0)
   END
 END
 FOR c = 0 TO 2
   SET cc = c + 1
-	index_queue(c) = index_queue(cc)
+  index_queue(c) = index_queue(cc)
 END
 index_queue(3) = RANDOM(1, 7)
-SpawnTetrominoSkip:
+Skip Spawning Tetromino:
 index = index_queue(0)
 rotation = 0
 y = 0
 x = FLOOR(game_width / 2) - 2
 RETURN
 
-UpdateTileInfo:
+------------------------------------------------------------
+ * Update Tile Info
+------------------------------------------------------------
 tile = figures(index)(rotation)(tile_i)
 tile_x = x + tile % 4
 tile_y = y + FLOOR(tile / 4)
 RETURN
 
-CheckIntersection:
+------------------------------------------------------------
+ * Check Intersection
+------------------------------------------------------------
 intersection = FALSE
 FOR i = 0 TO 3
   tile_i = i
-  GOSUB UpdateTileInfo
+  GOSUB Update Tile Info
   IF tile_x < 0 OR tile_x >= game_width
     intersection = TRUE
   ELSE
@@ -341,7 +406,9 @@ FOR i = 0 TO 3
 END
 RETURN
 
-Render:
+------------------------------------------------------------
+ * Render
+------------------------------------------------------------
 RESET
 COLOR "#161620"
 FILL
@@ -370,7 +437,7 @@ WHILE intersection = FALSE
   y += 1
   FOR i = 0 TO 3
     tile_i = i
-    GOSUB CheckIntersection
+    GOSUB Check Intersection
     IF intersection = TRUE
       y -= 1
       BREAK
@@ -380,10 +447,10 @@ END
 IF intersection = TRUE
   FOR i = 0 TO 3
     tile_i = i
-    GOSUB UpdateTileInfo
+    GOSUB Update Tile Info
       
     COLOR 155, 255, 255, 55
-    GOSUB DrawTetrominoTile
+    GOSUB Draw Tetromino Tile
     
     COLOR fields(0)(_color)
     FILL tile_x * block_size + padding / 2 + 2, _
@@ -405,25 +472,25 @@ x = game_width + 1
 
 FOR a = 1 TO 3
   index = index_queue(a)
-	y = (a - 1) * 5 + 2
-	COLOR fields(index)(_color)
-	FOR b = 0 TO 3
-	  tile_i = b
-	  GOSUB UpdateTileInfo
-	  GOSUB DrawTetrominoTile
-	END
+  y = (a - 1) * 5 + 2
+  COLOR fields(index)(_color)
+  FOR b = 0 TO 3
+    tile_i = b
+    GOSUB Update Tile Info
+    GOSUB Draw Tetromino Tile
+  END
 END
 
 IF memory > 0
-	index = memory
-	x = -5
-	y = 1
-	COLOR fields(index)(_color)
-	FOR b = 0 TO 3
-	  tile_i = b
-	  GOSUB UpdateTileInfo
-	  GOSUB DrawTetrominoTile
-	END
+  index = memory
+  x = -5
+  y = 1
+  COLOR fields(index)(_color)
+  FOR b = 0 TO 3
+    tile_i = b
+    GOSUB Update Tile Info
+    GOSUB Draw Tetromino Tile
+  END
 END
 
 index = old_index
@@ -432,22 +499,26 @@ x = old_x
 y = old_y
 
 COLOR fields(index)(_color)
-DrawTetromino:
+
+Draw Tetromino:
 FOR i = 0 TO 3
   tile_i = i
-  GOSUB UpdateTileInfo
-  GOSUB DrawTetrominoTile
+  GOSUB Update Tile Info
+  GOSUB Draw Tetromino Tile
 END
-
 RETURN
 
-DrawTetrominoTile:
+------------------------------------------------------------
+ * Draw Tetromino Tile
+------------------------------------------------------------
 FILL tile_x * block_size + padding / 2, _
      tile_y * block_size + padding / 2, _
      block_size - padding, _
      block_size - padding
 RETURN
 
-Exit:
-COLOR "#F006"
-GOSUB DrawTetromino
+------------------------------------------------------------
+ * Exit
+------------------------------------------------------------
+COLOR "#FF000066"
+GOSUB Draw Tetromino

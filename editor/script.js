@@ -28,15 +28,18 @@ function loadSrcFile(editor, file, callback)
 
 function loadFromLocalStorage(editor)
 {
-    const temp = localStorage.getItem("temp") ?? ""
+    const temp = localStorage.getItem("code") ?? ""
     editor.setValue(temp, -1)
     useLocalStorage = true
 }
 
 function saveToLocalStorage(editor)
 {
-    const temp = editor.getValue()
-    localStorage.setItem("temp", temp)
+    const code = editor.getValue()
+    if (code)
+        localStorage.setItem("code", code)
+    else
+        localStorage.removeItem("code")
 }
 
 function updateCanvasScale()
@@ -113,7 +116,7 @@ window.onload = () =>
     
     select.onchange = function(e)
     {
-        if (!this.value || this.value == "_")
+        if (this.value == "_")
         {
             this.selectedIndex = this.dataset.previousIndex
             return
@@ -121,8 +124,14 @@ window.onload = () =>
         
         this.dataset.previousIndex = this.selectedIndex
         
-        location.hash = this.value.split(".")[0]
+        if (this.value == "")
+        {
+            location.hash = ""
+            loadFromLocalStorage(editor)
+            return
+        }
         
+        location.hash = this.value.split(".")[0]
         loadSrcFile(editor, this.value)
     }
     

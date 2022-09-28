@@ -23,12 +23,12 @@ define(
                 start: [
                     {
                         token: 'keyword.method.tausly',
-                        regex: '\\b(?:ECHO|LOG|SLEEP|NORMALIZE|SMOOTHDAMP|SIZE|CLEAR|COLOR|FILL|TEXT|ALIGN\\sLEFT|ALIGN\\sCENTER|ALIGN\\sRIGHT|DIM|LABEL|INIT|SET|DIM|GAIN|BPM|TIME\\sSIGNATURE|REPEAT|TYPE|REVERB|SHEET|PLAY|STOP|RESET|DRAW|TRANSLATE|ROTATE|SCALE|ATTACK|RELEASE|CURSOR\\sSHOW|CURSOR\\sHIDE|FUNC|RETURNS)\\b',
+                        regex: '\\b(?:ECHO|LOG|SLEEP|NORMALIZE|SMOOTHDAMP|SIZE|CLEAR|COLOR|FILL|TEXT|ALIGN\\sLEFT|ALIGN\\sCENTER|ALIGN\\sRIGHT|DIM|LABEL|INIT|SET|DIM|GAIN|BPM|TIME\\sSIGNATURE|REPEAT|TYPE|REVERB|SHEET|PLAY|STOP|RESET|DRAW|TRANSLATE|ROTATE|SCALE|ATTACK|RELEASE|CURSOR\\sSHOW|CURSOR\\sHIDE|FUNC|RETURNS|SCOPE|WRITE)\\b',
                         caseInsensitive: true
                     },
                     {
                         token: 'keyword.func.tausly',
-                        regex: '\\b(?:CEIL|CLAMP|FLOOR|INPUT|INT|MAX|MIN|XRANDOM|RANDOM|ROUND|FPS|LEN|ABS|FRAMETIME|SUM)\\b'
+                        regex: '\\b(?:CEIL|CLAMP|FLOOR|INPUT|PRESS|RELEASE|INT|MAX|MIN|XRANDOM|RANDOM|ROUND|FPS|LEN|ABS|FRAMETIME|SUM|READ)\\b'
                     },
                     {
                         token: 'keyword.jump.tausly',

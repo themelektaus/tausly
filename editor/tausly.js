@@ -255,6 +255,14 @@ class Functions
             "Functions._INPUT_.call(this, $1)"
         ],
         [
+            /\bPRESS\b\s*\((.*?)\)/gi,
+            "Functions._PRESS_.call(this, $1)"
+        ],
+        [
+            /\bRELEASE\b\s*\((.*?)\)/gi,
+            "Functions._RELEASE_.call(this, $1)"
+        ],
+        [
             /\bINT\b\s*\((.*?)\)/gi,
             "Functions._INT_($1)"
         ],
@@ -305,6 +313,14 @@ class Functions
         [
             /\bMOUSEY\b/gi,
             "Functions._MOUSEY_.apply(this)"
+        ],
+        [
+            /\bREAD\b\s*\(\s*(.+?)\s*\,\s*(.+?)\s*\)/gi,
+            "Functions._READ_.call(this, $1, $2)"
+        ],
+        [
+            /\bREAD\b\s*\((.*?)\)/gi,
+            "Functions._READ_.call(this, $1)"
         ]
     ]
     
@@ -401,6 +417,16 @@ class Functions
         return this.root.input.has(key)
     }
     
+    static _PRESS_(key)
+    {
+        return this.root.press(this, key)
+    }
+    
+    static _RELEASE_(key)
+    {
+        return this.root.release(this, key)
+    }
+    
     static _FPS_dt_ = []
     static _FPS_(dt)
     {
@@ -434,6 +460,11 @@ class Functions
     static _SUM_(array)
     {
         return array.reduce((a, b) => a + b)
+    }
+    
+    static _READ_(key, defaultValue)
+    {
+        return this.root.getData(key, defaultValue)
     }
 }
 
@@ -755,7 +786,9 @@ class Tausly extends Block
         
         this.refresh()
         
-        this.input = new Set()
+        this.input = new Set
+        this._press = { }
+        this._release = { }
         
         const processKey = key =>
         {
@@ -775,6 +808,8 @@ class Tausly extends Block
             
             const key = processKey(e.key)
             this.input.add(key)
+            this._press[key] = new Set
+            delete this._release[key]
             
             //console.log("[" + key + "]")
         })
@@ -784,7 +819,10 @@ class Tausly extends Block
             if (e.repeat)
                 return
             
-            this.input.delete(processKey(e.key))
+            const key = processKey(e.key)
+            this.input.delete(processKey(key))
+            delete this._press[key]
+            this._release[key] = new Set
         })
         
         window.addEventListener("mousemove", e =>
@@ -792,6 +830,7 @@ class Tausly extends Block
             if (!this.mouse)
                 return
             
+            // TODO: Fix mouse position in editor
             const r = this.canvas.getBoundingClientRect()
             const s = r.width / this.canvas.offsetWidth
             this.mouse.x = (e.clientX - r.left) / s
@@ -800,13 +839,43 @@ class Tausly extends Block
         
         window.addEventListener("mousedown", e =>
         {
-            this.input.add("MOUSE")
+            const key = "MOUSE"
+            this.input.add(key)
+            this._press[key] = new Set
+            delete this._release[key]
         })
         
         window.addEventListener("mouseup", e =>
         {
-            this.input.delete("MOUSE")
+            const key = "MOUSE"
+            this.input.delete(key)
+            delete this._press[key]
+            this._release[key] = new Set
         })
+    }
+    
+    press(line, key)
+    {
+        if (this._press[key] === undefined)
+            return false
+        
+        if (this._press[key].has(line.globalIndex))
+            return false
+            
+        this._press[key].add(line.globalIndex)
+        return true
+    }
+    
+    release(line, key)
+    {
+        if (this._release[key] === undefined)
+            return false
+        
+        if (this._release[key].has(line.globalIndex))
+            return false
+            
+        this._release[key].add(line.globalIndex)
+        return true
     }
     
     refresh()
@@ -971,6 +1040,7 @@ class Tausly extends Block
     
     async beforeRun()
     {
+        this.scope = null
         this.mouse = { x: this.canvas.width / 2, y: this.canvas.height / 2 }
         this.history = { }
         
@@ -1104,6 +1174,27 @@ class Tausly extends Block
     {
         const dt = this.getDeltaTime()
         return (1000 - dt * fps) / (fps + dt) - 2.5 * ((1000 / fps) - dt) / (1000 / fps)
+    }
+    
+    getData(key, defaultValue)
+    {
+        key = `${(this.scope ?? "")}.${key}`
+        const value = localStorage.getItem(key)
+        return value ? JSON.parse(value) : (defaultValue ?? 0)
+    }
+    
+    setData(key, value)
+    {
+        key = `${(this.scope ?? "")}.${key}`
+        
+        if (value)
+        {
+            value = JSON.stringify(value)
+            localStorage.setItem(key, value)
+            return
+        }
+        
+        localStorage.removeItem(key)
     }
 }
 
@@ -3502,6 +3593,9 @@ class VarLine extends Line
     
     static parse(options)
     {
+        if (options.code.split("=").length > 10)
+            return null
+        
         let matches
         
         matches = options.code.match(/^([^ ]+)\s*(?:(|\+|\-|\*|\/))\=\s*(.+)$/)
@@ -4014,6 +4108,80 @@ class ReleaseLine extends Line
     {
         const instrument = this.root.getHistory("INSTRUMENT")
         instrument[0].instrument.release = this.value
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * line/95-scope.js
+//------------------------------------------------------------------------------
+
+class ScopeLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("SCOPE", 1)
+        if (matches)
+        {
+            const line = new ScopeLine(options)
+            line.getScope = matches[1]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getScope = this.createFunction(this.getScope)
+    }
+    
+    step()
+    {
+        this.root.scope = this.getScope()
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * line/96-write.js
+//------------------------------------------------------------------------------
+
+class WriteLine extends Line
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        let matches
+        
+        matches = options.code.matchKeyword("WRITE", 2)
+        if (matches)
+        {
+            const line = new WriteLine(options)
+            line.getKey = matches[1]
+            line.getValue = matches[2]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getKey = this.createFunction(this.getKey)
+        this.getValue = this.createFunction(this.getValue)
+    }
+    
+    step()
+    {
+        this.root.setData(this.getKey(), this.getValue())
     }
 }
 

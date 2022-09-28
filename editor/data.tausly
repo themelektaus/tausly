@@ -1,0 +1,40 @@
+CLEAR
+
+COLOR "black"
+FILL
+
+COLOR "white"
+TEXT 30, 40, "[1] READ"
+TEXT 30, 70, "[2] WRITE"
+TEXT 30, 100, "[3] DELETE"
+
+BEGIN GAMELOOP
+  
+  IF PRESS(1)
+    SET data = READ("data")
+    TEXT 30, 130, "Reading ... 'data' => " + data
+    BREAK
+  END
+  
+  IF PRESS(2)
+    SET data = RANDOM(10, 99)
+    TEXT 30, 130, "Wrting ... 'data', " + data
+    WRITE "data", data
+    BREAK
+  END
+  
+  IF PRESS(3)
+    TEXT 30, 130, "Delete ... 'data'"
+    WRITE "data", 0
+    BREAK
+  END
+  
+END
+
+TEXT 30, 160, "Press [SPACE]"
+
+BEGIN GAMELOOP
+  IF PRESS("SPACE")
+    BREAK
+  END
+END
