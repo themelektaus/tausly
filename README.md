@@ -16,7 +16,7 @@
 
 ## Demo
 - Visit the
-  [Editor](https://steinalt.online/tausly/editor)
+  [Editor](https://steinalt.online/tausly/editor#tetris)
   to see the current version in action.
 - There is also a minimalistic
   [index.html](https://steinalt.online/tausly)
