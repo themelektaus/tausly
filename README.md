@@ -84,9 +84,8 @@ to generate
 
 You can execute Tausly code via a windows application called **Tausly Player**.
 It is a ~7MB executable which registers as a default application for `.tausly`-files.
-So you can run Tausly Code without needing your web browser.
-Give it a try 😉
-- Executable | https://github.com/themelektaus/tausly-player/releases
+So you can run Tausly Code without needing your web browser.<br>Give it a try 😉
+- Windows (x64) | https://github.com/themelektaus/tausly-player/releases
 - GitHub | https://github.com/themelektaus/tausly-player
 
 
