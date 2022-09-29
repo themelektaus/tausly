@@ -112,12 +112,6 @@ It's a temporary replacement for the documentation at the moment.
 
 
 
-## Documentation
-
-As expected, there is no documentation... what a suprise.
-
-
-
 ## Limitations
 
 There are of course a few limitations, some of which are intentional:
@@ -129,3 +123,299 @@ There are of course a few limitations, some of which are intentional:
 - `GOSUB` is not able to `RETURN` if `GOTO`
   is called in the meantime.
 - No WebGL
+
+
+
+## Reference
+
+### `ECHO <value>`
+> By default it calls `console.log`. It can be overwritten by defining `onEcho` of a Tausly instance.
+```
+const tausly = new Tausly
+tausly.onEcho = text => { }
+```
+
+### `LOG <value>`
+> Typically used for debugging. It is like `ECHO` but ignores the `onEcho` override if there is any.
+
+### `SLEEP <milliseconds>`
+> Freezes the entier runtime application for a specified amount of **milliseconds**.
+
+### `GOTO <label>`
+> Jumps the cursor to the specified `label`.
+
+### `GOSUB <label>`
+> Jumps the cursor to the specified `label` and comes back if `RETURN` gets called.
+
+### `RETURN`
+> Jumps back to the last call of `GOSUB`.
+
+### `RETURN TO <label>`
+> Like `GOTO` but should be used if the cursor came from a `GOSUB` instruction.
+
+### `END`
+> Marks the ending of a **Block**.
+
+### `NEXT`
+> Skips the current iteration of a **Block**.
+
+### `BREAK`
+> Breaks out of the current **Block**.
+
+
+
+### `NORMALIZE <dimName>`
+> Normalizes a Vector. Here you have to parse the name of an `DIM(2)`. For example:
+```
+DIM(2) move
+move(0) = 1
+move(1) = 1
+NORMALIZE move
+```
+
+### `SMOOTHDAMP <current>, <target>, <vel>, <smoothTime>[, <dt>, <maxSp>]`
+> Works exactly like Unity's SmoothDamp Method<br>
+- https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/Math/Mathf.cs
+- https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/Math/Vector2.cs
+
+
+
+### `SIZE <x>, <y>`
+> Changes the size of the `canvas`.
+
+
+
+### `CLEAR`
+> Clears the canvas and calls `onClear` on the Tausly instance.
+
+### `COLOR <string>`
+> Sets the active color that should used for `FILL` and `TEXT`.
+
+### `FILL`
+> Fills the entier canvas by the active color.
+
+### `FILL <x>, <y>, <width>, <height>`
+> Fills the given area by the active color.
+
+
+
+### `TEXT <x>, <y>, <text>`
+> Write text inside the canvas at the given position.
+
+### `TEXT <x>, <y>, <text>, <maxWidth>`
+> Write text inside the canvas at the given position and takes usage of word wrapping by width.
+
+### `TEXT <x>, <y>, <text>, <maxWidth>, <fullText>`
+> Like above but with an additional argument called `fullText`. It behaves the same way, but if the `text` length is lower than `fullText` then the word wrapping is forced to the `fullText`.
+
+### `ALIGN LEFT`
+> Aligns text to the left (Default setting).
+
+### `ALIGN CENTER`
+> Aligns text to the center.
+
+### `ALIGN RIGHT`
+> Aligns text to the right.
+
+
+
+### `DRAW <x>, <y>, <spriteName>`
+> Draws the first `FRAME` of a `SPRITE`.
+
+### `DRAW <x>, <y>, <spriteName>, <frameIndex>`
+> Draws a `FRAME` of a `SPRITE`.
+
+### `DRAW <x>, <y>, <spriteName>, <frameName>`
+> Draws a `FRAME` of a `SPRITE`.
+
+
+
+### `RESET`
+> Resets all active transformations.
+
+### `RESET <dimName>`
+> Reset all value of a given `DIM`-name to `0`.
+
+
+
+### `TRANSLATE <x>, <y>`
+> &nbsp;
+
+### `ROTATE <degrees>`
+> &nbsp;
+
+### `SCALE <value>`
+> &nbsp;
+
+
+
+### `DIM(x)`
+> &nbsp;
+
+### `DIM(x,y)`
+> &nbsp;
+
+### `DIM(x,y,z)`
+> &nbsp;
+
+
+
+### `PIXELMAP "??.."`
+> &nbsp;
+
+### `COLORMAP "?", "#??????"`
+> &nbsp;
+
+
+
+### `CURSOR SHOW`
+> &nbsp;
+
+### `CURSOR HIDE`
+> &nbsp;
+
+
+
+### `INIT <varName>`
+> &nbsp;
+
+### `INIT <varName> = <value>`
+> &nbsp;
+
+### `SET <varName> = <value>`
+> &nbsp;
+
+### `<varName> = <value>`
+> &nbsp;
+
+
+
+### `FUNC <name> RETURNS <value>`
+> &nbsp;
+
+
+
+### `GAIN <volume>`
+> &nbsp;
+
+### `BPM <bpm>`
+> &nbsp;
+
+### `TIME SIGNATURE <n>`
+> &nbsp;
+
+### `REPEAT <boolean>`
+> &nbsp;
+
+### `TYPE <name>`
+> &nbsp;
+
+### `REVERB <boolean>`
+> &nbsp;
+
+### `SHEET "?? ?? ?? ?? .."`
+> &nbsp;
+
+### `PLAY <songName>`
+> &nbsp;
+
+### `STOP <songName>`
+> &nbsp;
+
+### `ATTACK <milliseconds>`
+> &nbsp;
+
+### `RELEASE <milliseconds>`
+> &nbsp;
+
+### `SCOPE <name>`
+> &nbsp;
+
+### `WRITE <key>, <value>`
+> &nbsp;
+
+
+
+### `IF [NOT] <condition> AND .. OR .. [THEN]`
+> &nbsp;
+
+### `ELSE`
+> &nbsp;
+
+### `BEGIN TRANSFORM`
+> &nbsp;
+
+### `FOR <i> = <from> TO <to> [THEN]`
+> &nbsp;
+
+### `WHILE [NOT] <condition>`
+> &nbsp;
+
+### `BEGIN GAMELOOP [<fps>]`
+> &nbsp;
+
+### `LOOP`
+> &nbsp;
+
+### `SONG <name>`
+> &nbsp;
+
+### `INSTRUMENT [<name>]`
+> &nbsp;
+
+### `SPRITE <name>`
+> &nbsp;
+
+### `FRAME [<name>]`
+> &nbsp;
+
+### `BEGIN CLIP <x>, <y>, <width>, <height>`
+> &nbsp;
+
+
+
+### `<Label>:`
+> &nbsp;
+
+### `* <Label>`
+> &nbsp;
+
+
+
+## Constants
+```
+VALUE
+FRAMETIME
+DELTATIME
+TIME
+TRUE
+FALSE
+NULL
+WIDTH
+HEIGHT
+FPS
+MOUSEX
+MOUSEY
+```
+
+## Functions
+```
+ROUND(x)
+CEIL(x)
+FLOOR(x)
+CLAMP(x, min, max)
+INPUT(key)
+PRESS(key)
+RELEASE(key)
+INT(x)
+MIN(a, b)
+MAX(a, b)
+RANDOM(min, max)
+XRANDOM(minmax)
+FPS(deltaTime)
+LEN(x)
+ABS(x)
+SUM(dim)
+READ(key)
+READ(key, defaultValue)
+```
