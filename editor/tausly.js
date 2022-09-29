@@ -3078,15 +3078,15 @@ class ResetLine extends Line
             let dim = this.parent.get(this.dimName)
             if (dim !== undefined)
             {
-                if (dim.isArray())
+                if (Array.isArray(dim))
                 {
                     for (const i in dim)
                     {
-                        if (dim[i].isArray())
+                        if (Array.isArray(dim[i]))
                         {
                             for (const j in dim[i])
                             {
-                                if (dim[i][j].isArray())
+                                if (Array.isArray(dim[i][j]))
                                 {
                                     for (const k in dim)
                                     {
