@@ -75,8 +75,69 @@ Array.prototype.getLuminance = function(rgba)
 
 CanvasRenderingContext2D.prototype.refresh = function()
 {
-    this.font = '17.6px dejavu, monospace'
+    this.font = "17.6px dejavu, monospace"
     this.textBaseline = "top"
+}
+
+CanvasRenderingContext2D.prototype.fillTextWrapped = function(text, x, y, maxWidth, fullText)
+{
+    let lines = this.getTextLines(text.split("\n"), maxWidth)
+    
+    if (fullText !== undefined)
+    {
+        const fullLines = this.getTextLines(fullText.split("\n"), maxWidth)
+        const i = lines.length - 1
+        if (lines[i].length > fullLines[i].length)
+        {
+            lines.push(lines[i].substring(fullLines[i].length).trim())
+            lines[i] = lines[i].substring(0, fullLines[i].length)
+        }
+    }
+    
+    this.fillTextLines(lines, x, y)
+}
+
+CanvasRenderingContext2D.prototype.getTextLines = function(text, maxWidth)
+{
+    if (Array.isArray(text))
+    {
+        const lines = []
+        for (const x of text)
+            lines.push(...this.getTextLines(x, maxWidth))
+        return lines
+    }
+    
+    if (maxWidth === undefined)
+        return [ text ]
+    
+    const words = text.split(" ")
+    const lines = []
+    
+    let line = words[0]
+    
+    for (let i = 1; i < words.length; i++)
+    {
+        const word = words[i]
+        const size = this.measureText(line + " " + word)
+        
+        if (size.width < maxWidth)
+        {
+            line += " " + word
+            continue
+        }
+        
+        lines.push(line)
+        line = word
+    }
+    
+    lines.push(line)
+    return lines;
+}
+
+CanvasRenderingContext2D.prototype.fillTextLines = function(lines, x, y)
+{
+    for (let i = 0; i < lines.length; i++)
+        this.fillText(lines[i], x, y + i * 22)
 }
 
 Promise.timeout = function(func, ms)
@@ -525,6 +586,7 @@ class Line
     endTransform(ctx)
     {
         ctx.setTransform(1, 0, 0, 1, 0, 0)
+        ctx.restore()
     }
 }
 
@@ -791,15 +853,14 @@ class Tausly extends Block
         
         this.canvas = document.querySelector(canvasSelector ?? "canvas")
         
-        this.ctx = this.canvas.getContext("2d")
-        this.ctx.isRoot = true
-        
         this.onResize = (width, height) => { }
         this.onRefresh = () => { }
         this.onEcho = data => console.log(data)
         this.onRender = () => { }
         this.onClear = () => { }
         
+        this.ctx = this.canvas.getContext("2d")
+        this.ctx.isRoot = true
         this.refresh()
         
         this.input = new Set
@@ -1076,6 +1137,8 @@ class Tausly extends Block
     
     afterRun()
     {
+        this.ctx.restore()
+        
         const parent = this.canvas.parentNode
         if (parent)
             parent.style.cursor = "unset"
@@ -1634,7 +1697,7 @@ class BeginBlock extends Block
     
     end()
     {
-        this.root.getHistory("TRANSFORMS").shift(this.transforms)
+        this.root.getHistory("TRANSFORMS").shift()
     }
 }
 
@@ -1937,7 +2000,7 @@ class SongBlock extends Block
     
     end()
     {
-        this.root.getHistory("SONG").shift(this)
+        this.root.getHistory("SONG").shift()
     }
 }
 
@@ -1993,7 +2056,7 @@ class InstrumentBlock extends Block
         const song = this.root.getHistory("SONG")
         song[0].song.add(this.instrument)
         
-        this.root.getHistory("INSTRUMENT").shift(this)
+        this.root.getHistory("INSTRUMENT").shift()
     }
 }
 
@@ -2042,7 +2105,7 @@ class SpriteBlock extends Block
     
     end()
     {
-        this.root.getHistory("SPRITE").shift(this)
+        this.root.getHistory("SPRITE").shift()
         
         return true
     }
@@ -2104,7 +2167,67 @@ class FrameBlock extends Block
         
         this.frame.burn()
         
-        this.root.getHistory("FRAME").shift(this)
+        this.root.getHistory("FRAME").shift()
+    }
+}
+
+
+
+//------------------------------------------------------------------------------
+// * block/40-begin-clip.js
+//------------------------------------------------------------------------------
+
+class ClipBlock extends Block
+{
+    static _ = Line.classes.add(this.name)
+    
+    static parse(options)
+    {
+        const matches = options.code.matchKeyword("BEGIN\\sCLIP", 4)
+        if (matches)
+        {
+            const line = new ClipBlock(options)
+            line.getX = matches[1]
+            line.getY = matches[2]
+            line.getWidth = matches[3]
+            line.getHeight = matches[4]
+            return line
+        }
+        
+        return null
+    }
+    
+    compile()
+    {
+        this.getX = this.createFunction(this.getX)
+        this.getY = this.createFunction(this.getY)
+        this.getWidth = this.createFunction(this.getWidth)
+        this.getHeight = this.createFunction(this.getHeight)
+    }
+    
+    step()
+    {
+        const ctx = this.root.getContext()
+        const x = this.getX()
+        const y = this.getY()
+        const w = this.getWidth()
+        const h = this.getHeight()
+        
+        this.transforms = [
+            (tx, ty) =>
+            {
+                ctx.save()
+                ctx.beginPath()
+                ctx.rect(x, y, w, h)
+                ctx.clip()
+            }
+        ]
+        this.root.getHistory("TRANSFORMS").unshift(this.transforms)
+    }
+    
+    end()
+    {
+        this.root.getHistory("TRANSFORMS").shift()
     }
 }
 
@@ -2870,13 +2993,41 @@ class TextLine extends Line
     
     static parse(options)
     {
-        const matches = options.code.matchKeyword("TEXT", 3)
+        let matches
+        
+        matches = options.code.matchKeyword("TEXT", 5)
         if (matches)
         {
             const line = new TextLine(options)
             line.getX = matches[1]
             line.getY = matches[2]
             line.getText = matches[3]
+            line.getMaxWidth = matches[4]
+            line.getFullText = matches[5]
+            return line
+        }
+        
+        matches = options.code.matchKeyword("TEXT", 4)
+        if (matches)
+        {
+            const line = new TextLine(options)
+            line.getX = matches[1]
+            line.getY = matches[2]
+            line.getText = matches[3]
+            line.getMaxWidth = matches[4]
+            line.getFullText = "undefined"
+            return line
+        }
+        
+        matches = options.code.matchKeyword("TEXT", 3)
+        if (matches)
+        {
+            const line = new TextLine(options)
+            line.getX = matches[1]
+            line.getY = matches[2]
+            line.getText = matches[3]
+            line.getMaxWidth = "undefined"
+            line.getFullText = "undefined"
             return line
         }
         
@@ -2888,6 +3039,8 @@ class TextLine extends Line
         this.getX = this.createFunction(this.getX)
         this.getY = this.createFunction(this.getY)
         this.getText = this.createFunction(this.getText)
+        this.getMaxWidth = this.createFunction(this.getMaxWidth)
+        this.getFullText = this.createFunction(this.getFullText)
     }
     
     step()
@@ -2897,7 +3050,7 @@ class TextLine extends Line
         const y = this.getY()
         
         this.beginTransform(x, y, 0, 0)
-        ctx.fillText(this.getText(), this.getX(), this.getY())
+        ctx.fillTextWrapped(this.getText(), this.getX(), this.getY(), this.getMaxWidth(), this.getFullText())
         this.endTransform(ctx)
         
         if (ctx.isRoot)

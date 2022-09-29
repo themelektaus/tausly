@@ -48,6 +48,6 @@ class FrameBlock extends Block
         
         this.frame.burn()
         
-        this.root.getHistory("FRAME").shift(this)
+        this.root.getHistory("FRAME").shift()
     }
 }

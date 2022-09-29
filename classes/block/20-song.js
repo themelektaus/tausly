@@ -35,6 +35,6 @@ class SongBlock extends Block
     
     end()
     {
-        this.root.getHistory("SONG").shift(this)
+        this.root.getHistory("SONG").shift()
     }
 }

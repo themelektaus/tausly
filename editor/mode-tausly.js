@@ -37,7 +37,7 @@ define(
                     },
                     {
                         token: 'keyword.block.tausly',
-                        regex: '\\b(?:IF|NOT|THEN|AND|OR|ELSE|END|FOR|TO|WHILE|LOOP|NEXT|BREAK|SONG|INSTRUMENT|SPRITE|FRAME|BEGIN\\sGAMELOOP|BEGIN\\sTRANSFORM)\\b'
+                        regex: '\\b(?:IF|NOT|THEN|AND|OR|ELSE|END|FOR|TO|WHILE|LOOP|NEXT|BREAK|SONG|INSTRUMENT|SPRITE|FRAME|BEGIN\\sGAMELOOP|BEGIN\\sTRANSFORM|BEGIN\\sCLIP)\\b'
                     },
                     {
                         token: 'keyword.const.tausly',

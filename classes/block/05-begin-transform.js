@@ -18,6 +18,6 @@ class BeginBlock extends Block
     
     end()
     {
-        this.root.getHistory("TRANSFORMS").shift(this.transforms)
+        this.root.getHistory("TRANSFORMS").shift()
     }
 }

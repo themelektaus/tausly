@@ -57,8 +57,69 @@ Array.prototype.getLuminance = function(rgba)
 
 CanvasRenderingContext2D.prototype.refresh = function()
 {
-    this.font = '17.6px dejavu, monospace'
+    this.font = "17.6px dejavu, monospace"
     this.textBaseline = "top"
+}
+
+CanvasRenderingContext2D.prototype.fillTextWrapped = function(text, x, y, maxWidth, fullText)
+{
+    let lines = this.getTextLines(text.split("\n"), maxWidth)
+    
+    if (fullText !== undefined)
+    {
+        const fullLines = this.getTextLines(fullText.split("\n"), maxWidth)
+        const i = lines.length - 1
+        if (lines[i].length > fullLines[i].length)
+        {
+            lines.push(lines[i].substring(fullLines[i].length).trim())
+            lines[i] = lines[i].substring(0, fullLines[i].length)
+        }
+    }
+    
+    this.fillTextLines(lines, x, y)
+}
+
+CanvasRenderingContext2D.prototype.getTextLines = function(text, maxWidth)
+{
+    if (Array.isArray(text))
+    {
+        const lines = []
+        for (const x of text)
+            lines.push(...this.getTextLines(x, maxWidth))
+        return lines
+    }
+    
+    if (maxWidth === undefined)
+        return [ text ]
+    
+    const words = text.split(" ")
+    const lines = []
+    
+    let line = words[0]
+    
+    for (let i = 1; i < words.length; i++)
+    {
+        const word = words[i]
+        const size = this.measureText(line + " " + word)
+        
+        if (size.width < maxWidth)
+        {
+            line += " " + word
+            continue
+        }
+        
+        lines.push(line)
+        line = word
+    }
+    
+    lines.push(line)
+    return lines;
+}
+
+CanvasRenderingContext2D.prototype.fillTextLines = function(lines, x, y)
+{
+    for (let i = 0; i < lines.length; i++)
+        this.fillText(lines[i], x, y + i * 22)
 }
 
 Promise.timeout = function(func, ms)

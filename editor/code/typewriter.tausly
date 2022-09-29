@@ -3,9 +3,9 @@ GOTO Start
 
 Test Messages 1:
 m(0) = "Hello :)"
-m(1) = "Some long text, which is displaying step by step..."
-m(2) = "Some other text, which also appears..."
-m(3) = "Thanks for playing :)"
+m(1) = "Some long text, which displays text, step by " + _
+  "step... Some other text, which also appears..."
+m(2) = "Thanks for playing :)"
 RETURN
 
 ------------------------------------------------------------
@@ -81,7 +81,8 @@ tw_wait = FALSE
 tw_done = FALSE
 ALIGN LEFT
 COLOR "white"
-TEXT 30, HEIGHT - 90, MAX(tw_text, tw_characters)
+SET current_text = MAX(tw_text, tw_characters)
+TEXT 30, HEIGHT - 90, current_text, WIDTH - 60, tw_text
 IF tw_characters >= LEN(tw_text)
   IF tw_post_delay_timer > tw_post_delay
     tw_wait = TRUE

@@ -11,15 +11,14 @@ class Tausly extends Block
         
         this.canvas = document.querySelector(canvasSelector ?? "canvas")
         
-        this.ctx = this.canvas.getContext("2d")
-        this.ctx.isRoot = true
-        
         this.onResize = (width, height) => { }
         this.onRefresh = () => { }
         this.onEcho = data => console.log(data)
         this.onRender = () => { }
         this.onClear = () => { }
         
+        this.ctx = this.canvas.getContext("2d")
+        this.ctx.isRoot = true
         this.refresh()
         
         this.input = new Set
@@ -296,6 +295,8 @@ class Tausly extends Block
     
     afterRun()
     {
+        this.ctx.restore()
+        
         const parent = this.canvas.parentNode
         if (parent)
             parent.style.cursor = "unset"

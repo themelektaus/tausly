@@ -250,7 +250,7 @@ window.onload = () =>
     clearButton.onclick = () =>
     {
         tausly.onClear()
-        tausly.ctx.clearRect(0, 0, tausly.canvas.width, tausly.canvas.height)
+        tausly.ctx.reset()
     }
     
     wrapper.classList.add("visible")

@@ -44,6 +44,6 @@ class InstrumentBlock extends Block
         const song = this.root.getHistory("SONG")
         song[0].song.add(this.instrument)
         
-        this.root.getHistory("INSTRUMENT").shift(this)
+        this.root.getHistory("INSTRUMENT").shift()
     }
 }

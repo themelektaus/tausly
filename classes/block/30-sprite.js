@@ -37,7 +37,7 @@ class SpriteBlock extends Block
     
     end()
     {
-        this.root.getHistory("SPRITE").shift(this)
+        this.root.getHistory("SPRITE").shift()
         
         return true
     }
