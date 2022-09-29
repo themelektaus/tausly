@@ -79,17 +79,26 @@ to generate
 
 
 
-## Limitations
 
-There are of course a few limitations, some of which are intentional:
-- `DIM` only can have a maximum of 3 dimensions
-- Importing external resources like *Graphics* or *Audio* is not possible.
-  You have to code everything by yourself by using
-  `SPRITE`, `SONG`, `INSTRUMENT`, and so on...
-  But there are some tools like **Image to Tausly**
-- `GOSUB` is not able to `RETURN` if `GOTO`
-  is called in the meantime.
-- No WebGL
+## Windows
+
+You can execute Tausly code via a windows application called **Tausly Player**.
+It is a ~7MB executable which registers as a default application for `.tausly`-files.
+So you can run Tausly Code without needing your web browser.
+Give it a try 😉
+- Executable | https://github.com/themelektaus/tausly-player/releases
+- GitHub | https://github.com/themelektaus/tausly-player
+
+
+
+## Visual Studio Code Extension
+
+There is also a VS Code Extension released for syntax highlighting:
+- Marketplace | https://marketplace.visualstudio.com/items?itemName=tausi.tausly-lang
+- GitHub | https://github.com/themelektaus/tausly-lang
+
+
+
 
 
 
@@ -103,6 +112,21 @@ You can find some examples at
 It's a temporary replacement for the documentation at the moment.
 
 
+
 ## Documentation
 
 As expected, there is no documentation... what a suprise.
+
+
+
+## Limitations
+
+There are of course a few limitations, some of which are intentional:
+- `DIM` only can have a maximum of 3 dimensions
+- Importing external resources like *Graphics* or *Audio* is not possible.
+  You have to code everything by yourself by using
+  `SPRITE`, `SONG`, `INSTRUMENT`, and so on...
+  But there are some tools like **Image to Tausly**
+- `GOSUB` is not able to `RETURN` if `GOTO`
+  is called in the meantime.
+- No WebGL
