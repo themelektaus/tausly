@@ -37,6 +37,14 @@
                     |                  |                    
                     |                  |                    
                                                             
+         [LEFT] [RIGHT]  Move horizontally                  
+            [UP] or [C]  Rotate clockwise                   
+                    [X]  Rotate counter clockwiese          
+                 [DOWN]  Move down faster                   
+                [SPACE]  Move down instantly                
+                [SHIFT]  Switch Tetromino                   
+                                                            
+
 ------------------------------------------------------------
  * Setup
 ------------------------------------------------------------
@@ -168,8 +176,8 @@ GOSUB Spawn Tetromino
 
 ------------------------------------------------------------
  * Game Loop
-   This is an infinite loop which sleeps at the end as long
-   as needed. In the end it runs through 60 times a second.
+  This is an infinite loop which sleeps at the end as long
+  as needed. In the end it runs through 60 times a second.
 ------------------------------------------------------------
 BEGIN GAMELOOP
   

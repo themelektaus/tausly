@@ -16,6 +16,16 @@ class Regex
 // * 11-extensions.js
 //------------------------------------------------------------------------------
 
+Number.isNumber = function(value)
+{
+    return typeof value === "number"
+}
+
+String.isString = function(value)
+{
+    return typeof value === 'string'
+}
+
 String.prototype.toCondition = function()
 {
     let x = this
@@ -399,16 +409,22 @@ class Functions
     
     static _MIN_(a, b)
     {
+        if (String.isString(a))
+            return a.substring(b, a.length - b)
         return Math.min(a, b)
     }
     
     static _MAX_(a, b)
     {
+        if (String.isString(a))
+            return a.substring(0, b)
         return Math.max(a, b)
     }
     
     static _CLAMP_(x, a, b)
     {
+        if (String.isString(a))
+            return x.substring(a, a + b)
         return Math.min(Math.max(x, a), b)
     }
     
@@ -830,7 +846,6 @@ class Tausly extends Block
             if (!this.mouse)
                 return
             
-            // TODO: Fix mouse position in editor
             const r = this.canvas.getBoundingClientRect()
             const s = r.width / this.canvas.offsetWidth
             this.mouse.x = (e.clientX - r.left) / s
@@ -1108,13 +1123,13 @@ class Tausly extends Block
     setSize(width, height)
     {
         const canvas = this.getCanvas()
-        if (canvas.width == width && canvas.height == height)
+        if (canvas.width === width && canvas.height === height)
             return
         
         canvas.width = width
         canvas.height = height
         
-        if (canvas == this.canvas)
+        if (canvas === this.canvas)
         {
             this.onResize(width, height)
             this.refresh()
@@ -2991,7 +3006,7 @@ class DrawLine extends Line
         
         let frame
         
-        if (typeof frameTitle == "number")
+        if (Number.isNumber(frameTitle))
         {
             frame = sprite.frames[frameTitle]
         }
@@ -3063,15 +3078,15 @@ class ResetLine extends Line
             let dim = this.parent.get(this.dimName)
             if (dim !== undefined)
             {
-                if (dim.length)
+                if (dim.isArray())
                 {
                     for (const i in dim)
                     {
-                        if (dim[i].length)
+                        if (dim[i].isArray())
                         {
                             for (const j in dim[i])
                             {
-                                if (dim[i][j].length)
+                                if (dim[i][j].isArray())
                                 {
                                     for (const k in dim)
                                     {

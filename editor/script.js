@@ -16,7 +16,7 @@ let useLocalStorage
 function loadSrcFile(editor, file, callback)
 {
     useLocalStorage = false
-    fetch(file + "?" + Math.random())
+    fetch(`code/${file}?${Math.random()}`)
         .then(x => x.text())
         .then(x =>
         {

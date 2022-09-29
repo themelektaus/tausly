@@ -7,30 +7,46 @@
     $editor_folder = "{$root}/editor";
     $staging_folder = "{$root}/staging";
     
-    foreach (scandir($editor_folder) as $file)
+    foreach ([ "", "code/" ] as $folder)
     {
-        if ($file == "." or $file == "..")
-            continue;
+        $editor_path = "{$editor_folder}/{$folder}";
+        $staging_path = "{$staging_folder}/{$folder}";
         
-        $filename = "{$editor_folder}/{$file}";
-        echo "Unlink " . $filename . PHP_EOL;
-        unlink($filename);
+        foreach (scandir($editor_path) as $file)
+        {
+            if ($file == "." or $file == "..")
+                continue;
+            
+            $filename = "{$editor_path}{$file}";
+            if (is_dir($filename))
+                continue;
+            
+            echo "Unlink " . $filename . PHP_EOL;
+            unlink($filename);
+        }
+        
+        foreach (scandir($staging_path) as $file)
+        {
+            if ($file == "." or $file == "..")
+                continue;
+            
+            if ($file == "index.php")
+                continue;
+            
+            $filename = "{$staging_path}{$file}";
+            if (is_dir($filename))
+                continue;
+            
+            echo "Copy " . $filename . PHP_EOL;
+            copy($filename, "{$editor_path}{$file}");
+        }
     }
     
-    foreach (scandir($staging_folder) as $file)
-    {
-        if ($file == "." or $file == "..")
-            continue;
-        
-        if ($file == "index.php")
-            continue;
-        
-        $filename = "{$staging_folder}/{$file}";
-        echo "Copy " . $filename . PHP_EOL;
-        copy("{$staging_folder}/{$file}", "{$editor_folder}/{$file}");
-    }
+    ob_start();
+    include __DIR__ . "/editor.php";
+    $editor_html = ob_get_clean();
     
-    copy(__DIR__ . "/editor.html", "{$editor_folder}/index.html");
+    file_put_contents("{$editor_folder}/index.html", $editor_html);
     
     copy("{$staging_folder}/favicon.ico", "{$root}/favicon.ico");
     copy("{$staging_folder}/reverb-impulse-response.m4a", "{$root}/reverb-impulse-response.m4a");

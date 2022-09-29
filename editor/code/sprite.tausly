@@ -70,10 +70,9 @@ BEGIN GAMELOOP
   SMOOTHDAMP S, T, V, 0.1
   
   BEGIN TRANSFORM
-    TRANSLATE X, Y
     SCALE S
     ROTATE A
-    DRAW WIDTH / 2 - 4, HEIGHT / 2 - 4, "GFX", I(0)
+    DRAW X, Y, "GFX", I(0)
   END
   
 END

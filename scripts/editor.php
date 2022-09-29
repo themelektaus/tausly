@@ -31,14 +31,15 @@
                         <option value="_"></option>
                         <option value="" selected="selected">- Select File -</option>
                         <option value="_"></option>
-                        <option value="data.tausly">data.tausly</option>
-                        <option value="game-platformer.tausly">game-platformer.tausly</option>
-                        <option value="game-pong.tausly">game-pong.tausly</option>
-                        <option value="map.tausly">map.tausly</option>
-                        <option value="music.tausly">music.tausly</option>
-                        <option value="sprite.tausly">sprite.tausly</option>
-                        <option value="tetris.tausly">tetris.tausly</option>
-                        <option value="_"></option>
+                        <?php
+                            $path = realpath(__DIR__ . "/../staging/code");
+                            $files = glob("{$path}/*.tausly");
+                            foreach ($files as $file):
+                                $value = basename($file);
+                        ?><option value="<?= $value ?>"><?= $value ?></option>
+                        <?php
+                            endforeach;
+                        ?><option value="_"></option>
                     </select>
                 </div>
                 <div id="code"></div>

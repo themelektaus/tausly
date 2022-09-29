@@ -1,0 +1,104 @@
+GOTO Start
+------------------------------------------------------------
+
+Test Messages 1:
+m(0) = "Hello :)"
+m(1) = "Some long text, which is displaying step by step..."
+m(2) = "Some other text, which also appears..."
+m(3) = "Thanks for playing :)"
+RETURN
+
+------------------------------------------------------------
+ * Start
+------------------------------------------------------------
+INIT tw_text
+INIT tw_characters
+INIT tw_speed = 30
+INIT tw_post_delay = 600
+INIT tw_post_delay_timer
+INIT tw_wait
+INIT tw_next
+INIT tw_done
+
+DIM(50) m
+INIT m_index
+INIT m_done
+
+BEGIN GAMELOOP
+  
+  COLOR "black"
+  FILL
+  
+  IF PRESS("SPACE")
+    IF m_done
+      GOSUB Test Messages 1
+    ELSE
+      tw_next = TRUE
+    END
+  END
+  
+  GOSUB Update Messages
+  
+  IF m_done
+    ALIGN CENTER
+    COLOR "white"
+    TEXT WIDTH / 2, HEIGHT / 2, "Press [SPACE] to start"
+  END
+  
+  IF tw_wait
+    ALIGN CENTER
+    COLOR "white"
+    TEXT WIDTH / 2, HEIGHT / 2, "Press [SPACE] to continue"
+  END
+  
+END
+
+------------------------------------------------------------
+ * Update Messages
+------------------------------------------------------------
+tw_text = m(m_index)
+IF tw_text = 0
+  tw_wait = FALSE
+  m_done = TRUE
+ELSE
+  m_done = FALSE
+  GOSUB Update Typewriter
+  IF tw_done
+    m_index += 1
+    IF m(m_index) = 0
+      RESET m
+      m_done = TRUE
+      m_index = 0
+    END
+  END
+END
+RETURN
+
+------------------------------------------------------------
+ * Update Typewriter
+------------------------------------------------------------
+tw_wait = FALSE
+tw_done = FALSE
+ALIGN LEFT
+COLOR "white"
+TEXT 30, HEIGHT - 90, MAX(tw_text, tw_characters)
+IF tw_characters >= LEN(tw_text)
+  IF tw_post_delay_timer > tw_post_delay
+    tw_wait = TRUE
+    IF tw_next
+      tw_done = TRUE
+      tw_characters = 0
+      tw_post_delay_timer = 0
+    END
+  ELSE
+    tw_post_delay_timer += DELTATIME
+  END
+ELSE
+  tw_characters += DELTATIME / 1000 * tw_speed
+END
+tw_next = FALSE
+RETURN
+
+------------------------------------------------------------
+ * Exit
+------------------------------------------------------------

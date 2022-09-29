@@ -66,7 +66,6 @@ class Tausly extends Block
             if (!this.mouse)
                 return
             
-            // TODO: Fix mouse position in editor
             const r = this.canvas.getBoundingClientRect()
             const s = r.width / this.canvas.offsetWidth
             this.mouse.x = (e.clientX - r.left) / s
@@ -344,13 +343,13 @@ class Tausly extends Block
     setSize(width, height)
     {
         const canvas = this.getCanvas()
-        if (canvas.width == width && canvas.height == height)
+        if (canvas.width === width && canvas.height === height)
             return
         
         canvas.width = width
         canvas.height = height
         
-        if (canvas == this.canvas)
+        if (canvas === this.canvas)
         {
             this.onResize(width, height)
             this.refresh()

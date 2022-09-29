@@ -50,7 +50,7 @@ class DrawLine extends Line
         
         let frame
         
-        if (typeof frameTitle == "number")
+        if (Number.isNumber(frameTitle))
         {
             frame = sprite.frames[frameTitle]
         }

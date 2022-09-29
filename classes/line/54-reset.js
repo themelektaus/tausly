@@ -30,15 +30,15 @@ class ResetLine extends Line
             let dim = this.parent.get(this.dimName)
             if (dim !== undefined)
             {
-                if (dim.length)
+                if (dim.isArray())
                 {
                     for (const i in dim)
                     {
-                        if (dim[i].length)
+                        if (dim[i].isArray())
                         {
                             for (const j in dim[i])
                             {
-                                if (dim[i][j].length)
+                                if (dim[i][j].isArray())
                                 {
                                     for (const k in dim)
                                     {

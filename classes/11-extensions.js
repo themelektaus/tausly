@@ -1,3 +1,13 @@
+Number.isNumber = function(value)
+{
+    return typeof value === "number"
+}
+
+String.isString = function(value)
+{
+    return typeof value === 'string'
+}
+
 String.prototype.toCondition = function()
 {
     let x = this

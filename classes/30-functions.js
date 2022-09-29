@@ -199,16 +199,22 @@ class Functions
     
     static _MIN_(a, b)
     {
+        if (String.isString(a))
+            return a.substring(b, a.length - b)
         return Math.min(a, b)
     }
     
     static _MAX_(a, b)
     {
+        if (String.isString(a))
+            return a.substring(0, b)
         return Math.max(a, b)
     }
     
     static _CLAMP_(x, a, b)
     {
+        if (String.isString(a))
+            return x.substring(a, a + b)
         return Math.min(Math.max(x, a), b)
     }
     
