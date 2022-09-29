@@ -98,7 +98,7 @@ There are of course a few limitations, some of which are intentional:
 You can find some examples at
 [/editor/code](https://github.com/themelektaus/tausly/tree/master/editor/code).
 
-![](https://github.com/themelektaus/tausly/tree/master/screenshots/screenshot-001.png)
+![](https://raw.githubusercontent.com/themelektaus/tausly/master/screenshots/screenshot-001.png)
 
 It's a temporary replacement for the documentation at the moment.
 
