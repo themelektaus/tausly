@@ -280,6 +280,16 @@ canvas {
     background: #091310;
 }
 
+#log span {
+    margin-right: .4em;
+    opacity: .5;
+}
+
+#log span + span {
+    margin-right: 0;
+    opacity: inherit;
+}
+
 #empty {
     position: absolute;
     transition: opacity 200ms;

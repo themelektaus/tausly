@@ -154,7 +154,8 @@ window.onload = () =>
         view.classList.add("with-log")
         
         const div = document.createElement("div")
-        div.innerHTML = output
+        const timestamp = (new Date).toLocaleTimeString()
+        div.innerHTML = `<span>${timestamp}</span><span>${output}</span>`
         log.appendChild(div)
         
         log.scrollTo({ top: log.scrollHeight, behavior: "smooth" })
