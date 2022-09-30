@@ -123,12 +123,24 @@ There are of course a few limitations, some of which are intentional:
 
 # Reference
 
+
+
 ## Interpreter
 
 ```javascript
+const code = ""
 const tausly = new Tausly
-tausly.onEcho = text => { }
+this.onResize = (width, height) => { }
+this.onRefresh = () => { }
+this.onEcho = data => console.log(data)
+this.onRender = () => { }
+this.onClear = () => { }
+tausly.setSize(640, 480)
+tausly.load(code)
+tausly.compile()
+tausly.run().then(() => { })
 ```
+
 
 
 ## Instructions
@@ -469,43 +481,232 @@ ECHO numbers
 </p>
 </details>
 
-<!--
+---
 
-#### NORMALIZE *vector*
-Normalize a `DIM(2)`.
+### IF [NOT] *condition* [THEN] : [ELSE] : END
+Checks if a condition is met.
+
+#### Parameters
+- `condition`
+
+#### Examples
 ```
-DIM(2) vector
-move(0) = 1
-move(1) = 1
-NORMALIZE vector
+INIT x = RANDOM(0, 9)
+ECHO x
+
+IF x < 4
+  ECHO "x is less than 4"
+END
+
+IF x = 4
+  ECHO "x is equals 4"
+ELSE
+  ECHO "x is greater than 4"
+END
+
+ECHO "Done"
 ```
 
-#### SMOOTHDAMP *current*, *target*, *vel*, *smoothTime*, *dt*, *maxSp*
+<details><summary>Output</summary>
+<p>
+
+```
+> 7
+> x is greater than 4
+> Done
+```
+
+</p>
+</details>
+
+There are also some keywords to combine multiple conditions.
+```
+INIT x = TRUE
+INIT y = FALSE
+
+IF x AND y
+  ECHO "This text won't appear"
+END
+
+IF x OR y
+  ECHO "There we go!"
+END
+```
+
+<details><summary>Output</summary>
+<p>
+
+```
+> There we go!
+```
+
+</p>
+</details>
+
+---
+
+### LOOP
+Starts an infinite loop. It can be broken by calling `BREAK`
+or by stepping out with `GOTO`.
+
+#### Examples
+```
+LOOP
+  IF PRESS("SPACE")
+    BREAK
+  END
+  IF PRESS("ESCAPE")
+    GOTO Exit
+  END
+END
+
+Exit:
+ECHO "Done"
+```
+
+There is also another keyword called `NEXT`.
+You can use this to start the next run ahead of time.
+```
+INIT i
+LOOP
+  IF i < 3
+    NEXT
+  END
+  IF i < 7
+    ECHO i
+  END
+  IF i = 10
+    BREAK
+  END
+  i += 1
+END
+```
+
+<details><summary>Output</summary>
+<p>
+
+```
+> 3
+> 4
+> 5
+> 6
+```
+
+</p>
+</details>
+
+---
+
+### FOR *variable* = *from* TO *to*
+Starts a loop. It repeats only for a fixed amount of time.
+
+#### Parameters
+- `variable` Variable to create that has the current iteration as value
+- `from` Initial value of the variable
+- `to` Last value of the iteration variable
+
+#### Example
+```
+FOR i = 1 TO 10
+  ECHO i
+END
+```
+
+<details><summary>Output</summary>
+<p>
+
+```
+> 1
+> 2
+> 3
+> 4
+> 5
+> 6
+> 7
+> 8
+> 9
+> 10
+```
+
+</p>
+</details>
+
+---
+
+### WHILE [NOT] *condition*
+Starts a conditional loop. It repeats as long the condition is met.
+
+#### Parameters
+- `condition`
+
+#### Example
+```
+INIT i
+WHILE i < 5
+  ECHO i
+  i += 1
+END
+```
+
+<details><summary>Output</summary>
+<p>
+
+```
+> 0
+> 1
+> 2
+> 3
+> 4
+```
+
+</p>
+</details>
+
+---
+
+### BEGIN GAMELOOP [ *fps* ]
+Another infinite loop but which some automatic `SLEEP` after each iteration.
+
+#### Parameters
+- `fps` (Optional) Target framerate - default value is **60**
+
+#### Example
+```
+BEGIN GAMELOOP
+  GOSUB Update
+  GOSUB Render
+END
+```
+
+---
+
+### SMOOTHDAMP *current*, *target*, *vel*, *smoothTime*, *dt*, *maxSp*
 The arguments *dt* and *maxSp* are optional.<br>
 It works exactly like Unity's SmoothDamp Method<br>
 - https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/Math/Mathf.cs
 - https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/Math/Vector2.cs
 
+---
 
-
-### Canvas
-
-#### SIZE *x*, *y*
+### SIZE *x*, *y*
 Change the size of the canvas.
 
-#### CLEAR
+---
+
+### CLEAR
 Clear the entier canvas. It also calls the `onClear` callback.
 
+---
 
-`CURSOR SHOW`
-`CURSOR HIDE`
+### CURSOR SHOW
 
+---
 
+### CURSOR HIDE
 
-### Rendering
+---
 
-#### COLOR *value*
-
+### COLOR *value*
 Set the active color. It is used by `FILL` and `TEXT`.
 ```
 COLOR "green"
@@ -516,17 +717,17 @@ COLOR "#00FF00"
 ```
 COLOR "rgba(0, 255, 0, 1.0)"
 ```
-#### FILL
-Fill the entier canvas by the active color.
 
-#### FILL *x*, *y*, *width*, *height*
+---
+
+### FILL
+Fill the entier canvas by the active color.
+### FILL *x*, *y*, *width*, *height*
 Fill the given area by the active color.
 
+---
 
-
-### Clipping
-
-#### BEGIN CLIP *x*, *y*, *width*, *height*
+### BEGIN CLIP *x*, *y*, *width*, *height*
 Limit all drawcalls to an area until the `END` keyword.
 ```
 BEGIN CLIP 10, 20, 320, 240
@@ -535,33 +736,40 @@ BEGIN CLIP 10, 20, 320, 240
 END
 ```
 
+---
 
-
-### Text
-
-#### ALIGN LEFT
+### ALIGN LEFT
 Align text to the left (default setting).
 
-#### ALIGN CENTER
+---
+
+### ALIGN CENTER
 Align text to the center.
 
-#### ALIGN RIGHT
+---
+
+### ALIGN RIGHT
 Align text to the right.
 
-#### TEXT *x*, *y*, *text*
+---
+
+### TEXT *x*, *y*, *text*
 Write *text* on the canvas at the position *x* and *y*.
 
-#### TEXT *x*, *y*, *text*, *maxWidth*
-Write *text* on the canvas at the position *x* and *y* and take usage of word wrapping by *maxWidth*.
+---
 
-#### TEXT *x*, *y*, *text*, *maxWidth*, *fullText*
+### TEXT *x*, *y*, *text*, *maxWidth*
+Write *text* on the canvas at the position *x* and *y* and
+take usage of word wrapping by *maxWidth*.
+
+---
+
+### TEXT *x*, *y*, *text*, *maxWidth*, *fullText*
 It behaves the same way like above, but the word wrapping is forced to the *fullText*.
 
+---
 
-
-
-### Sprites
-
+## Sprites
 Before Sprites can be drawn they have to be defined.
 A sprite is a **Block** instruction and must have a name and a nested `SIZE`.
 Every `SPRITE` can have multiple frames but it needs to have at least one `FRAME`.
@@ -591,146 +799,124 @@ SPRITE "Hero"
 END
 ```
 
-#### DRAW *x*, *y*, *spriteName*
+---
+
+### DRAW *x*, *y*, *spriteName*
 Draw the first `FRAME` of a `SPRITE`.
 ```
 DRAW 10, 20, "Hero"
 ```
 
-#### DRAW *x*, *y*, *spriteName*, *frameIndex*
+---
+
+### DRAW *x*, *y*, *spriteName*, *frameIndex*
 Draw a `FRAME` by index of a `SPRITE`.
 ```
 DRAW 10, 20, "Hero", 0
 ```
-#### DRAW *x*, *y*, *spriteName*, *frameName*
+
+---
+
+### DRAW *x*, *y*, *spriteName*, *frameName*
 Draw a `FRAME` by name of a `SPRITE`.
 ```
 DRAW 10, 20, "Hero", "Front"
 ```
 
+---
 
+### BEGIN TRANSFORM
+NORMALIZE *vector*
+Normalize a `DIM(2)`.
+```
+DIM(2) vector
+move(0) = 1
+move(1) = 1
+NORMALIZE vector
+```
 
-### Transformation
+---
 
-#### TRANSLATE \<x\>, \<y\>
-> &nbsp;
+### TRANSLATE *x*, *y*
 
-#### ROTATE \<degrees\>
-> &nbsp;
+---
 
-#### SCALE \<value\>
-> &nbsp;
+### ROTATE *deg*
 
-#### RESET
+---
+
+### SCALE *value*
+
+---
+
+### RESET
 Resets all active transformations.
 
+---
 
+### FUNC *name* RETURNS *expression*
 
-### Dimensions
+---
 
-#### DIM(*x*)
-> &nbsp;
+### SONG *name*
 
-#### DIM(*x*,*y*)
-> &nbsp;
+---
 
-#### DIM(*x*,*y*,`z`)
-> &nbsp;
+### GAIN *volume*
 
-#### RESET \<dimName\>
-Set all value to `0` of a dimension called `dimName`.
+---
 
+### BPM *bpm*
 
+---
 
-#### FUNC \<name\> RETURNS \<value\>
-> &nbsp;
+### TIME SIGNATURE *n*
 
+---
 
+### REPEAT *bool*
 
-### Audio
+---
 
-#### SONG \<name\>
-> &nbsp;
+### INSTRUMENT *name*
 
-#### GAIN \<volume\>
-> &nbsp;
+---
 
-#### BPM \<bpm\>
-> &nbsp;
+### TYPE *name*
 
-#### TIME SIGNATURE \<n\>
-> &nbsp;
+---
 
-#### REPEAT \<boolean\>
-> &nbsp;
+### REVERB *bool*
 
-#### INSTRUMENT [\<name\>]
-> &nbsp;
+---
 
-#### TYPE \<name\>
-> &nbsp;
+### ATTACK *ms*
 
-#### REVERB \<boolean\>
-> &nbsp;
+---
 
-#### ATTACK \<milliseconds\>
-> &nbsp;
+### RELEASE *ms*
 
-#### RELEASE \<milliseconds\>
-> &nbsp;
+---
 
-#### SHEET "C0 .. D1 E2 F3 --"
-> &nbsp;
+### SHEET *notes*
 
-#### PLAY \<songName\>
-> &nbsp;
+---
 
-#### STOP \<songName\>
-> &nbsp;
+### PLAY *song*
 
+---
 
+### STOP *song*
 
-#### SCOPE \<name\>
-> &nbsp;
+---
 
-#### WRITE \<key\>, \<value\>
-> &nbsp;
+### SCOPE *name*
 
+---
 
+### WRITE *key*, *value*
 
-#### IF [NOT] \<condition\> AND .. OR .. [THEN]
-> &nbsp;
-
-#### ELSE
-> &nbsp;
-
-#### BEGIN TRANSFORM
-> &nbsp;
-
-#### FOR \<i\> = \<from\> TO \<to\> [THEN]
-> &nbsp;
-
-#### WHILE [NOT] \<condition\>
-> &nbsp;
-
-#### BEGIN GAMELOOP [\<fps\>]
-> &nbsp;
-
-#### LOOP
-> &nbsp;
-
-
-
-#### END
-Marks the ending of a **Block**.
-
-#### NEXT
-Skips the current iteration of a **Block**.
-
-#### BREAK
-Breaks out of the current **Block**.
-
-
+---
 
 ## Constants
 ```
@@ -770,8 +956,28 @@ READ(key)
 READ(key, defaultValue)
 ```
 
--->
+<!--
+### KEYWORD *parameter* [ , *optional* ]
+Description.
+
+#### Parameters
+- `parameter` Description
+- `optional` (Optional) Description
+
+#### Example
+```
+ECHO "Hello, World!"
+```
+
+<details><summary>Output</summary>
+<p>
+
+```
+> Hello, World!
+```
+
+</p>
+</details>
 
 ---
-
-The rest of the documentation will follow...
+-->
