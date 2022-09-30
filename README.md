@@ -159,18 +159,18 @@ Freeze the entier runtime application for a specified amount of *milliseconds*.
 ### Labels
 Labels can wrote with a leading `*` or trailing `:` like so:
 ```
-* My Label:
+* MyLabel:
  Do some awesome stuff
 ```
 ```
-My Label:
+MyLabel:
  Do some other stuff
 ```
 
 #### GOTO *MyLabel*
 Jump to the row with the specified Label called *MyLabel*.
 
-#### GOSUB *My Label*
+#### GOSUB *MyLabel*
 Jump to the row with the specified Label called *MyLabel*
 and jump back to row where come from by calling `RETURN`.
 
