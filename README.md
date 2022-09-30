@@ -79,7 +79,6 @@ to generate
 
 
 
-
 ## Windows
 
 You can execute Tausly code via a windows application called **Tausly Player**.
@@ -98,17 +97,13 @@ There is also a VS Code Extension released for syntax highlighting:
 
 
 
-
-
-
 ## Examples
 
 You can find some examples at
 [/editor/code](https://github.com/themelektaus/tausly/tree/master/editor/code).
+It's a temporary replacement for the documentation at the moment.
 
 ![](https://raw.githubusercontent.com/themelektaus/tausly/master/screenshots/screenshot-001.png)
-
-It's a temporary replacement for the documentation at the moment.
 
 
 
@@ -502,5 +497,6 @@ READ(key, defaultValue)
 ```
 -->
 
-## Stay tuned
+
+
 The rest of the documentation will follow...
