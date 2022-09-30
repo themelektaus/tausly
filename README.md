@@ -134,7 +134,7 @@ There are of course a few limitations, some of which are intentional:
 
 ### Console Output
 
-#### ECHO `value`
+#### ECHO *value*
 ```
 ECHO "Hello, World!"
 ```
@@ -145,14 +145,14 @@ const tausly = new Tausly
 tausly.onEcho = text => { }
 ```
 
-#### LOG `value`
+#### LOG *value*
 Typically used for debugging. It is like `ECHO` but is ignoring the `onEcho` override.
 
 
 
 ### Waiting
-#### SLEEP `milliseconds`
-Freeze the entier runtime application for a specified amount of **milliseconds**.
+#### SLEEP *milliseconds*
+Freeze the entier runtime application for a specified amount of *milliseconds*.
 
 
 
@@ -167,23 +167,24 @@ My Label:
  Do some other stuff
 ```
 
-#### GOTO `My Label`
-Jump to the row with the specified Label called `My Label`.
+#### GOTO *MyLabel*
+Jump to the row with the specified Label called *MyLabel*.
 
-#### GOSUB `My Label`
-Jump to the row with the specified Label called `My Label` and jump back to row where  come from by calling `RETURN`.
+#### GOSUB *My Label*
+Jump to the row with the specified Label called *MyLabel*
+and jump back to row where come from by calling `RETURN`.
 
 #### RETURN
 Jump back to the last row where `GOSUB` was called.
 
-#### RETURN TO `My Label`
+#### RETURN TO *MyLabel*
 Like `GOTO` but should be used if coming from a `GOSUB` instruction.
 
 
 
 ### Calculations
 
-#### NORMALIZE `vector`
+#### NORMALIZE *vector*
 Normalize a `DIM(2)`.
 ```
 DIM(2) vector
@@ -192,8 +193,8 @@ move(1) = 1
 NORMALIZE vector
 ```
 
-#### SMOOTHDAMP `current`, `target`, `vel`, `smoothTime`, `dt`, `maxSp`
-The arguments `dt` and `maxSp` are optional.<br>
+#### SMOOTHDAMP *current*, *target*, *vel*, *smoothTime*, *dt*, *maxSp*
+The arguments *dt* and *maxSp* are optional.<br>
 It works exactly like Unity's SmoothDamp Method<br>
 - https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/Math/Mathf.cs
 - https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/Math/Vector2.cs
@@ -202,13 +203,13 @@ It works exactly like Unity's SmoothDamp Method<br>
 
 ### Canvas
 
-#### SIZE `x`, `y`
+#### SIZE *x*, *y*
 Change the size of the canvas.
 
 #### CLEAR
 Clear the entier canvas. It also calls the `onClear` callback.
 
-#### BEGIN CLIP `x`, `y`, `width`, `height`
+#### BEGIN CLIP *x*, *y*, *width*, *height*
 Limit all draw calls to an area until the `END` keyword.
 
 <!--
@@ -220,7 +221,7 @@ Limit all draw calls to an area until the `END` keyword.
 
 ### Rendering
 
-#### COLOR `value`
+#### COLOR *value*
 Set the active color used by `FILL` and `TEXT`.
 ```
 COLOR "green"
@@ -232,7 +233,7 @@ COLOR "rgba(0, 255, 0, 1.0)"
 #### FILL
 Fill the entier canvas by the active color.
 
-#### FILL `x`, `y`, `width`, `height`
+#### FILL *x*, *y*, *width*, *height*
 Fill the given area by the active color.
 
 
@@ -248,14 +249,14 @@ Align text to the center.
 #### ALIGN RIGHT
 Align text to the right.
 
-#### TEXT `x`, `y`, `text`
-Write `text` on the canvas at the position `x` and `y`.
+#### TEXT *x*, *y*, *text*
+Write *text* on the canvas at the position *x* and *y*.
 
-#### TEXT `x`, `y`, `text`, `maxWidth`
-Write `text` on the canvas at the position `x` and `y` and take usage of word wrapping by `maxWidth`.
+#### TEXT *x*, *y*, *text*, *maxWidth*
+Write *text* on the canvas at the position *x* and *y* and take usage of word wrapping by *maxWidth*.
 
-#### TEXT `x`, `y`, `text`, `maxWidth`, `fullText`
-It behaves the same way like above, but the word wrapping is forced to the `fullText`.
+#### TEXT *x*, *y*, *text*, *maxWidth*, *fullText*
+It behaves the same way like above, but the word wrapping is forced to the *fullText*.
 
 
 
@@ -291,18 +292,18 @@ SPRITE "Hero"
 END
 ```
 
-#### DRAW `x`, `y`, `spriteName`
+#### DRAW *x*, *y*, *spriteName*
 Draw the first `FRAME` of a `SPRITE`.
 ```
 DRAW 10, 20, "Hero"
 ```
 
-#### DRAW `x`, `y`, `spriteName`, `frameIndex`
+#### DRAW *x*, *y*, *spriteName*, *frameIndex*
 Draws a `FRAME` by index of a `SPRITE`.
 ```
 DRAW 10, 20, "Hero", 0
 ```
-#### DRAW `x`, `y`, `spriteName`, `frameName`
+#### DRAW *x*, *y*, *spriteName*, *frameName*
 Draws a `FRAME` by name of a `SPRITE`.
 ```
 DRAW 10, 20, "Hero", "Front"
@@ -346,13 +347,13 @@ Resets all active transformations.
 
 ### Dimensions
 
-#### DIM(`x`)
+#### DIM(*x*)
 > &nbsp;
 
-#### DIM(`x`,`y`)
+#### DIM(*x*,*y*)
 > &nbsp;
 
-#### DIM(`x`,`y`,`z`)
+#### DIM(*x*,*y*,`z`)
 > &nbsp;
 
 #### RESET \<dimName\>
