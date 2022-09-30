@@ -123,61 +123,355 @@ There are of course a few limitations, some of which are intentional:
 
 # Reference
 
-## Instructions
+## Interpreter
 
-
-
-### Console Output
-
-#### ECHO *value*
-```
-ECHO "Hello, World!"
-```
-By default it is just `console.log(value)`.
-It can be overwritten by defining `onEcho`.
-```
+```javascript
 const tausly = new Tausly
 tausly.onEcho = text => { }
 ```
 
-#### LOG *value*
-Typically used for debugging. It is like `ECHO` but is ignoring the `onEcho` override.
 
+## Instructions
 
+### ECHO *value*
 
-### Waiting
-#### SLEEP *milliseconds*
-Freeze the entier runtime application for a specified amount of *milliseconds*.
+Prints a value to the console output.
+By default the method calls `console.log(...)`.<br>
+It can be overwritten by `onEcho`.
 
+#### Parameters
+- `value` Value of any type
 
-
-### Labels
-Labels can wrote with a leading `*` or trailing `:` like so:
+#### Example
 ```
-* MyLabel:
- Do some awesome stuff
+ECHO "Hello, World!"
 ```
+
+<details><summary>Output</summary>
+<p>
+
+```
+> Hello, World!
+```
+
+</p>
+</details>
+
+---
+
+### LOG *value*
+Like `ECHO` but is ignores the `onEcho` override.
+Typically used for debugging.
+
+#### Parameters
+- `value` Value of any type
+
+#### Example
+```
+LOG "Hello, Developer!"
+```
+
+<details><summary>Output</summary>
+<p>
+
+```
+> Hello, Developer!
+```
+
+</p>
+</details>
+
+---
+
+### SLEEP *ms*
+Freezes the entier runtime for a specified amount of time
+
+#### Parameters
+- `ms` Time in milliseconds
+
+#### Example
+```
+SLEEP 3000
+```
+
+---
+
+### INIT *variableName* [ = *defaultValue* ]
+Initializes a new variable.
+
+#### Parameters
+- `variableName` Name of the variable
+- `defaultValue` (Optional) Sets a default value. If the variable already this has no effect.
+
+#### Example
+```
+INIT x = 42
+ECHO x
+
+INIT x = 69
+ECHO x
+```
+
+---
+
+### *variableName* = *value*
+Sets a value of a variable. It **throws an exception** if the variable is **not initalized**.
+
+#### Parameters
+- `variableName` Name of the variable
+- `value` Value of any type
+
+#### Example
+```
+INIT x
+x = 1337
+ECHO x
+```
+
+<details><summary>Output</summary>
+<p>
+
+```
+> 1337
+```
+
+</p>
+</details>
+
+---
+
+### SET *variableName* = *value*
+Sets a value of a variable. If the variable not exists it will be automatically initialized.<br>
+In a nutshell, it's a shorthand for `INIT x : x = 420`
+
+#### Parameters
+- `variableName` Name of the variable
+- `value` Value of any type
+
+#### Example
+```
+SET x = 420
+ECHO x
+```
+
+<details><summary>Output</summary>
+<p>
+
+```
+> 420
+```
+
+</p>
+</details>
+
+---
+
+### GOTO *label*
+Jumps to the row with the specified label.
+
+#### Parameters
+- `label` Name of a label without surrounding quotes
+
+#### Examples
+**Labels** can be written by a leading `*` or trailing `:`
 ```
 MyLabel:
- Do some other stuff
+ Do some stuff...
+```
+They also can have whitespaces or special characters.
+```
+GOTO Where am I?
+ECHO "I am not gonna be printed."
+
+* Where am I?
+ECHO "I am here."
 ```
 
-#### GOTO *MyLabel*
-Jump to the row with the specified Label called *MyLabel*.
+<details><summary>Output</summary>
+<p>
 
-#### GOSUB *MyLabel*
-Jump to the row with the specified Label called *MyLabel*
-and jump back to row where coming from if `RETURN` was called.
+```
+> I am here.
+```
 
-#### RETURN
-Jump back to the last row where `GOSUB` was called.
+</p>
+</details>
 
-#### RETURN TO *MyLabel*
-Like `GOTO` but should be used if coming from a `GOSUB` instruction.
+---
 
+### GOSUB *label*
+Jumps to the row with the specified label and
+jumps back to row where it is coming from if `RETURN` was called.
 
+#### Parameters
+- `label` Name of a label without surrounding quotes
 
-### Calculations
+#### Examples
+```
+SET x = 2
+GOSUB MySubroutine
+
+SET x = 3
+GOSUB MySubroutine
+
+GOTO Exit
+
+MySubroutine:
+ECHO "x * x = " + (x * x)
+RETURN
+
+Exit:
+ECHO "Done"
+```
+
+<details><summary>Output</summary>
+<p>
+
+```
+> x * x = 4
+> x * x = 9
+> Done
+```
+
+</p>
+</details>
+
+It is also possible to break out of a subroutine by using `RETURN TO`.
+```
+GOSUB MySubroutine
+GOSUB MySubroutine
+
+BeforeExit:
+ECHO "Almost done"
+GOTO Exit
+
+MySubroutine:
+ECHO "Only prints once"
+RETURN TO BeforeExit
+
+Exit:
+ECHO "Done"
+```
+
+<details><summary>Output</summary>
+<p>
+
+```
+> Only prints once
+> Almost done
+> Done
+```
+
+</p>
+</details>
+
+---
+
+### DIM(*x*) *dimName* [ = *numbers* ... ]
+Initializes an 1-dimensional array with a fixed size filled with zeros.
+
+#### Parameters
+- `x` Size of the array
+- `dimName` Name of the array
+- `numbers` (Optional) Comma separated numbers
+
+#### Examples
+```
+DIM(3) numbers
+numbers(1) = 42
+ECHO numbers
+```
+
+<details><summary>Output</summary>
+<p>
+
+```
+> 0,42,0
+```
+
+</p>
+</details>
+
+To setup initial values, write those numbers comma separated.
+```
+DIM(4) numbers = 1,3,3,7
+```
+
+---
+
+### DIM(*x*, *y*) *dimName*
+Initializes an 2-dimensional array with a fixed size filled with zeros.
+
+#### Parameters
+- `x` Size of the first dimension
+- `y` Size of the second dimension
+- `dimName` Name of the array
+
+#### Examples
+```
+DIM(3,3) tictactoe
+
+tictactoe(2)(1) = 1
+
+ECHO tictactoe(2)(0)
+ECHO tictactoe(2)(1)
+```
+
+<details><summary>Output</summary>
+<p>
+
+```
+> 0
+> 1
+```
+
+</p>
+</details>
+
+---
+
+### DIM(*x*, *y*, *z*) *dimName*
+Initializes an 3-dimensional array with a fixed size filled with zeros.
+
+#### Parameters
+- `x` Size of the first dimension
+- `y` Size of the second dimension
+- `z` Size of the third dimension
+- `dimName` Name of the array
+
+---
+
+### RESET *dimName*
+Sets all values of an array back to `0`.
+
+#### Parameters
+- `dimName` Name of the array
+
+#### Examples
+```
+DIM(3) numbers
+
+numbers(1) = 42
+ECHO numbers
+
+RESET numbers
+ECHO numbers
+```
+
+<details><summary>Output</summary>
+<p>
+
+```
+> 0,42,0
+> 0,0,0
+```
+
+</p>
+</details>
+
+---
+
+<!--
 
 #### NORMALIZE *vector*
 Normalize a `DIM(2)`.
@@ -204,25 +498,24 @@ Change the size of the canvas.
 #### CLEAR
 Clear the entier canvas. It also calls the `onClear` callback.
 
-#### BEGIN CLIP *x*, *y*, *width*, *height*
-Limit all drawcalls to an area until the `END` keyword.
 
-<!--
 `CURSOR SHOW`
 `CURSOR HIDE`
--->
 
 
 
 ### Rendering
 
 #### COLOR *value*
+
 Set the active color. It is used by `FILL` and `TEXT`.
 ```
 COLOR "green"
-  or
+```
+```
 COLOR "#00FF00"
-  or
+```
+```
 COLOR "rgba(0, 255, 0, 1.0)"
 ```
 #### FILL
@@ -230,6 +523,19 @@ Fill the entier canvas by the active color.
 
 #### FILL *x*, *y*, *width*, *height*
 Fill the given area by the active color.
+
+
+
+### Clipping
+
+#### BEGIN CLIP *x*, *y*, *width*, *height*
+Limit all drawcalls to an area until the `END` keyword.
+```
+BEGIN CLIP 10, 20, 320, 240
+    COLOR "orange"
+    FILL
+END
+```
 
 
 
@@ -305,7 +611,7 @@ DRAW 10, 20, "Hero", "Front"
 ```
 
 
-<!--
+
 ### Transformation
 
 #### TRANSLATE \<x\>, \<y\>
@@ -319,24 +625,6 @@ DRAW 10, 20, "Hero", "Front"
 
 #### RESET
 Resets all active transformations.
--->
-
-
-
-<!--
-### Variables
-
-#### INIT \<varName\>
-> &nbsp;
-
-#### INIT \<varName\> = \<value\>
-> &nbsp;
-
-#### SET \<varName\> = \<value\>
-> &nbsp;
-
-#### \<varName\> = \<value\>
-> &nbsp;
 
 
 
@@ -353,18 +641,14 @@ Resets all active transformations.
 
 #### RESET \<dimName\>
 Set all value to `0` of a dimension called `dimName`.
--->
 
 
 
-<!--
 #### FUNC \<name\> RETURNS \<value\>
 > &nbsp;
--->
 
 
 
-<!--
 ### Audio
 
 #### SONG \<name\>
@@ -405,21 +689,17 @@ Set all value to `0` of a dimension called `dimName`.
 
 #### STOP \<songName\>
 > &nbsp;
--->
 
 
 
-<!--
 #### SCOPE \<name\>
 > &nbsp;
 
 #### WRITE \<key\>, \<value\>
 > &nbsp;
--->
 
 
 
-<!--
 #### IF [NOT] \<condition\> AND .. OR .. [THEN]
 > &nbsp;
 
@@ -440,11 +720,9 @@ Set all value to `0` of a dimension called `dimName`.
 
 #### LOOP
 > &nbsp;
--->
 
 
 
-<!--
 #### END
 Marks the ending of a **Block**.
 
@@ -453,11 +731,9 @@ Skips the current iteration of a **Block**.
 
 #### BREAK
 Breaks out of the current **Block**.
--->
 
 
 
-<!--
 ## Constants
 ```
 VALUE
@@ -495,8 +771,9 @@ SUM(dim)
 READ(key)
 READ(key, defaultValue)
 ```
+
 -->
 
-
+---
 
 The rest of the documentation will follow...
