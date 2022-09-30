@@ -116,7 +116,7 @@ It's a temporary replacement for the documentation at the moment.
 
 There are of course a few limitations, some of which are intentional:
 - `DIM` only can have a maximum of 3 dimensions
-- Importing external resources like *Graphics* or *Audio* is not possible.
+- Importing external resources like *Graphics* or *Sounds* are not possible.
   You have to code everything by yourself by using
   `SPRITE`, `SONG`, `INSTRUMENT`, and so on...
   But there are some tools like **Image to Tausly**
@@ -172,7 +172,7 @@ Jump to the row with the specified Label called *MyLabel*.
 
 #### GOSUB *MyLabel*
 Jump to the row with the specified Label called *MyLabel*
-and jump back to row where come from by calling `RETURN`.
+and jump back to row where coming from if `RETURN` was called.
 
 #### RETURN
 Jump back to the last row where `GOSUB` was called.
@@ -210,7 +210,7 @@ Change the size of the canvas.
 Clear the entier canvas. It also calls the `onClear` callback.
 
 #### BEGIN CLIP *x*, *y*, *width*, *height*
-Limit all draw calls to an area until the `END` keyword.
+Limit all drawcalls to an area until the `END` keyword.
 
 <!--
 `CURSOR SHOW`
@@ -222,7 +222,7 @@ Limit all draw calls to an area until the `END` keyword.
 ### Rendering
 
 #### COLOR *value*
-Set the active color used by `FILL` and `TEXT`.
+Set the active color. It is used by `FILL` and `TEXT`.
 ```
 COLOR "green"
   or
@@ -268,7 +268,7 @@ A sprite is a **Block** instruction and must have a name and a nested `SIZE`.
 Every `SPRITE` can have multiple frames but it needs to have at least one `FRAME`.
 The `FRAME` itself is a **Block** too.
 The name of it is optional.
-Inside `FRAME` are finally the color informations.
+Inside `FRAME` are finally the color and pixel informations.
 ```
 SPRITE "Hero"
   SIZE 12, 12
@@ -299,12 +299,12 @@ DRAW 10, 20, "Hero"
 ```
 
 #### DRAW *x*, *y*, *spriteName*, *frameIndex*
-Draws a `FRAME` by index of a `SPRITE`.
+Draw a `FRAME` by index of a `SPRITE`.
 ```
 DRAW 10, 20, "Hero", 0
 ```
 #### DRAW *x*, *y*, *spriteName*, *frameName*
-Draws a `FRAME` by name of a `SPRITE`.
+Draw a `FRAME` by name of a `SPRITE`.
 ```
 DRAW 10, 20, "Hero", "Front"
 ```
