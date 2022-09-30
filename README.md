@@ -469,8 +469,6 @@ ECHO numbers
 </p>
 </details>
 
----
-
 <!--
 
 #### NORMALIZE *vector*
