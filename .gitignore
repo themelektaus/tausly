@@ -1,2 +1,4 @@
 /ignore-from-git/
+/ld*/
+/scripts/ld*.index.php
 /staging/

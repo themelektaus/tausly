@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<?php $wd ??= "staging" ?><!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="UTF-8">
@@ -32,7 +32,7 @@
                         <option value="" selected="selected">- Select File -</option>
                         <option value="_"></option>
                         <?php
-                            $path = realpath(__DIR__ . "/../staging/code");
+                            $path = realpath(__DIR__ . "/../{$wd}/code");
                             $files = glob("{$path}/*.tausly");
                             foreach ($files as $file):
                                 $value = basename($file);
