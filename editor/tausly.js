@@ -2652,9 +2652,9 @@ class SmoothDampLine extends Line
         }
         
         const line = new SmoothDampLine(options)
-        line.current = matches[1]
-        line.target = matches[2]
-        line.currentVelocity = matches[3]
+        line.getCurrent = matches[1]
+        line.getTarget = matches[2]
+        line.getCurrentVelocity = matches[3]
         line.getSmoothTime = matches[4]
         line.getDeltaTime = matches[5]
         line.getMaxSpeed = matches[6]
@@ -2663,9 +2663,9 @@ class SmoothDampLine extends Line
     
     compile()
     {
-        this.getCurrent = this.createFunction(this.current)
-        this.getTarget = this.createFunction(this.target)
-        this.getCurrentVelocity = this.createFunction(this.currentVelocity)
+        this.getCurrent = this.createFunction(this.getCurrent)
+        this.getTarget = this.createFunction(this.getTarget)
+        this.getCurrentVelocity = this.createFunction(this.getCurrentVelocity)
         this.getSmoothTime = this.createFunction(this.getSmoothTime)
         this.getDeltaTime = this.createFunction(this.getDeltaTime)
         this.getMaxSpeed = this.createFunction(this.getMaxSpeed)

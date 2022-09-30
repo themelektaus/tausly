@@ -34,9 +34,9 @@ String.prototype.matchKeyword = function(keyword, argumentCount)
     for (let i = 0; i < argumentCount; i++)
     {
         if (i == 0)
-            pattern += "\\s+(.+?)"
+            pattern += "\\s+(.+?)" + Regex.outsideQuotes
         else
-            pattern += "\\s*\\,\\s*(.+?)"
+            pattern += "\\s*\\,\\s*(.+?)" + Regex.outsideQuotes
     }
     pattern += "$"
     
