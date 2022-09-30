@@ -126,117 +126,191 @@ There are of course a few limitations, some of which are intentional:
 
 
 
-## Reference
+# Reference
 
-#### ECHO \<value\>
-By default it calls `console.log`. It can be overwritten by defining `onEcho` of a Tausly instance.
+## Instructions
+
+
+
+### Console Output
+
+#### ECHO `value`
+```
+ECHO "Hello, World!"
+```
+By default it is just `console.log(value)`.
+It can be overwritten by defining `onEcho`.
 ```
 const tausly = new Tausly
 tausly.onEcho = text => { }
 ```
 
-#### LOG \<value\>
-Typically used for debugging. It is like `ECHO` but ignores the `onEcho` override if there is any.
+#### LOG `value`
+Typically used for debugging. It is like `ECHO` but is ignoring the `onEcho` override.
 
-#### SLEEP \<milliseconds\>
-Freezes the entier runtime application for a specified amount of **milliseconds**.
 
-#### GOTO \<label\>
-Jumps the cursor to the specified `label`.
 
-#### GOSUB \<label\>
-Jumps the cursor to the specified `label` and comes back if `RETURN` gets called.
+### Waiting
+#### SLEEP `milliseconds`
+Freeze the entier runtime application for a specified amount of **milliseconds**.
+
+
+
+### Labels
+Labels can wrote with a leading `*` or trailing `:` like so:
+```
+* My Label:
+ Do some awesome stuff
+```
+```
+My Label:
+ Do some other stuff
+```
+
+#### GOTO `My Label`
+Jump to the row with the specified Label called `My Label`.
+
+#### GOSUB `My Label`
+Jump to the row with the specified Label called `My Label` and jump back to row where  come from by calling `RETURN`.
 
 #### RETURN
-Jumps back to the last call of `GOSUB`.
+Jump back to the last row where `GOSUB` was called.
 
-#### RETURN TO \<label\>
-Like `GOTO` but should be used if the cursor came from a `GOSUB` instruction.
-
-#### END
-Marks the ending of a **Block**.
-
-#### NEXT
-Skips the current iteration of a **Block**.
-
-#### BREAK
-Breaks out of the current **Block**.
+#### RETURN TO `My Label`
+Like `GOTO` but should be used if coming from a `GOSUB` instruction.
 
 
 
-#### NORMALIZE \<dimName\>
-Normalizes a Vector. Here you have to parse the name of an `DIM(2)`. For example:
+### Calculations
+
+#### NORMALIZE `vector`
+Normalize a `DIM(2)`.
 ```
-DIM(2) move
+DIM(2) vector
 move(0) = 1
 move(1) = 1
-NORMALIZE move
+NORMALIZE vector
 ```
 
-#### SMOOTHDAMP \<current\>, \<target\>, \<vel\>, \<smoothTime\>[, \<dt\>, \<maxSp\>]
-Works exactly like Unity's SmoothDamp Method<br>
+#### SMOOTHDAMP `current`, `target`, `vel`, `smoothTime`, `dt`, `maxSp`
+The arguments `dt` and `maxSp` are optional.<br>
+It works exactly like Unity's SmoothDamp Method<br>
 - https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/Math/Mathf.cs
 - https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/Math/Vector2.cs
 
 
 
-#### SIZE \<x\>, \<y\>
-Changes the size of the `canvas`.
+### Canvas
 
-
+#### SIZE `x`, `y`
+Change the size of the canvas.
 
 #### CLEAR
-Clears the canvas and calls `onClear` on the Tausly instance.
+Clear the entier canvas. It also calls the `onClear` callback.
 
-#### COLOR \<string\>
-Sets the active color that should used for `FILL` and `TEXT`.
+#### BEGIN CLIP `x`, `y`, `width`, `height`
+Limit all draw calls to an area until the `END` keyword.
 
+<!--
+`CURSOR SHOW`
+`CURSOR HIDE`
+-->
+
+
+
+### Rendering
+
+#### COLOR `value`
+Set the active color used by `FILL` and `TEXT`.
+```
+COLOR "green"
+  or
+COLOR "#00FF00"
+  or
+COLOR "rgba(0, 255, 0, 1.0)"
+```
 #### FILL
-Fills the entier canvas by the active color.
+Fill the entier canvas by the active color.
 
-#### FILL \<x\>, \<y\>, \<width\>, \<height\>
-Fills the given area by the active color.
+#### FILL `x`, `y`, `width`, `height`
+Fill the given area by the active color.
 
 
 
-#### TEXT \<x\>, \<y\>, \<text\>
-Write text inside the canvas at the given position.
-
-#### TEXT \<x\>, \<y\>, \<text\>, \<maxWidth\>
-Write text inside the canvas at the given position and takes usage of word wrapping by width.
-
-#### TEXT \<x\>, \<y\>, \<text\>, \<maxWidth\>, \<fullText\>
-Like above but with an additional argument called `fullText`. It behaves the same way, but if the `text` length is lower than `fullText` then the word wrapping is forced to the `fullText`.
+### Text
 
 #### ALIGN LEFT
-Aligns text to the left (Default setting).
+Align text to the left (default setting).
 
 #### ALIGN CENTER
-Aligns text to the center.
+Align text to the center.
 
 #### ALIGN RIGHT
-Aligns text to the right.
+Align text to the right.
+
+#### TEXT `x`, `y`, `text`
+Write `text` on the canvas at the position `x` and `y`.
+
+#### TEXT `x`, `y`, `text`, `maxWidth`
+Write `text` on the canvas at the position `x` and `y` and take usage of word wrapping by `maxWidth`.
+
+#### TEXT `x`, `y`, `text`, `maxWidth`, `fullText`
+It behaves the same way like above, but the word wrapping is forced to the `fullText`.
 
 
 
-#### DRAW \<x\>, \<y\>, \<spriteName\>
-Draws the first `FRAME` of a `SPRITE`.
 
-#### DRAW \<x\>, \<y\>, \<spriteName\>, \<frameIndex\>
-Draws a `FRAME` of a `SPRITE`.
+### Sprites
 
-#### DRAW \<x\>, \<y\>, \<spriteName\>, \<frameName\>
-Draws a `FRAME` of a `SPRITE`.
+Before Sprites can be drawn they have to be defined.
+A sprite is a **Block** instruction and must have a name and a nested `SIZE`.
+Every `SPRITE` can have multiple frames but it needs to have at least one `FRAME`.
+The `FRAME` itself is a **Block** too.
+The name of it is optional.
+Inside `FRAME` are finally the color informations.
+```
+SPRITE "Hero"
+  SIZE 12, 12
+  FRAME "Front"
+    COLORMAP "#", "black"
+    COLORMAP ".", "#FC9"
+    COLORMAP "-", "#9999CC"
+    PIXELMAP "    ####    "
+    PIXELMAP "  ##....##  "
+    PIXELMAP " #........# "
+    PIXELMAP " #........# "
+    PIXELMAP " #.##..##.# "
+    PIXELMAP " #........# "
+    PIXELMAP " #...##...# "
+    PIXELMAP "  #......#  "
+    PIXELMAP " #-######-# "
+    PIXELMAP "#.#------#.#"
+    PIXELMAP " ##--##--## "
+    PIXELMAP "   ##  ##   "
+  END
+END
+```
+
+#### DRAW `x`, `y`, `spriteName`
+Draw the first `FRAME` of a `SPRITE`.
+```
+DRAW 10, 20, "Hero"
+```
+
+#### DRAW `x`, `y`, `spriteName`, `frameIndex`
+Draws a `FRAME` by index of a `SPRITE`.
+```
+DRAW 10, 20, "Hero", 0
+```
+#### DRAW `x`, `y`, `spriteName`, `frameName`
+Draws a `FRAME` by name of a `SPRITE`.
+```
+DRAW 10, 20, "Hero", "Front"
+```
 
 
-
-#### RESET
-Resets all active transformations.
-
-#### RESET \<dimName\>
-Reset all value of a given `DIM`-name to `0`.
-
-
+<!--
+### Transformation
 
 #### TRANSLATE \<x\>, \<y\>
 > &nbsp;
@@ -247,34 +321,14 @@ Reset all value of a given `DIM`-name to `0`.
 #### SCALE \<value\>
 > &nbsp;
 
-
-
-#### DIM(x)
-> &nbsp;
-
-#### DIM(x,y)
-> &nbsp;
-
-#### DIM(x,y,z)
-> &nbsp;
+#### RESET
+Resets all active transformations.
+-->
 
 
 
-#### PIXELMAP "??.."
-> &nbsp;
-
-#### COLORMAP "?", "#??????"
-> &nbsp;
-
-
-
-#### CURSOR SHOW
-> &nbsp;
-
-#### CURSOR HIDE
-> &nbsp;
-
-
+<!--
+### Variables
 
 #### INIT \<varName\>
 > &nbsp;
@@ -290,10 +344,35 @@ Reset all value of a given `DIM`-name to `0`.
 
 
 
-#### FUNC \<name\> RETURNS \<value\>
+### Dimensions
+
+#### DIM(`x`)
 > &nbsp;
 
+#### DIM(`x`,`y`)
+> &nbsp;
 
+#### DIM(`x`,`y`,`z`)
+> &nbsp;
+
+#### RESET \<dimName\>
+Set all value to `0` of a dimension called `dimName`.
+-->
+
+
+
+<!--
+#### FUNC \<name\> RETURNS \<value\>
+> &nbsp;
+-->
+
+
+
+<!--
+### Audio
+
+#### SONG \<name\>
+> &nbsp;
 
 #### GAIN \<volume\>
 > &nbsp;
@@ -307,19 +386,13 @@ Reset all value of a given `DIM`-name to `0`.
 #### REPEAT \<boolean\>
 > &nbsp;
 
+#### INSTRUMENT [\<name\>]
+> &nbsp;
+
 #### TYPE \<name\>
 > &nbsp;
 
 #### REVERB \<boolean\>
-> &nbsp;
-
-#### SHEET "?? ?? ?? ?? .."
-> &nbsp;
-
-#### PLAY \<songName\>
-> &nbsp;
-
-#### STOP \<songName\>
 > &nbsp;
 
 #### ATTACK \<milliseconds\>
@@ -328,14 +401,29 @@ Reset all value of a given `DIM`-name to `0`.
 #### RELEASE \<milliseconds\>
 > &nbsp;
 
+#### SHEET "C0 .. D1 E2 F3 --"
+> &nbsp;
+
+#### PLAY \<songName\>
+> &nbsp;
+
+#### STOP \<songName\>
+> &nbsp;
+-->
+
+
+
+<!--
 #### SCOPE \<name\>
 > &nbsp;
 
 #### WRITE \<key\>, \<value\>
 > &nbsp;
+-->
 
 
 
+<!--
 #### IF [NOT] \<condition\> AND .. OR .. [THEN]
 > &nbsp;
 
@@ -356,32 +444,24 @@ Reset all value of a given `DIM`-name to `0`.
 
 #### LOOP
 > &nbsp;
-
-#### SONG \<name\>
-> &nbsp;
-
-#### INSTRUMENT [\<name\>]
-> &nbsp;
-
-#### SPRITE \<name\>
-> &nbsp;
-
-#### FRAME [\<name\>]
-> &nbsp;
-
-#### BEGIN CLIP \<x\>, \<y\>, \<width\>, \<height\>
-> &nbsp;
+-->
 
 
 
-#### \<Label\>:
-> &nbsp;
+<!--
+#### END
+Marks the ending of a **Block**.
 
-#### * \<Label\>
-> &nbsp;
+#### NEXT
+Skips the current iteration of a **Block**.
+
+#### BREAK
+Breaks out of the current **Block**.
+-->
 
 
 
+<!--
 ## Constants
 ```
 VALUE
@@ -419,3 +499,7 @@ SUM(dim)
 READ(key)
 READ(key, defaultValue)
 ```
+-->
+
+## Stay tuned
+The rest of the documentation will follow...
