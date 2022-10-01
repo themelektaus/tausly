@@ -4,11 +4,31 @@
 
 SIZE 800, 600
 
+INIT theme_seconds = 10
+INIT theme_milliseconds = theme_seconds * 1000
+INIT start_stage = 0
+
+INIT game_width = 480
+INIT game_height = 480
+
+INIT stage_timer
+
+DIM(2) move
+INIT speed
+INIT e
+INIT x
+INIT y
+INIT t
+
+DIM(48) random_i
+INIT random_i_cursor
+
 
 
 ------------------------------------------------------------
  * Dimension Keys
 ------------------------------------------------------------
+
 INIT _enabled = 0
 INIT _x = 1
 INIT _y = 2
@@ -19,6 +39,138 @@ INIT _directiony = 6
 INIT _speed = 7
 INIT _state = 8
 INIT _friendly = 9
+INIT _ox = 10
+INIT _oy = 11
+INIT _minx = 12
+INIT _maxx = 13
+INIT _time = 14
+INIT _powerup = 15
+
+GOTO Initialize
+
+
+
+------------------------------------------------------------
+ * Setup Stages
+------------------------------------------------------------
+
+😎 Stage 1
+
+swarm_count = 30
+swarm_count_alive = 30
+
+swarm_shoot_interval = 500
+swarm_shoot_factor = 2
+
+swarm_y_max = 7
+swarm_y_interval = 15000
+
+FOR i = 0 TO swarm_count - 1
+  x = i % 10
+  y = FLOOR(i / 10)
+  
+  e = enemies(i)
+  e(_enabled) = TRUE
+  e(_ox) = 8 + x * 48
+  e(_oy) = 8 + y * 48
+  e(_width) = 32
+  e(_height) = 32
+  e(_minx) = -8
+  e(_maxx) = 8
+  e(_speed) = 500
+  e(_powerup) = RANDOM(0, 2)
+END
+
+stage_i += 1
+GOSUB Save Stage
+RESET enemies
+
+
+
+😅 Stage 2
+
+swarm_count = 15
+swarm_count_alive = 15
+
+swarm_shoot_interval = 350
+swarm_shoot_factor = 2
+
+swarm_y_max = 7
+swarm_y_interval = 15000
+
+FOR i = 0 TO 5
+  e = enemies(i)
+  e(_enabled) = TRUE
+  e(_ox) = 64 + i * 64
+  e(_oy) = 16
+  e(_width) = 32
+  e(_height) = 32
+  e(_minx) = -32
+  e(_maxx) = 32
+  e(_speed) = 1000
+END
+
+FOR i = 6 TO 10
+  e = enemies(i)
+  e(_enabled) = TRUE
+  e(_ox) = 64 + (i - 6) * 64
+  e(_oy) = 64
+  e(_width) = 32
+  e(_height) = 32
+  e(_minx) = -32
+  e(_maxx) = 32
+  e(_speed) = 700
+END
+
+FOR i = 11 TO 14
+  e = enemies(i)
+  e(_enabled) = TRUE
+  e(_ox) = 64 + (i - 10) * 64
+  e(_oy) = 112
+  e(_width) = 32
+  e(_height) = 32
+  e(_minx) = -48
+  e(_maxx) = 48
+  e(_speed) = 500
+END
+
+stage_i += 1
+GOSUB Save Stage
+RESET enemies
+
+
+
+😞 Stage 3
+
+swarm_count = 30
+swarm_count_alive = 30
+
+swarm_shoot_interval = 175
+swarm_shoot_factor = 2
+
+swarm_y_max = 7
+swarm_y_interval = 5000
+
+FOR i = 0 TO swarm_count - 1
+  x = i % 10
+  y = FLOOR(i / 10)
+  
+  e = enemies(i)
+  e(_enabled) = TRUE
+  e(_ox) = 8 + x * 48
+  e(_oy) = 16 + y * 48
+  e(_width) = 32
+  e(_height) = 32
+  e(_minx) = -8
+  e(_maxx) = 8
+  e(_speed) = 500
+END
+
+stage_i += 1
+GOSUB Save Stage
+RESET enemies
+
+RETURN
 
 
 
@@ -26,31 +178,27 @@ INIT _friendly = 9
  * Initialize
 ------------------------------------------------------------
 
-DIM(2) move
-INIT speed
-
-DIM(100) random_i
-INIT random_i_cursor
-
 GOSUB Initialize Input
 GOSUB Initialize Player
 GOSUB Initialize Enemies
 GOSUB Initialize Bullets
+GOSUB Initialize Stages
 
 GOSUB Initialize Functions
+
 
 ------------------------------------------------------------
  * Start
 ------------------------------------------------------------
 
 GOSUB Start Player
-GOSUB Start Enemies
+GOSUB Start Stages
 
 ------------------------------------------------------------
  * Game Loop
 ------------------------------------------------------------
 
-BEGIN GAMELOOP 65
+BEGIN GAMELOOP 75
   GOSUB Update
   GOSUB Render
 END
@@ -58,6 +206,8 @@ END
 ------------------------------------------------------------
  * Update
 ------------------------------------------------------------
+
+GOSUB Update Stage
 
 GOSUB Update Input
 GOSUB Update Player
@@ -70,12 +220,29 @@ RETURN
  * Render
 ------------------------------------------------------------
 
-COLOR "#061119"
+COLOR "#000000"
 FILL
 
-GOSUB Render Player
-GOSUB Render Enemies
-GOSUB Render Bullets
+BEGIN TRANSFORM
+  
+  x = (WIDTH - game_width) / 2
+  y = (HEIGHT - game_height) / 2
+  
+  BEGIN CLIP x, y, game_width, game_height
+    TRANSLATE x, y
+    
+    COLOR "#061119"
+    FILL
+    
+    GOSUB Render Player
+    GOSUB Render Enemies
+    GOSUB Render Bullets
+  END
+END
+
+COLOR "white"
+ALIGN LEFT
+TEXT 5, 5, CEIL(stage_timer / 1000)
 
 COLOR "cyan"
 ALIGN RIGHT
@@ -95,7 +262,9 @@ INIT input_left
 INIT input_right
 INIT input_up
 INIT input_down
-INIT input_shift
+
+INIT press_space
+INIT press_escape
 
 RETURN
 
@@ -107,7 +276,9 @@ input_left = INPUT("A")
 input_right = INPUT("D")
 input_up = INPUT("W")
 input_down = INPUT("S")
-input_shift = INPUT("SHIFT")
+
+press_space = INPUT("SPACE")
+press_escape = INPUT("ESCAPE")
 
 RETURN
 
@@ -126,6 +297,9 @@ INIT player_height
 INIT player_speed
 INIT player_shoot_cooldown
 INIT player_shoot_cooldown_timer
+INIT player_powerup
+INIT player_speedshot
+INIT player_shield
 
 RETURN
 
@@ -133,12 +307,16 @@ RETURN
  * Start Player
 ------------------------------------------------------------
 
-player_x = WIDTH / 2
-player_y = HEIGHT - 50
+player_x = game_width / 2
+player_y = game_height - 32
 player_width = 32
 player_height = 32
-player_speed = 400
-player_shoot_cooldown = 250
+player_speed = 300
+player_shoot_cooldown = 500
+player_shoot_cooldown_timer = 0
+player_powerup = 0
+player_speedshot = 0
+player_shield = FALSE
 
 RETURN
 
@@ -157,27 +335,26 @@ speed = DELTATIME / 1000 * player_speed
 player_x += move(0) * speed
 player_y += move(1) * speed
 
-player_x = CLAMP(player_x, 0, WIDTH - player_width)
-player_y = CLAMP(player_y, 0, HEIGHT - player_height)
+player_x = CLAMP(player_x, 0, game_width - player_width)
+player_y = CLAMP(player_y, 0, game_height - player_height)
+
+player_shoot_cooldown_timer -= DELTATIME
+
+IF player_speedshot > 0
+  player_speedshot -= DELTATIME
+  player_shoot_cooldown_timer -= DELTATIME * 2
+END
 
 player_shoot_cooldown_timer = _
-  MAX(0, player_shoot_cooldown_timer - DELTATIME)
+  MAX(0, player_shoot_cooldown_timer)
 
-IF input_shift
-  IF player_shoot_cooldown_timer = 0
-    player_shoot_cooldown_timer = player_shoot_cooldown
-    GOSUB Spawn Bullet
-    IF NOT bullet_i = -1
-      bullet(_x) = player_x + player_width / 2 - 4
-      bullet(_y) = player_y - 24
-      bullet(_width) = 8
-      bullet(_height) = 24
-      bullet(_directionx) = 0
-      bullet(_directiony) = -1
-      bullet(_speed) = 750
-      bullet(_friendly) = TRUE
-    END
-  END
+IF player_shoot_cooldown_timer = 0
+  player_shoot_cooldown_timer = player_shoot_cooldown
+  GOSUB Spawn Player Bullet
+END
+
+IF press_space
+  GOSUB Use Player Powerup
 END
 
 source_x = player_x
@@ -187,10 +364,20 @@ source_height = player_height
 
 FOR j = 0 TO LEN(bullets) - 1
   bullet = bullets(j)
-  IF NOT bullet(_friendly)
+  IF bullet(_friendly) = FALSE OR bullet(_powerup) > 0
     GOSUB Check Bullet Intersection
     IF intersection
-      RESET bullet
+      IF bullet(_powerup) > 0
+        player_powerup = bullet(_powerup)
+        RESET bullet
+      ELSE
+        IF player_shield = TRUE
+          player_shield = FALSE
+          RESET bullet
+        ELSE
+          GOTO Exit
+        END
+      END
       BREAK
     END
   END
@@ -199,8 +386,55 @@ END
 RETURN
 
 ------------------------------------------------------------
+* Spawn Player Bullet
+------------------------------------------------------------
+
+GOSUB Spawn Bullet
+IF NOT bullet_i = -1
+  bullet(_x) = player_x + player_width / 2 - 4
+  bullet(_y) = player_y - 24
+  bullet(_width) = 8
+  bullet(_height) = 24
+  bullet(_directionx) = 0
+  bullet(_directiony) = -1
+  bullet(_speed) = 750
+  bullet(_friendly) = TRUE
+END
+
+RETURN
+
+------------------------------------------------------------
+* Use Player Powerup
+------------------------------------------------------------
+
+IF player_powerup > 0
+  
+  IF player_powerup = 1
+    player_shoot_cooldown_timer = 0
+    player_speedshot = 2000
+    GOTO Use Player Powerup Done
+  END
+  
+  IF player_powerup = 2
+    player_shield = TRUE
+    GOTO Use Player Powerup Done
+  END
+  
+  Use Player Powerup Done:
+  player_powerup = 0
+END
+
+RETURN
+
+------------------------------------------------------------
  * Render Player
 ------------------------------------------------------------
+
+IF player_shield = TRUE
+  COLOR "cyan"
+  FILL player_x - 4, player_y - 4, _
+       player_width + 8, player_height + 8
+END
 
 COLOR "green"
 FILL player_x, player_y, player_width, player_height
@@ -215,27 +449,25 @@ RETURN
  * Initialize Enemies
 ------------------------------------------------------------
 
-DIM(48,5) enemies
-DIM(5) enemy
+DIM(48,24) enemies
+DIM(24) enemy
 INIT enemy_i
 
+INIT swarm_count
+INIT swarm_count_alive
+
+INIT swarm_shoot_interval
+INIT swarm_shoot_factor
 INIT swarm_shoot_timer
 
+INIT swarm_y
+INIT swarm_y_max
+INIT swarm_y_target
+INIT swarm_y_velocity
+INIT swarm_y_interval
+INIT swarm_y_timer
+
 RETURN
-
-------------------------------------------------------------
- * Start Enemies
-------------------------------------------------------------
-
-FOR i = 0 TO LEN(enemies) - 1
-  SET x = i % 12
-  SET y = FLOOR(i / 12)
-  enemies(i)(_enabled) = TRUE
-  enemies(i)(_x) = 32 + x * 64
-  enemies(i)(_y) = 32 + y * 64
-  enemies(i)(_width) = 32
-  enemies(i)(_height) = 32
-END
 
 ------------------------------------------------------------
  * Update Enemies
@@ -248,7 +480,9 @@ IF swarm_shoot_timer = 0
     enemy = enemies(enemy_i)
     GOSUB Spawn Bullet
     IF NOT bullet_i = -1
-      swarm_shoot_timer = 1000
+      t = 1 - swarm_count_alive / swarm_count
+      t = swarm_shoot_interval * LERP(1, swarm_shoot_factor, t)
+      swarm_shoot_timer = t
       bullet(_x) = enemy(_x) + enemy(_width) / 2 - 4
       bullet(_y) = enemy(_y) + enemy(_height)
       bullet(_width) = 8
@@ -260,6 +494,14 @@ IF swarm_shoot_timer = 0
     END
   END
 END
+
+swarm_y_timer = MAX(0, swarm_y_timer - DELTATIME)
+IF swarm_y_timer = 0
+  swarm_y_timer = swarm_y_interval
+  swarm_y_target = MIN(swarm_y_max, swarm_y_target + 1)
+END
+
+SMOOTHDAMP swarm_y, swarm_y_target, swarm_y_velocity, 0.5
 
 FOR i = 0 TO LEN(enemies) - 1
   enemy_i = i
@@ -278,6 +520,14 @@ IF NOT enemy(_enabled)
   RETURN
 END
 
+enemy(_time) += DELTATIME / 1000
+
+t = enemy(_time) / 1000 * enemy(_speed) + enemy(_y) / 32
+t = ABS(t % 2 - 1)
+t = LERP(enemy(_minx), enemy(_maxx), t)
+enemy(_x) = enemy(_ox) + t
+enemy(_y) = enemy(_oy) + (swarm_y - 1) * 48
+
 source_x = enemy(_x)
 source_y = enemy(_y)
 source_width = enemy(_width)
@@ -288,8 +538,23 @@ FOR j = 0 TO LEN(bullets) - 1
   IF bullet(_friendly)
     GOSUB Check Bullet Intersection
     IF intersection
-      RESET enemy
       RESET bullet
+      IF enemy(_powerup) > 0
+        GOSUB Spawn Bullet
+        IF NOT bullet_i = -1
+          bullet(_x) = source_x
+          bullet(_y) = source_y
+          bullet(_width) = 24
+          bullet(_height) = 24
+          bullet(_directionx) = 0
+          bullet(_directiony) = 1
+          bullet(_speed) = 100
+          bullet(_friendly) = TRUE
+          bullet(_powerup) = enemy(_powerup)
+        END
+      END
+      swarm_count_alive -= 1
+      RESET enemy
       BREAK
     END
   END
@@ -355,8 +620,8 @@ RETURN
  * Initialize Bullets
 ------------------------------------------------------------
 
-DIM(30,10) bullets
-DIM(10) bullet
+DIM(64,24) bullets
+DIM(24) bullet
 INIT bullet_i
 
 RETURN
@@ -425,8 +690,8 @@ IF bullet(_enabled)
   
   target_x = 0
   target_y = 0
-  target_width = WIDTH
-  target_height = HEIGHT
+  target_width = game_width
+  target_height = game_height
   
   GOSUB Check Intersection
   IF NOT intersection
@@ -462,12 +727,153 @@ bullet = bullets(bullet_i)
 
 IF bullet(_enabled)
   IF bullet(_friendly)
-    COLOR "limegreen"
+    IF bullet(_powerup) = 0
+      COLOR "limegreen"
+    ELSE
+      IF bullet(_powerup) = 1
+        COLOR "green"
+      ELSE
+        IF bullet(_powerup) = 2
+          COLOR "cyan"
+        ELSE
+          COLOR "#666"
+        END
+      END
+    END
   ELSE
     COLOR "red"
   END
   FILL bullet(_x), bullet(_y), _
        bullet(_width), bullet(_height)
+END
+
+RETURN
+
+
+
+
+
+------------------------------------------------------------
+ * Initialize Stages
+------------------------------------------------------------
+
+DIM(3) stages
+DIM(3,2) stage_player
+DIM(3,2) stage_swarm
+DIM(3,48,24) stage_enemies
+DIM(3,64,24) stage_bullets
+
+INIT stage_i
+
+RETURN
+
+------------------------------------------------------------
+ * Start Stages
+------------------------------------------------------------
+
+stage_i = -1
+
+swarm_count = 0
+swarm_count_alive = 0
+
+swarm_shoot_interval = 0
+swarm_shoot_factor = 1
+swarm_shoot_timer = 0
+
+swarm_y = -1
+swarm_y_target = 0
+swarm_y_velocity = 0
+swarm_y_timer = 0
+
+GOSUB Setup Stages
+
+stage_i = start_stage - 1
+
+RETURN
+
+------------------------------------------------------------
+* Update Stage
+------------------------------------------------------------
+
+stage_timer = MAX(0, stage_timer - DELTATIME)
+IF stage_timer = 0
+  stage_timer = theme_milliseconds
+  IF NOT stage_i = -1
+    GOSUB Save Stage
+  END
+  stage_i += 1
+  IF stage_i >= LEN(stages)
+    stage_i = 0
+  END
+  GOSUB Load Stage
+END
+
+RETURN
+
+------------------------------------------------------------
+ * Save Stage
+------------------------------------------------------------
+
+stage_player(stage_i)(0) = player_x
+stage_player(stage_i)(1) = player_y
+
+stage_swarm(stage_i)(0) = swarm_count
+stage_swarm(stage_i)(1) = swarm_count_alive
+
+stage_swarm(stage_i)(2) = swarm_shoot_interval
+stage_swarm(stage_i)(3) = swarm_shoot_factor
+stage_swarm(stage_i)(4) = swarm_shoot_timer
+
+stage_swarm(stage_i)(5) = swarm_y
+stage_swarm(stage_i)(6) = swarm_y_target
+stage_swarm(stage_i)(7) = swarm_y_velocity
+stage_swarm(stage_i)(8) = swarm_y_interval
+stage_swarm(stage_i)(9) = swarm_y_timer
+
+FOR i = 0 TO LEN(enemies) - 1
+  FOR j = 0 TO LEN(enemies(i)) - 1
+    stage_enemies(stage_i)(i)(j) = enemies(i)(j)
+  END
+END
+
+FOR i = 0 TO LEN(bullets) - 1
+  FOR j = 0 TO LEN(bullets(i)) - 1
+    stage_bullets(stage_i)(i)(j) = bullets(i)(j)
+  END
+END
+
+RETURN
+
+------------------------------------------------------------
+ * Load Stage
+------------------------------------------------------------
+
+player_x = stage_player(stage_i)(0)
+player_y = stage_player(stage_i)(1)
+
+swarm_count = stage_swarm(stage_i)(0)
+swarm_count_alive = stage_swarm(stage_i)(1)
+
+swarm_shoot_interval = stage_swarm(stage_i)(2)
+swarm_shoot_factor = stage_swarm(stage_i)(3)
+swarm_shoot_timer = stage_swarm(stage_i)(4)
+
+swarm_y = stage_swarm(stage_i)(5)
+swarm_y_target = stage_swarm(stage_i)(6)
+swarm_y_velocity = stage_swarm(stage_i)(7)
+swarm_y_interval = stage_swarm(stage_i)(8)
+swarm_y_timer = stage_swarm(stage_i)(9)
+
+FOR i = 0 TO LEN(enemies) - 1
+  FOR j = 0 TO LEN(enemies(i)) - 1
+    enemies(i)(j) = stage_enemies(stage_i)(i)(j)
+  END
+END
+
+FOR i = 0 TO LEN(bullets) - 1
+  FOR j = 0 TO LEN(bullets(i)) - 1
+    bullets(i)(j) = stage_bullets(stage_i)(i)(j)
+  END
 END
 
 RETURN
@@ -519,4 +925,5 @@ RETURN
  * Exit
 ------------------------------------------------------------
 
-ECHO "Good bye!"
+GOSUB Render
+ECHO "GAME OVER"

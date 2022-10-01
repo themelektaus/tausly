@@ -63,6 +63,9 @@ CanvasRenderingContext2D.prototype.refresh = function()
 
 CanvasRenderingContext2D.prototype.fillTextWrapped = function(text, x, y, maxWidth, fullText)
 {
+    if (!String.isString(text))
+        text = "" + text
+    
     let lines = this.getTextLines(text.split("\n"), maxWidth)
     
     if (fullText !== undefined)

@@ -954,6 +954,7 @@ ABS(x)
 SUM(dim)
 READ(key)
 READ(key, defaultValue)
+LERP(a, b, t)
 ```
 
 <!--

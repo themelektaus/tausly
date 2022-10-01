@@ -81,6 +81,9 @@ CanvasRenderingContext2D.prototype.refresh = function()
 
 CanvasRenderingContext2D.prototype.fillTextWrapped = function(text, x, y, maxWidth, fullText)
 {
+    if (!String.isString(text))
+        text = "" + text
+    
     let lines = this.getTextLines(text.split("\n"), maxWidth)
     
     if (fullText !== undefined)
@@ -392,6 +395,10 @@ class Functions
         [
             /\bREAD\b\s*\((.*?)\)/gi,
             "Functions._READ_.call(this, $1)"
+        ],
+        [
+            /\bLERP\b\s*\(\s*(.+?)\s*\,\s*(.+?)\s*\,\s*(.+?)\s*\)/gi,
+            "Functions._LERP_($1, $2, $3)"
         ]
     ]
     
@@ -542,6 +549,11 @@ class Functions
     static _READ_(key, defaultValue)
     {
         return this.root.getData(key, defaultValue)
+    }
+    
+    static _LERP_(a, b, t)
+    {
+        return (1 - t) * a + t * b
     }
 }
 

@@ -121,6 +121,10 @@ class Functions
         [
             /\bREAD\b\s*\((.*?)\)/gi,
             "Functions._READ_.call(this, $1)"
+        ],
+        [
+            /\bLERP\b\s*\(\s*(.+?)\s*\,\s*(.+?)\s*\,\s*(.+?)\s*\)/gi,
+            "Functions._LERP_($1, $2, $3)"
         ]
     ]
     
@@ -271,5 +275,10 @@ class Functions
     static _READ_(key, defaultValue)
     {
         return this.root.getData(key, defaultValue)
+    }
+    
+    static _LERP_(a, b, t)
+    {
+        return (1 - t) * a + t * b
     }
 }
