@@ -1,0 +1,522 @@
+------------------------------------------------------------
+ * Setup
+------------------------------------------------------------
+
+SIZE 800, 600
+
+
+
+------------------------------------------------------------
+ * Dimension Keys
+------------------------------------------------------------
+INIT _enabled = 0
+INIT _x = 1
+INIT _y = 2
+INIT _width = 3
+INIT _height = 4
+INIT _directionx = 5
+INIT _directiony = 6
+INIT _speed = 7
+INIT _state = 8
+INIT _friendly = 9
+
+
+
+------------------------------------------------------------
+ * Initialize
+------------------------------------------------------------
+
+DIM(2) move
+INIT speed
+
+DIM(100) random_i
+INIT random_i_cursor
+
+GOSUB Initialize Input
+GOSUB Initialize Player
+GOSUB Initialize Enemies
+GOSUB Initialize Bullets
+
+GOSUB Initialize Functions
+
+------------------------------------------------------------
+ * Start
+------------------------------------------------------------
+
+GOSUB Start Player
+GOSUB Start Enemies
+
+------------------------------------------------------------
+ * Game Loop
+------------------------------------------------------------
+
+BEGIN GAMELOOP 65
+  GOSUB Update
+  GOSUB Render
+END
+
+------------------------------------------------------------
+ * Update
+------------------------------------------------------------
+
+GOSUB Update Input
+GOSUB Update Player
+GOSUB Update Enemies
+GOSUB Update Bullets
+
+RETURN
+
+------------------------------------------------------------
+ * Render
+------------------------------------------------------------
+
+COLOR "#061119"
+FILL
+
+GOSUB Render Player
+GOSUB Render Enemies
+GOSUB Render Bullets
+
+COLOR "cyan"
+ALIGN RIGHT
+TEXT WIDTH - 5, 5, FPS
+
+RETURN
+
+
+
+
+
+------------------------------------------------------------
+* Initialize Input
+------------------------------------------------------------
+
+INIT input_left
+INIT input_right
+INIT input_up
+INIT input_down
+INIT input_shift
+
+RETURN
+
+------------------------------------------------------------
+ * Update Input
+------------------------------------------------------------
+
+input_left = INPUT("A")
+input_right = INPUT("D")
+input_up = INPUT("W")
+input_down = INPUT("S")
+input_shift = INPUT("SHIFT")
+
+RETURN
+
+
+
+
+
+------------------------------------------------------------
+ * Initialize Player
+------------------------------------------------------------
+
+INIT player_x
+INIT player_y
+INIT player_width
+INIT player_height
+INIT player_speed
+INIT player_shoot_cooldown
+INIT player_shoot_cooldown_timer
+
+RETURN
+
+------------------------------------------------------------
+ * Start Player
+------------------------------------------------------------
+
+player_x = WIDTH / 2
+player_y = HEIGHT - 50
+player_width = 32
+player_height = 32
+player_speed = 400
+player_shoot_cooldown = 250
+
+RETURN
+
+------------------------------------------------------------
+ * Update Player
+------------------------------------------------------------
+
+RESET move
+IF input_left : move(0) -= 1 : END
+IF input_right : move(0) += 1 : END
+IF input_up : move(1) -= 1 : END
+IF input_down : move(1) += 1 : END
+NORMALIZE move
+
+speed = DELTATIME / 1000 * player_speed
+player_x += move(0) * speed
+player_y += move(1) * speed
+
+player_x = CLAMP(player_x, 0, WIDTH - player_width)
+player_y = CLAMP(player_y, 0, HEIGHT - player_height)
+
+player_shoot_cooldown_timer = _
+  MAX(0, player_shoot_cooldown_timer - DELTATIME)
+
+IF input_shift
+  IF player_shoot_cooldown_timer = 0
+    player_shoot_cooldown_timer = player_shoot_cooldown
+    GOSUB Spawn Bullet
+    IF NOT bullet_i = -1
+      bullet(_x) = player_x + player_width / 2 - 4
+      bullet(_y) = player_y - 24
+      bullet(_width) = 8
+      bullet(_height) = 24
+      bullet(_directionx) = 0
+      bullet(_directiony) = -1
+      bullet(_speed) = 750
+      bullet(_friendly) = TRUE
+    END
+  END
+END
+
+source_x = player_x
+source_y = player_y
+source_width = player_width
+source_height = player_height
+
+FOR j = 0 TO LEN(bullets) - 1
+  bullet = bullets(j)
+  IF NOT bullet(_friendly)
+    GOSUB Check Bullet Intersection
+    IF intersection
+      RESET bullet
+      BREAK
+    END
+  END
+END
+
+RETURN
+
+------------------------------------------------------------
+ * Render Player
+------------------------------------------------------------
+
+COLOR "green"
+FILL player_x, player_y, player_width, player_height
+
+RETURN
+
+
+
+
+
+------------------------------------------------------------
+ * Initialize Enemies
+------------------------------------------------------------
+
+DIM(48,5) enemies
+DIM(5) enemy
+INIT enemy_i
+
+INIT swarm_shoot_timer
+
+RETURN
+
+------------------------------------------------------------
+ * Start Enemies
+------------------------------------------------------------
+
+FOR i = 0 TO LEN(enemies) - 1
+  SET x = i % 12
+  SET y = FLOOR(i / 12)
+  enemies(i)(_enabled) = TRUE
+  enemies(i)(_x) = 32 + x * 64
+  enemies(i)(_y) = 32 + y * 64
+  enemies(i)(_width) = 32
+  enemies(i)(_height) = 32
+END
+
+------------------------------------------------------------
+ * Update Enemies
+------------------------------------------------------------
+
+swarm_shoot_timer = MAX(0, swarm_shoot_timer - DELTATIME)
+IF swarm_shoot_timer = 0
+  GOSUB Get Random Enemy
+  IF NOT enemy_i = -1
+    enemy = enemies(enemy_i)
+    GOSUB Spawn Bullet
+    IF NOT bullet_i = -1
+      swarm_shoot_timer = 1000
+      bullet(_x) = enemy(_x) + enemy(_width) / 2 - 4
+      bullet(_y) = enemy(_y) + enemy(_height)
+      bullet(_width) = 8
+      bullet(_height) = 24
+      bullet(_directionx) = 0
+      bullet(_directiony) = 1
+      bullet(_speed) = 250
+      bullet(_friendly) = FALSE
+    END
+  END
+END
+
+FOR i = 0 TO LEN(enemies) - 1
+  enemy_i = i
+  GOSUB Update Enemy
+END
+
+RETURN
+
+------------------------------------------------------------
+ * Update Enemy
+------------------------------------------------------------
+
+enemy = enemies(enemy_i)
+
+IF NOT enemy(_enabled)
+  RETURN
+END
+
+source_x = enemy(_x)
+source_y = enemy(_y)
+source_width = enemy(_width)
+source_height = enemy(_height)
+
+FOR j = 0 TO LEN(bullets) - 1
+  bullet = bullets(j)
+  IF bullet(_friendly)
+    GOSUB Check Bullet Intersection
+    IF intersection
+      RESET enemy
+      RESET bullet
+      BREAK
+    END
+  END
+END
+
+RETURN
+
+------------------------------------------------------------
+ * Get Random Enemy
+------------------------------------------------------------
+
+RESET random_i
+random_i_cursor = 0
+
+FOR i = 0 TO LEN(enemies) - 1
+  IF NOT enemies(i)(_enabled)
+    NEXT
+  END
+  random_i(random_i_cursor) = i
+  random_i_cursor += 1
+END
+
+IF random_i_cursor > 0
+  random_i_cursor = RANDOM(0, random_i_cursor - 1)
+  enemy_i = random_i(random_i_cursor)
+ELSE
+  enemy_i = -1
+END
+
+RETURN
+
+------------------------------------------------------------
+ * Render Enemies
+------------------------------------------------------------
+
+COLOR "darkred"
+
+FOR i = 0 TO LEN(enemies) - 1
+  enemy_i = i
+  GOSUB Render Enemy
+END
+
+RETURN
+
+------------------------------------------------------------
+ * Render Enemy
+------------------------------------------------------------
+
+enemy = enemies(enemy_i)
+
+IF enemy(_enabled)
+  FILL enemy(_x), enemy(_y), enemy(_width), enemy(_height)
+END
+
+RETURN
+
+
+
+
+
+
+------------------------------------------------------------
+ * Initialize Bullets
+------------------------------------------------------------
+
+DIM(30,10) bullets
+DIM(10) bullet
+INIT bullet_i
+
+RETURN
+
+------------------------------------------------------------
+ * Spawn Bullet
+------------------------------------------------------------
+
+bullet_i = -1
+FOR i = 0 TO LEN(bullets) - 1
+  bullet = bullets(i)
+  IF bullet(_enabled)
+    NEXT
+  END
+  bullet(_enabled) = TRUE
+  bullet(_state) = 1
+  bullet_i = i
+  BREAK
+END
+
+IF bullet_i = -1
+  ECHO "WARNING: Bullet Pool exhausted"
+END
+
+RETURN
+
+------------------------------------------------------------
+ * Check Bullet Intersection
+------------------------------------------------------------
+
+intersection = FALSE
+
+IF bullet(_enabled)
+  target_x = bullet(_x)
+  target_y = bullet(_y)
+  target_width = bullet(_width)
+  target_height = bullet(_height)
+  GOSUB Check Intersection
+END
+
+RETURN
+
+------------------------------------------------------------
+ * Update Bullets
+------------------------------------------------------------
+
+FOR i = 0 TO LEN(bullets) - 1
+  bullet_i = i
+  GOSUB Update Bullet
+END
+
+RETURN
+
+------------------------------------------------------------
+ * Update Bullet
+------------------------------------------------------------
+
+bullet = bullets(bullet_i)
+
+IF bullet(_enabled)
+  
+  source_x = bullet(_x)
+  source_y = bullet(_y)
+  source_width = bullet(_width)
+  source_height = bullet(_height)
+  
+  target_x = 0
+  target_y = 0
+  target_width = WIDTH
+  target_height = HEIGHT
+  
+  GOSUB Check Intersection
+  IF NOT intersection
+    RESET bullet
+  ELSE
+    IF bullet(_state) = 2
+      speed = DELTATIME / 1000 * bullet(_speed)
+      bullet(_y) += bullet(_directiony) * speed
+    ELSE
+      bullet(_state) = 2
+    END
+  END
+END
+
+RETURN
+
+------------------------------------------------------------
+ * Render Bullets
+------------------------------------------------------------
+
+FOR i = 0 TO LEN(bullets) - 1
+  bullet_i = i
+  GOSUB Render Bullet
+END
+
+RETURN
+
+------------------------------------------------------------
+ * Render Bullet
+------------------------------------------------------------
+
+bullet = bullets(bullet_i)
+
+IF bullet(_enabled)
+  IF bullet(_friendly)
+    COLOR "limegreen"
+  ELSE
+    COLOR "red"
+  END
+  FILL bullet(_x), bullet(_y), _
+       bullet(_width), bullet(_height)
+END
+
+RETURN
+
+
+
+
+
+------------------------------------------------------------
+ * Initialize Functions
+------------------------------------------------------------
+
+INIT intersection
+
+INIT source_x
+INIT source_y
+INIT source_width
+INIT source_height
+
+INIT target_x
+INIT target_y
+INIT target_width
+INIT target_height
+
+RETURN
+
+------------------------------------------------------------
+ * Check Intersection
+------------------------------------------------------------
+
+intersection = FALSE
+IF source_x + source_width > target_x
+  IF source_x < target_x + target_width
+    IF source_y + source_height > target_y
+      IF source_y < target_y + target_height
+        intersection = TRUE
+      END
+    END
+  END
+END
+
+RETURN
+
+
+
+
+
+------------------------------------------------------------
+ * Exit
+------------------------------------------------------------
+
+ECHO "Good bye!"

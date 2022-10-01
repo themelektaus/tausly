@@ -420,4 +420,12 @@ window.addEventListener("keydown", e =>
         
         return
     }
+    
+    if (e.key == "F6")
+    {
+        e.preventDefault()
+        wrapper.classList.remove("visible")
+        setTimeout(() => location.reload(), 500)
+        return
+    }
 })

@@ -43,6 +43,7 @@
     }
     
     ob_start();
+    $wd = "staging";
     include __DIR__ . "/editor.php";
     $editor_html = ob_get_clean();
     
