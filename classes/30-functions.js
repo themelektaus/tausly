@@ -15,7 +15,7 @@ class Functions
             "this.root.lastDeltaTime"
         ],
         [
-            /\bTIME\b/gi,
+            /\bTIME\b/g,
             "this.root.lastTime"
         ],
         [

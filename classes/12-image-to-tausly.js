@@ -54,6 +54,14 @@ class ImageToTausly
             let rgba = Array.from(data.slice(i, i + 4))
             
             let index = Math.max(0, Math.ceil(rgba.getLuminance() * colorChars.length) - 1)
+            
+            if (rgba[3] == 0)
+            {
+                index = Math.floor(i / 4 / img.width)
+                pixelMap[index] += " "
+                continue
+            }
+            
             let colorChar = colorChars[index]
             if (colorChar.index >= colorChar.chars.length)
             {

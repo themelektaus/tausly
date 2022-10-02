@@ -2,26 +2,583 @@
  * Setup
 ------------------------------------------------------------
 
-SIZE 800, 600
+SIZE 496, 496
 
 INIT theme_seconds = 10
-INIT theme_milliseconds = theme_seconds * 1000
-INIT start_stage = 0
 
-INIT game_width = 480
-INIT game_height = 480
-
+INIT start_stage
 INIT stage_timer
+INIT theme_milliseconds = theme_seconds * 1000
+
+INIT render_colliders = FALSE
+INIT show_fps = FALSE
 
 DIM(2) move
 INIT speed
-INIT e
-INIT x
-INIT y
-INIT t
+
+INIT e : INIT r : INIT t
+INIT vx : INIT vy
+INIT x : INIT tx
+INIT y : INIT ty
+DIM(50) m
 
 DIM(48) random_i
 INIT random_i_cursor
+
+INIT sprite_name
+
+INIT m_allow_skip
+
+
+
+CHEATER'S SECTION 😎
+
+INIT god_mode = FALSE
+INIT debug_mode = FALSE
+
+INIT first_time = TRUE
+
+
+
+------------------------------------------------------------
+ * Sprites
+------------------------------------------------------------
+
+SPRITE "Ship"
+  SIZE 12, 8
+  FRAME
+    COLORMAP "D", "#0A0"
+    COLORMAP "-", "#060"
+    PIXELMAP "            "
+    PIXELMAP "     DD     "
+    PIXELMAP " D   DD   D "
+    PIXELMAP " D---DD---D "
+    PIXELMAP " D---DD---D "
+    PIXELMAP " D---DD---D "
+    PIXELMAP "    D--D    "
+    PIXELMAP "            "
+  END
+  FRAME
+    COLORMAP "D", "#0A0"
+    COLORMAP "-", "#060"
+    COLORMAP ".", "rgba(0, 255, 255, 0.8)"
+    PIXELMAP "            "
+    PIXELMAP "     DD     "
+    PIXELMAP " D...DD...D "
+    PIXELMAP ".D---DD---D."
+    PIXELMAP ".D---DD---D."
+    PIXELMAP ".D---DD---D."
+    PIXELMAP " ...D--D... "
+    PIXELMAP "    ....    "
+  END
+END
+
+SPRITE "Enemy"
+  SIZE 12, 8
+  FRAME
+    COLORMAP "D", "#A0A"
+    COLORMAP ".", "#FFF"
+    PIXELMAP "            "
+    PIXELMAP "    D  D    "
+    PIXELMAP "  DDDDDDDD  "
+    PIXELMAP " DDD.DD.DDD "
+    PIXELMAP " D DD..DD D "
+    PIXELMAP " D DDDDDD D "
+    PIXELMAP "   D    D   "
+    PIXELMAP "            "
+  END
+  FRAME
+    COLORMAP "D", "#A0A"
+    COLORMAP ".", "#FFF"
+    PIXELMAP " D        D "
+    PIXELMAP " D  D  D  D "
+    PIXELMAP " DDDDDDDDDD "
+    PIXELMAP "  DD.DD.DD  "
+    PIXELMAP "   DDDDDD   "
+    PIXELMAP "   DD..DD   "
+    PIXELMAP "    DDDD    "
+    PIXELMAP "    D  D    "
+  END
+END
+
+SPRITE "Special Enemy"
+  SIZE 12, 8
+  FRAME
+    COLORMAP "D", "#C90"
+    COLORMAP ".", "#FFF"
+    PIXELMAP "            "
+    PIXELMAP "    D  D    "
+    PIXELMAP "  DDDDDDDD  "
+    PIXELMAP " DDD.DD.DDD "
+    PIXELMAP " D DD..DD D "
+    PIXELMAP " D DDDDDD D "
+    PIXELMAP "   D    D   "
+    PIXELMAP "            "
+  END
+  FRAME
+    COLORMAP "D", "#C90"
+    COLORMAP ".", "#FFF"
+    PIXELMAP " D        D "
+    PIXELMAP " D  D  D  D "
+    PIXELMAP " DDDDDDDDDD "
+    PIXELMAP "  DD.DD.DD  "
+    PIXELMAP "   DDDDDD   "
+    PIXELMAP "   DD..DD   "
+    PIXELMAP "    DDDD    "
+    PIXELMAP "    D  D    "
+  END
+END
+
+SPRITE "Tank Enemy"
+  SIZE 12, 8
+  FRAME
+    COLORMAP "D", "#09C"
+    COLORMAP ".", "#FFF"
+    PIXELMAP "            "
+    PIXELMAP "    D  D    "
+    PIXELMAP "  DDDDDDDD  "
+    PIXELMAP " DDD.DD.DDD "
+    PIXELMAP " D DD..DD D "
+    PIXELMAP " D DDDDDD D "
+    PIXELMAP "   D    D   "
+    PIXELMAP "            "
+  END
+  FRAME
+    COLORMAP "D", "#09C"
+    COLORMAP ".", "#FFF"
+    PIXELMAP " D        D "
+    PIXELMAP " D  D  D  D "
+    PIXELMAP " DDDDDDDDDD "
+    PIXELMAP "  DD.DD.DD  "
+    PIXELMAP "   DDDDDD   "
+    PIXELMAP "   DD..DD   "
+    PIXELMAP "    DDDD    "
+    PIXELMAP "    D  D    "
+  END
+END
+
+SPRITE "Boss"
+  SIZE 24, 24
+  FRAME
+    COLORMAP "D", "#C00F"
+    COLORMAP ".", "#0000"
+    COLORMAP "-", "#FFFF"
+    PIXELMAP "..                    .."
+    PIXELMAP "..                    .."
+    PIXELMAP "  ..                ..  "
+    PIXELMAP "  .D                D.  "
+    PIXELMAP "   DDDDDDD    DDDDDDD   "
+    PIXELMAP "    DDDDDDDDDDDDDDDD    "
+    PIXELMAP "     DDDDDDDDDDDDDD     "
+    PIXELMAP "     DD--DDDDDD--DD     "
+    PIXELMAP "    DDDDD-DDDD-DDDDD    "
+    PIXELMAP "    DDDDDDDDDDDDDDDD    "
+    PIXELMAP "    DDDDDDDDDDDDDDDD    "
+    PIXELMAP "     DDDDD----DDDDD     "
+    PIXELMAP "     DDDD-DDDD-DDDD     "
+    PIXELMAP "      DDDDDDDDDDDD      "
+    PIXELMAP "      DDDDDDDDDDDD      "
+    PIXELMAP "      DD DD  DD DD      "
+    PIXELMAP "     DDD DD  DD DDD     "
+    PIXELMAP "    DDD  DD  DD  DDD    "
+    PIXELMAP "    DD   DD  DD   DD    "
+    PIXELMAP "   DD   DD    DD   DD   "
+    PIXELMAP "  ..   DD      DD   ..  "
+    PIXELMAP "  ..                ..  "
+    PIXELMAP "..                    .."
+    PIXELMAP "..                    .."
+  END
+  FRAME
+    COLORMAP "D", "#C00F"
+    COLORMAP ".", "#0000"
+    COLORMAP "-", "#FFFF"
+    PIXELMAP "..                    .."
+    PIXELMAP "..                    .."
+    PIXELMAP "  ..                ..  "
+    PIXELMAP "  .D                D.  "
+    PIXELMAP "   DDDDDDD    DDDDDDD   "
+    PIXELMAP "    DDDDDDDDDDDDDDDD    "
+    PIXELMAP "     DDDDDDDDDDDDDD     "
+    PIXELMAP "     DD--DDDDDD--DD     "
+    PIXELMAP "    DDDDD-DDDD-DDDDD    "
+    PIXELMAP "    DDDDDDDDDDDDDDDD    "
+    PIXELMAP "    DDDDDDDDDDDDDDDD    "
+    PIXELMAP "     DDDD------DDDD     "
+    PIXELMAP "     DDD-DDDDDD-DDD     "
+    PIXELMAP "      DDDDDDDDDDDD      "
+    PIXELMAP "      DDDDDDDDDDDD      "
+    PIXELMAP "      DD DD  DD DD      "
+    PIXELMAP "     DDD DD  DD DDD     "
+    PIXELMAP "     DD  DD  DD  DD     "
+    PIXELMAP "     DD  DD  DD  DD     "
+    PIXELMAP "     D   DD  DD   D     "
+    PIXELMAP "  ..      D  D      ..  "
+    PIXELMAP "  ..                ..  "
+    PIXELMAP "..                    .."
+    PIXELMAP "..                    .."
+  END
+END
+
+SPRITE "Fast Shot"
+  SIZE 7, 7
+  FRAME
+    COLORMAP ".", "darkgreen"
+    COLORMAP "#", "yellow"
+    COLORMAP "D", "orange"
+    PIXELMAP " ..... "
+    PIXELMAP ".#..D.."
+    PIXELMAP ".##.DD."
+    PIXELMAP ".###DDD"
+    PIXELMAP ".##.DD."
+    PIXELMAP ".#..D.."
+    PIXELMAP " ..... "
+  END
+END
+
+SPRITE "Shield"
+  SIZE 7, 7
+  FRAME
+    COLORMAP ".", "darkcyan"
+    COLORMAP "#", "white"
+    COLORMAP "D", "grey"
+    PIXELMAP " ..... "
+    PIXELMAP ".#####."
+    PIXELMAP ".#DDD#."
+    PIXELMAP ".#DDD#."
+    PIXELMAP "..#D#.."
+    PIXELMAP "...#..."
+    PIXELMAP " ..... "
+  END
+END
+
+SPRITE "Upgrade"
+  SIZE 7, 7
+  FRAME
+    COLORMAP ".", "darkorange"
+    COLORMAP "#", "white"
+    PIXELMAP " ..... "
+    PIXELMAP "...#..."
+    PIXELMAP "..#.#.."
+    PIXELMAP ".#...#."
+    PIXELMAP "...#..."
+    PIXELMAP "..#.#.."
+    PIXELMAP " ..... "
+  END
+END
+
+------------------------------------------------------------
+ * BGM
+------------------------------------------------------------
+
+SONG "Ingame" 
+  GAIN 80
+  BPM 80
+  TIME SIGNATURE 16
+  REPEAT TRUE
+  INSTRUMENT
+    GAIN 70
+    TYPE "triangle"
+    REVERB 1
+    
+    SHEET "F4  --  --  --  G#4 --  G4  -- "
+    SHEET "--  --  G#4 --  --  --  F4  -- "
+    SHEET "--  --  G#4 --  --  --  G4  -- "
+    SHEET "--  --  G#4 --  --  --  --  -- "
+    
+    SHEET "F4  --  --  --  G#4 --  G4  -- "
+    SHEET "--  --  G#4 --  --  --  Bb4 -- "
+    SHEET "--  --  G#4 --  --  --  G4  -- "
+    SHEET "--  --  D#4 --  --  --  --  -- "
+    
+    SHEET "F4  --  --  --  G#4 --  G4  -- "
+    SHEET "--  --  G#4 --  --  --  F4  -- "
+    SHEET "--  --  G#4 --  --  --  G4  -- "
+    SHEET "--  --  G#4 --  --  --  --  -- "
+    
+    SHEET "C5  --  --  --  Bb4 --  G#4 -- "
+    SHEET "--  --  G4  --  --  --  C4  -- "
+    SHEET "--  --  G#4 --  --  --  G4  -- "
+    SHEET "--  --  D#4 --  --  --  --  -- "
+    
+    SHEET "F4  --  --  --  G#4 --  G4  -- "
+    SHEET "--  --  G#4 --  --  --  F4  -- "
+    SHEET "--  --  G#4 --  --  --  G4  -- "
+    SHEET "--  --  G#4 --  --  --  --  -- "
+    
+    SHEET "F4  --  --  --  G#4 --  G4  -- "
+    SHEET "--  --  G#4 --  --  --  Bb4 -- "
+    SHEET "--  --  G#4 --  --  --  G4  -- "
+    SHEET "--  --  D#4 --  --  --  --  -- "
+    
+    SHEET "F4  --  --  --  G#4 --  G4  -- "
+    SHEET "--  --  G#4 --  --  --  F4  -- "
+    SHEET "--  --  G#4 --  --  --  G4  -- "
+    SHEET "--  --  G#4 --  --  --  --  -- "
+    
+    SHEET "C5  --  --  --  Bb4 --  G#4 -- "
+    SHEET "--  --  G4  --  --  --  C4  -- "
+    SHEET "--  --  G#4 --  --  --  G4  -- "
+    SHEET "--  --  D#4 --  --  --  --  -- "
+    
+    SHEET "F4  --  --  --  G#4 --  G4  -- "
+    SHEET "--  --  G#4 --  --  --  F4  -- "
+    SHEET "--  --  G#4 --  --  --  G4  -- "
+    SHEET "--  --  G#4 --  --  --  --  -- "
+    
+    SHEET "F4  --  --  --  G#4 --  G4  -- "
+    SHEET "--  --  G#4 --  --  --  Bb4 -- "
+    SHEET "--  --  G#4 --  --  --  G4  -- "
+    SHEET "--  --  D#4 --  --  --  --  -- "
+    
+    SHEET "F4  --  --  --  G#4 --  G4  -- "
+    SHEET "--  --  G#4 --  --  --  F4  -- "
+    SHEET "--  --  G#4 --  --  --  G4  -- "
+    SHEET "--  --  G#4 --  --  --  --  -- "
+    
+    SHEET "C5  --  --  --  Bb4 --  G#4 -- "
+    SHEET "--  --  G4  --  --  --  C4  -- "
+    SHEET "--  --  G#4 --  --  --  G4  -- "
+    SHEET "--  --  D#4 --  --  --  --  -- "
+    
+  END
+  
+  INSTRUMENT
+    GAIN 30
+    TYPE "sine"
+    REVERB 0
+    ATTACK 150
+    
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    
+    SHEET "F5  --  F5  --  F5  --  F5  -- "
+    SHEET "G#4 --  F5  --  G#4 --  F6  -- "
+    SHEET "F5  --  F5  --  F5  --  F5  -- "
+    SHEET "G#4 --  F5  --  G5  --  F4  -- "
+    
+    SHEET "F5  --  F5  --  F5  --  F5  -- "
+    SHEET "G#4 --  F5  --  G#4 --  F6  -- "
+    SHEET "F5  --  F5  --  F5  --  F5  -- "
+    SHEET "D#4 --  D#4 --  G5  --  F4  -- "
+    
+    SHEET "F5  --  F5  --  F5  --  F5  -- "
+    SHEET "G#4 --  F5  --  G#4 --  F6  -- "
+    SHEET "F5  --  F5  --  F5  --  F5  -- "
+    SHEET "G#4 --  F5  --  G5  --  F4  -- "
+    
+    SHEET "F5  --  F5  --  F5  --  F5  -- "
+    SHEET "G#4 --  F5  --  G#4 --  F6  -- "
+    SHEET "F5  --  F5  --  F5  --  F5  -- "
+    SHEET "D#4 --  D#4 --  G5  --  F4  -- "
+    
+  END
+  
+  INSTRUMENT
+    GAIN 40
+    TYPE "sawtooth"
+    
+    SHEET "F1  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  F1  -- "
+    
+    SHEET "F1  ..  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    
+    SHEET "F1  ..  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  F1  F1 "
+    
+    SHEET "C1  ..  --  --  --  --  --  -- "
+    SHEET "--  --  --  --  --  --  --  -- "
+    SHEET "D#2 --  --  --  --  --  --  -- "
+    SHEET "D#2 --  --  --  --  --  --  -- "
+    
+    SHEET "F1  ..  --  --  F1  --  --  -- "
+    SHEET "F1  --  --  --  F1  --  --  -- "
+    SHEET "F1  --  --  --  F1  --  --  -- "
+    SHEET "F1  --  --  --  F1  --  F1  F1 "
+    
+    SHEET "F1  ..  --  --  F1  --  --  -- "
+    SHEET "F1  --  --  --  F1  --  --  -- "
+    SHEET "G#1 --  --  --  G#1 --  --  -- "
+    SHEET "D1  --  --  --  D1  --  --  -- "
+    
+    SHEET "F1  ..  --  --  F1  --  --  -- "
+    SHEET "F1  --  --  --  F1  --  --  -- "
+    SHEET "F1  --  --  --  F1  --  --  -- "
+    SHEET "F1  --  --  --  F1  --  F1  F1 "
+    
+    SHEET "C1  ..  --  --  C1  --  --  -- "
+    SHEET "C1  --  --  --  C1  --  --  -- "
+    SHEET "D#2 --  --  --  D#2 --  --  -- "
+    SHEET "D#2 --  --  --  D#2 --  --  -- "
+    
+    SHEET "F1  ..  --  --  F1  --  --  -- "
+    SHEET "F1  --  --  --  F1  --  --  -- "
+    SHEET "F1  --  --  --  F1  --  --  -- "
+    SHEET "F1  --  --  --  F1  --  F1  F1 "
+    
+    SHEET "F1  ..  --  --  F1  --  --  -- "
+    SHEET "F1  --  --  --  F1  --  --  -- "
+    SHEET "G#1 --  --  --  G#1 --  --  -- "
+    SHEET "D1  --  --  --  D1  --  --  -- "
+    
+    SHEET "F1  ..  --  --  F1  --  --  -- "
+    SHEET "F1  --  --  --  F1  --  --  -- "
+    SHEET "F1  --  --  --  F1  --  --  -- "
+    SHEET "F1  --  --  --  F1  --  F1  F1 "
+    
+    SHEET "C1  ..  --  --  C1  --  --  -- "
+    SHEET "C1  --  --  --  C1  --  --  -- "
+    SHEET "D#2 --  --  --  D#2 --  --  -- "
+    SHEET "D#2 --  --  --  D#2 --  --  -- "
+  END
+END
+
+------------------------------------------------------------
+ * SFX
+------------------------------------------------------------
+
+SONG "Insert Coin"
+  GAIN 60
+  BPM 240
+  TIME SIGNATURE 16
+  INSTRUMENT
+    TYPE "triangle"
+    SHEET "E7 D6 E6 D7"
+  END
+END
+
+SONG "Player Hit"
+  GAIN 50
+  BPM 240
+  TIME SIGNATURE 16
+  INSTRUMENT
+    TYPE "sine"
+    SHEET "E3 D3 B2 --"
+  END
+END
+
+SONG "Enemy Hit"
+  GAIN 50
+  BPM 240
+  TIME SIGNATURE 16
+  INSTRUMENT
+    TYPE "sine"
+    SHEET "E5 C4"
+  END
+END
+
+SONG "Collect"
+  GAIN 40
+  BPM 240
+  TIME SIGNATURE 16
+  INSTRUMENT
+    REVERB 1
+    TYPE "sine"
+    SHEET "E6 C7 E7"
+  END
+END
+
+SONG "Use"
+  GAIN 40
+  BPM 240
+  TIME SIGNATURE 16
+  INSTRUMENT
+    REVERB 2
+    TYPE "sine"
+    SHEET "E6 C7 E6"
+  END
+END
+
+SONG "Type"
+  GAIN 20
+  BPM 120
+  TIME SIGNATURE 16
+  REPEAT TRUE
+  INSTRUMENT
+    TYPE "sine"
+    SHEET "C3 D3 C3 D3 D3 C3 E3 C3"
+  END
+END
+
+
+
+------------------------------------------------------------
+ * Messages
+------------------------------------------------------------
+
+DIM(7) intro_message
+intro_message(0) = "Commander..."
+intro_message(1) = "You are the last ship out there."
+intro_message(2) = "But now we are getting attacked..."
+intro_message(3) = "...from four sides at once."
+intro_message(4) = _
+  "Overload the quantum drive to duplicate yourself."
+intro_message(5) = "You are our last hope.\n" + _
+  "We count on you."
+
+DIM(5) outro_message
+outro_message(0) = "Commander...\nCommander...\n" + _
+  "Commander...\nCommander..."
+outro_message(1) = _
+  "You are the last ship out there.\n" + _
+  "You are the last ship out there.\n" + _
+  "You are the last ship out there.\n" + _
+  "You are the last ship out there."
+outro_message(1) = _
+  "Synchronize your duplicates by " + _
+  "deactivating the quantum drive.\n" + _
+  "Synchronize your duplicates by " + _
+  "deactivating the quantum drive.\n" + _
+  "Synchronize your duplicates by " + _
+  "deactivating the quantum drive.\n" + _
+  "Synchronize your duplicates by " + _
+  "deactivating the quantum drive."
+outro_message(2) = "Better?"
+outro_message(3) = "You saved humanity."
+outro_message(4) = "Time to fly home, Commander."
 
 
 
@@ -34,143 +591,38 @@ INIT _x = 1
 INIT _y = 2
 INIT _width = 3
 INIT _height = 4
-INIT _directionx = 5
-INIT _directiony = 6
-INIT _speed = 7
-INIT _state = 8
-INIT _friendly = 9
-INIT _ox = 10
-INIT _oy = 11
-INIT _minx = 12
-INIT _maxx = 13
-INIT _time = 14
-INIT _powerup = 15
+INIT _direction = 5
+INIT _speed = 6
+INIT _state = 7
+INIT _friendly = 8
+INIT _ox = 9
+INIT _oy = 10
+INIT _type = 11
+INIT _powerup = 12
+INIT _hp = 13
+INIT _maxhp = 14
+INIT _t = 15
+INIT _tx = 16
+INIT _ty = 17
+INIT _vx = 18
+INIT _vy = 19
+INIT _hit = 20
+INIT _dead = 21
+INIT _offset = 22
+INIT _respawn = 23
+INIT _respawntimer = 24
 
-GOTO Initialize
+INIT _none = 0
+INIT _fastshot = 1
+INIT _shield = 2
+INIT _shootrate = 3
 
-
-
-------------------------------------------------------------
- * Setup Stages
-------------------------------------------------------------
-
-😎 Stage 1
-
-swarm_count = 30
-swarm_count_alive = 30
-
-swarm_shoot_interval = 500
-swarm_shoot_factor = 2
-
-swarm_y_max = 7
-swarm_y_interval = 15000
-
-FOR i = 0 TO swarm_count - 1
-  x = i % 10
-  y = FLOOR(i / 10)
-  
-  e = enemies(i)
-  e(_enabled) = TRUE
-  e(_ox) = 8 + x * 48
-  e(_oy) = 8 + y * 48
-  e(_width) = 32
-  e(_height) = 32
-  e(_minx) = -8
-  e(_maxx) = 8
-  e(_speed) = 500
-  e(_powerup) = RANDOM(0, 2)
-END
-
-stage_i += 1
-GOSUB Save Stage
-RESET enemies
+INIT _special = 1
+INIT _boss = 2
+INIT _slave = 3
+INIT _tank = 4
 
 
-
-😅 Stage 2
-
-swarm_count = 15
-swarm_count_alive = 15
-
-swarm_shoot_interval = 350
-swarm_shoot_factor = 2
-
-swarm_y_max = 7
-swarm_y_interval = 15000
-
-FOR i = 0 TO 5
-  e = enemies(i)
-  e(_enabled) = TRUE
-  e(_ox) = 64 + i * 64
-  e(_oy) = 16
-  e(_width) = 32
-  e(_height) = 32
-  e(_minx) = -32
-  e(_maxx) = 32
-  e(_speed) = 1000
-END
-
-FOR i = 6 TO 10
-  e = enemies(i)
-  e(_enabled) = TRUE
-  e(_ox) = 64 + (i - 6) * 64
-  e(_oy) = 64
-  e(_width) = 32
-  e(_height) = 32
-  e(_minx) = -32
-  e(_maxx) = 32
-  e(_speed) = 700
-END
-
-FOR i = 11 TO 14
-  e = enemies(i)
-  e(_enabled) = TRUE
-  e(_ox) = 64 + (i - 10) * 64
-  e(_oy) = 112
-  e(_width) = 32
-  e(_height) = 32
-  e(_minx) = -48
-  e(_maxx) = 48
-  e(_speed) = 500
-END
-
-stage_i += 1
-GOSUB Save Stage
-RESET enemies
-
-
-
-😞 Stage 3
-
-swarm_count = 30
-swarm_count_alive = 30
-
-swarm_shoot_interval = 175
-swarm_shoot_factor = 2
-
-swarm_y_max = 7
-swarm_y_interval = 5000
-
-FOR i = 0 TO swarm_count - 1
-  x = i % 10
-  y = FLOOR(i / 10)
-  
-  e = enemies(i)
-  e(_enabled) = TRUE
-  e(_ox) = 8 + x * 48
-  e(_oy) = 16 + y * 48
-  e(_width) = 32
-  e(_height) = 32
-  e(_minx) = -8
-  e(_maxx) = 8
-  e(_speed) = 500
-END
-
-stage_i += 1
-GOSUB Save Stage
-RESET enemies
-
-RETURN
 
 
 
@@ -187,29 +639,130 @@ GOSUB Initialize Stages
 GOSUB Initialize Functions
 
 
+
 ------------------------------------------------------------
- * Start
+ * Menu
 ------------------------------------------------------------
+BEGIN GAMELOOP
+  
+  press_space = PRESS("SPACE")
+  
+  COLOR "black"
+  FILL
+  
+  IF press_space
+    PLAY "Insert Coin"
+    SLEEP 500
+    
+    IF first_time
+      first_time = FALSE
+      m_allow_skip = TRUE
+      FOR i = 0 TO LEN(intro_message) - 1
+        m(i) = intro_message(i)
+      END
+      GOSUB Start Message
+    ELSE
+      SLEEP 1000
+    END
+    
+    BREAK
+  END
+  
+  ALIGN CENTER
+  COLOR "white"
+  
+  TEXT WIDTH / 2, HEIGHT / 2 - 32 - 11, _
+       "- T I M E   I N V A D E R S -"
+  
+  IF FLOOR(TIME / 250) % 4 > 0
+    TEXT WIDTH / 2, HEIGHT / 2 + 32 - 11, _
+        "PRESS [SPACE] TO INSERT COIN"
+  END
+END
+
+------------------------------------------------------------
+ * Start Game
+------------------------------------------------------------
+
+start_stage = 0
+stage_timer = 0
+
+RESET enemies
+RESET bullets
+
+RESET stages
+RESET stage_player
+RESET stage_swarm
+RESET stage_enemies
+RESET stage_bullets
 
 GOSUB Start Player
 GOSUB Start Stages
+
+PLAY "Ingame"
 
 ------------------------------------------------------------
  * Game Loop
 ------------------------------------------------------------
 
-BEGIN GAMELOOP 75
+BEGIN GAMELOOP 95
   GOSUB Update
   GOSUB Render
 END
 
 ------------------------------------------------------------
+ * Game Over
+------------------------------------------------------------
+
+STOP "Ingame"
+
+FOR i = 0 TO 10 : COLOR "#9001" : FILL : SLEEP 50 : END
+SLEEP 1000
+
+COLOR "darkred"
+FILL
+
+COLOR "white"
+ALIGN CENTER
+TEXT WIDTH / 2, HEIGHT / 2 - 11, _
+  "The enemy has eradicated humanity.\n\nPRESS [SPACE]"
+
+WHILE NOT PRESS("SPACE") : SLEEP 10 : END
+WHILE NOT RELEASE("SPACE") : SLEEP 10 : END
+PLAY "Player Hit"
+
+GOTO Menu
+
+------------------------------------------------------------
+ * Game Won
+------------------------------------------------------------
+
+STOP "Ingame"
+
+FOR i = 0 TO 10 : COLOR "#0901" : FILL : SLEEP 50 : END
+SLEEP 1000
+
+m_allow_skip = FALSE
+FOR i = 0 TO LEN(outro_message) - 1
+  m(i) = outro_message(i)
+END
+GOSUB Start Message
+
+WHILE INPUT("SPACE") : SLEEP 10 : END
+
+GOTO Menu
+
+------------------------------------------------------------
  * Update
 ------------------------------------------------------------
 
-GOSUB Update Stage
-
 GOSUB Update Input
+
+IF press_n
+  stage_timer = 0
+END
+
+GOSUB Update Stage
 GOSUB Update Player
 GOSUB Update Enemies
 GOSUB Update Bullets
@@ -220,33 +773,42 @@ RETURN
  * Render
 ------------------------------------------------------------
 
-COLOR "#000000"
+COLOR "#061119"
 FILL
 
-BEGIN TRANSFORM
-  
-  x = (WIDTH - game_width) / 2
-  y = (HEIGHT - game_height) / 2
-  
-  BEGIN CLIP x, y, game_width, game_height
-    TRANSLATE x, y
-    
-    COLOR "#061119"
-    FILL
-    
-    GOSUB Render Player
-    GOSUB Render Enemies
-    GOSUB Render Bullets
+COLOR "#191929"
+ALIGN CENTER
+SCALE 10
+TEXT WIDTH / 2, HEIGHT / 2 - 11, CEIL(stage_timer / 1000)
+RESET
+
+ALIGN LEFT
+
+COLOR "#FFF"
+IF player_powerup = _fastshot
+  SCALE 4 : DRAW 24, HEIGHT - 32, "Fast Shot" : RESET
+  TEXT 48, HEIGHT - 34, "Fast Shot"
+ELSE
+  IF player_powerup = _shield
+    SCALE 4 : DRAW 24, HEIGHT - 32, "Shield" : RESET
+    TEXT 48, HEIGHT - 34, "Shield"
   END
 END
 
-COLOR "white"
-ALIGN LEFT
-TEXT 5, 5, CEIL(stage_timer / 1000)
-
-COLOR "cyan"
 ALIGN RIGHT
-TEXT WIDTH - 5, 5, FPS
+COLOR "orange"
+TEXT WIDTH - 16, HEIGHT - 34, "SHOOT SPEED " + _
+  ROUND(player_shootrate * 10)
+
+GOSUB Render Player
+GOSUB Render Enemies
+GOSUB Render Bullets
+
+IF show_fps
+  COLOR "cyan"
+  ALIGN RIGHT
+  TEXT WIDTH - 5, 5, FPS
+END
 
 RETURN
 
@@ -265,6 +827,7 @@ INIT input_down
 
 INIT press_space
 INIT press_escape
+INIT press_n
 
 RETURN
 
@@ -272,13 +835,38 @@ RETURN
  * Update Input
 ------------------------------------------------------------
 
-input_left = INPUT("A")
-input_right = INPUT("D")
-input_up = INPUT("W")
-input_down = INPUT("S")
+IF INPUT("LEFT") OR INPUT("A")
+  input_left = TRUE
+ELSE
+  input_left = FALSE
+END
 
-press_space = INPUT("SPACE")
-press_escape = INPUT("ESCAPE")
+IF INPUT("RIGHT") OR INPUT("D")
+  input_right = TRUE
+ELSE
+  input_right = FALSE
+END
+
+IF INPUT("UP") OR INPUT("W")
+  input_up = TRUE
+ELSE
+  input_up = FALSE
+END
+
+IF INPUT("DOWN") OR INPUT("S")
+  input_down = TRUE
+ELSE
+  input_down = FALSE
+END
+
+press_space = PRESS("SPACE")
+press_escape = PRESS("ESCAPE")
+
+IF debug_mode
+  press_n = PRESS("N")
+ELSE
+  press_n = FALSE
+END
 
 RETURN
 
@@ -295,11 +883,13 @@ INIT player_y
 INIT player_width
 INIT player_height
 INIT player_speed
+INIT player_shootrate
 INIT player_shoot_cooldown
 INIT player_shoot_cooldown_timer
 INIT player_powerup
-INIT player_speedshot
+INIT player_fastshot
 INIT player_shield
+INIT player_shield_lost
 
 RETURN
 
@@ -307,16 +897,18 @@ RETURN
  * Start Player
 ------------------------------------------------------------
 
-player_x = game_width / 2
-player_y = game_height - 32
-player_width = 32
-player_height = 32
+player_x = WIDTH / 2
+player_y = HEIGHT - 32
+player_width = 36
+player_height = 16
 player_speed = 300
-player_shoot_cooldown = 500
+player_shootrate = 1
+player_shoot_cooldown = 750
 player_shoot_cooldown_timer = 0
-player_powerup = 0
-player_speedshot = 0
+player_powerup = _none
+player_fastshot = 0
 player_shield = FALSE
+player_shield_lost = FALSE
 
 RETURN
 
@@ -335,13 +927,13 @@ speed = DELTATIME / 1000 * player_speed
 player_x += move(0) * speed
 player_y += move(1) * speed
 
-player_x = CLAMP(player_x, 0, game_width - player_width)
-player_y = CLAMP(player_y, 0, game_height - player_height)
+player_x = CLAMP(player_x, 0, WIDTH - player_width)
+player_y = CLAMP(player_y, 0, HEIGHT - player_height)
 
-player_shoot_cooldown_timer -= DELTATIME
+player_shoot_cooldown_timer -= DELTATIME * player_shootrate
 
-IF player_speedshot > 0
-  player_speedshot -= DELTATIME
+IF player_fastshot > 0
+  player_fastshot -= DELTATIME
   player_shoot_cooldown_timer -= DELTATIME * 2
 END
 
@@ -364,22 +956,41 @@ source_height = player_height
 
 FOR j = 0 TO LEN(bullets) - 1
   bullet = bullets(j)
-  IF bullet(_friendly) = FALSE OR bullet(_powerup) > 0
+  IF bullet(_friendly) = FALSE OR bullet(_powerup) <> _none
     GOSUB Check Bullet Intersection
     IF intersection
-      IF bullet(_powerup) > 0
-        player_powerup = bullet(_powerup)
+      IF NOT bullet(_powerup) = _none
+        PLAY "Collect"
+        IF bullet(_powerup) = _fastshot OR bullet(_powerup) = _shield
+          player_powerup = bullet(_powerup)
+        ELSE
+          IF bullet(_powerup) = _shootrate
+            player_shootrate += 0.2
+          END
+        END
         RESET bullet
       ELSE
-        IF player_shield = TRUE
-          player_shield = FALSE
-          RESET bullet
-        ELSE
-          GOTO Exit
-        END
+        PLAY "Player Hit"
+        GOSUB Player Hit
       END
       BREAK
     END
+  END
+END
+
+RETURN
+
+------------------------------------------------------------
+* Player Hit
+------------------------------------------------------------
+
+IF player_shield = TRUE
+  player_shield_lost = TRUE
+  player_shield = FALSE
+  RESET bullet
+ELSE
+  IF NOT god_mode
+    GOTO Game Over
   END
 END
 
@@ -395,8 +1006,7 @@ IF NOT bullet_i = -1
   bullet(_y) = player_y - 24
   bullet(_width) = 8
   bullet(_height) = 24
-  bullet(_directionx) = 0
-  bullet(_directiony) = -1
+  bullet(_direction) = -1
   bullet(_speed) = 750
   bullet(_friendly) = TRUE
 END
@@ -407,21 +1017,23 @@ RETURN
 * Use Player Powerup
 ------------------------------------------------------------
 
-IF player_powerup > 0
+IF NOT player_powerup = _none
   
-  IF player_powerup = 1
+  PLAY "Use"
+  
+  IF player_powerup = _fastshot
     player_shoot_cooldown_timer = 0
-    player_speedshot = 2000
+    player_fastshot = 3000
     GOTO Use Player Powerup Done
   END
   
-  IF player_powerup = 2
+  IF player_powerup = _shield
     player_shield = TRUE
     GOTO Use Player Powerup Done
   END
   
   Use Player Powerup Done:
-  player_powerup = 0
+  player_powerup = _none
 END
 
 RETURN
@@ -430,14 +1042,18 @@ RETURN
  * Render Player
 ------------------------------------------------------------
 
+SCALE 4
 IF player_shield = TRUE
-  COLOR "cyan"
-  FILL player_x - 4, player_y - 4, _
-       player_width + 8, player_height + 8
+  DRAW player_x + 11, player_y + 3, "Ship", 1
+ELSE
+  DRAW player_x + 11, player_y + 3, "Ship", 0
 END
+RESET
 
-COLOR "green"
-FILL player_x, player_y, player_width, player_height
+IF render_colliders
+  COLOR "#FFF3"
+  FILL player_x, player_y, player_width, player_height
+END
 
 RETURN
 
@@ -449,9 +1065,10 @@ RETURN
  * Initialize Enemies
 ------------------------------------------------------------
 
-DIM(48,24) enemies
-DIM(24) enemy
+DIM(48,25) enemies
+DIM(25) enemy
 INIT enemy_i
+
 
 INIT swarm_count
 INIT swarm_count_alive
@@ -473,6 +1090,11 @@ RETURN
  * Update Enemies
 ------------------------------------------------------------
 
+FOR i = 0 TO LEN(enemies) - 1
+  enemy_i = i
+  GOSUB Update Enemy
+END
+
 swarm_shoot_timer = MAX(0, swarm_shoot_timer - DELTATIME)
 IF swarm_shoot_timer = 0
   GOSUB Get Random Enemy
@@ -481,14 +1103,13 @@ IF swarm_shoot_timer = 0
     GOSUB Spawn Bullet
     IF NOT bullet_i = -1
       t = 1 - swarm_count_alive / swarm_count
-      t = swarm_shoot_interval * LERP(1, swarm_shoot_factor, t)
-      swarm_shoot_timer = t
+      t = LERP(1, swarm_shoot_factor, t)
+      swarm_shoot_timer = t * swarm_shoot_interval
       bullet(_x) = enemy(_x) + enemy(_width) / 2 - 4
       bullet(_y) = enemy(_y) + enemy(_height)
       bullet(_width) = 8
-      bullet(_height) = 24
-      bullet(_directionx) = 0
-      bullet(_directiony) = 1
+      bullet(_height) = 8
+      bullet(_direction) = 1
       bullet(_speed) = 250
       bullet(_friendly) = FALSE
     END
@@ -500,12 +1121,31 @@ IF swarm_y_timer = 0
   swarm_y_timer = swarm_y_interval
   swarm_y_target = MIN(swarm_y_max, swarm_y_target + 1)
 END
-
 SMOOTHDAMP swarm_y, swarm_y_target, swarm_y_velocity, 0.5
 
-FOR i = 0 TO LEN(enemies) - 1
-  enemy_i = i
-  GOSUB Update Enemy
+RETURN
+
+------------------------------------------------------------
+ * Start Enemy
+------------------------------------------------------------
+
+enemy(_enabled) = TRUE
+enemy(_hp) = enemy(_maxhp)
+enemy(_dead) = FALSE
+enemy(_x) = enemy(_ox)
+enemy(_y) = enemy(_height) * -1
+
+IF enemy(_type) = _none
+  r = RANDOM(0, 10)
+  IF r = 9
+    enemy(_powerup) = _fastshot
+  ELSE
+    IF r = 10
+      enemy(_powerup) = _shield
+    ELSE
+      enemy(_powerup) = _none
+    END
+  END
 END
 
 RETURN
@@ -520,41 +1160,116 @@ IF NOT enemy(_enabled)
   RETURN
 END
 
-enemy(_time) += DELTATIME / 1000
+enemy(_hit) = MAX(0, enemy(_hit) - DELTATIME / 250)
 
-t = enemy(_time) / 1000 * enemy(_speed) + enemy(_y) / 32
-t = ABS(t % 2 - 1)
-t = LERP(enemy(_minx), enemy(_maxx), t)
-enemy(_x) = enemy(_ox) + t
-enemy(_y) = enemy(_oy) + (swarm_y - 1) * 48
+IF enemy(_type) = _slave
+  enemy(_tx) = enemies(0)(_tx) + enemy_i * 48 - 104
+  enemy(_ty) = enemies(0)(_ty) + 64
+  IF enemy_i = 2 OR enemy_i = 3
+    enemy(_ty) += 16
+  END
+ELSE
+  IF enemy(_t) > 0
+    enemy(_t) = MAX(0, enemy(_t) - DELTATIME)
+  END
+  IF enemy(_t) = 0
+    enemy(_t) = 1000
+    IF enemy(_type) = _boss
+      enemy(_tx) = RANDOM(0, WIDTH)
+      enemy(_ty) = RANDOM(0, HEIGHT / 2)
+    ELSE
+      x = enemy(_ox) - enemy(_offset)
+      y = enemy(_ox) + enemy(_offset)
+      enemy(_tx) = RANDOM(x, y)
+      x = enemy(_oy) - enemy(_offset)
+      y = enemy(_oy) + enemy(_offset)
+      enemy(_ty) = RANDOM(x, y)
+    END
+  END
+END
+
+x = enemy(_x)
+y = enemy(_y)
+tx = enemy(_tx)
+ty = enemy(_ty) + (swarm_y - 1) * 48
+vx = enemy(_vx)
+vy = enemy(_vy)
+t = 1 / enemy(_speed)
+SMOOTHDAMP x, tx, vx, t
+SMOOTHDAMP y, ty, vy, t
+enemy(_x) = x
+enemy(_y) = y
+enemy(_vx) = vx
+enemy(_vy) = vy
+
+Update Enemy Next:
+
+IF enemy(_dead)
+  IF enemy(_hit) = 0
+    IF enemy(_type) = _boss
+      GOSUB Render
+      GOTO Game Won
+    END
+    IF enemy(_respawn) = 0
+      RESET enemy
+    ELSE
+      enemy(_respawntimer) = _
+        MAX(0, enemy(_respawntimer) - DELTATIME / 1000)
+      IF enemy(_respawntimer) = 0
+        GOSUB Start Enemy
+        swarm_count_alive += 1
+      END
+    END
+  END
+  RETURN
+END
 
 source_x = enemy(_x)
 source_y = enemy(_y)
 source_width = enemy(_width)
 source_height = enemy(_height)
 
+target_x = player_x
+target_y = player_y
+target_width = player_width
+target_height = player_height
+
+GOSUB Check Intersection
+IF intersection
+  GOSUB Player Hit
+END
+
 FOR j = 0 TO LEN(bullets) - 1
   bullet = bullets(j)
-  IF bullet(_friendly)
+  IF bullet(_friendly) AND bullet(_powerup) = _none
     GOSUB Check Bullet Intersection
     IF intersection
       RESET bullet
-      IF enemy(_powerup) > 0
-        GOSUB Spawn Bullet
-        IF NOT bullet_i = -1
-          bullet(_x) = source_x
-          bullet(_y) = source_y
-          bullet(_width) = 24
-          bullet(_height) = 24
-          bullet(_directionx) = 0
-          bullet(_directiony) = 1
-          bullet(_speed) = 100
-          bullet(_friendly) = TRUE
-          bullet(_powerup) = enemy(_powerup)
+      PLAY "Enemy Hit"
+      enemy(_hp) -= 1
+      enemy(_hit) = 1
+      IF enemy(_hp) = 0
+        IF player_shield_lost = TRUE
+          player_shield_lost = FALSE
+          enemy(_powerup) = _shield
         END
+        IF NOT enemy(_powerup) = _none
+          GOSUB Spawn Bullet
+          IF NOT bullet_i = -1
+            bullet(_x) = source_x
+            bullet(_y) = source_y
+            bullet(_width) = 24
+            bullet(_height) = 24
+            bullet(_direction) = 1
+            bullet(_speed) = 100
+            bullet(_friendly) = TRUE
+            bullet(_powerup) = enemy(_powerup)
+          END
+        END
+        swarm_count_alive -= 1
+        enemy(_dead) = TRUE
+        enemy(_respawntimer) = enemy(_respawn)
       END
-      swarm_count_alive -= 1
-      RESET enemy
       BREAK
     END
   END
@@ -571,6 +1286,9 @@ random_i_cursor = 0
 
 FOR i = 0 TO LEN(enemies) - 1
   IF NOT enemies(i)(_enabled)
+    NEXT
+  END
+  IF enemies(i)(_dead)
     NEXT
   END
   random_i(random_i_cursor) = i
@@ -590,27 +1308,55 @@ RETURN
  * Render Enemies
 ------------------------------------------------------------
 
-COLOR "darkred"
+IF render_colliders = TRUE
+  COLOR "rgba(255, 155, 0, 0.7)"
+  FOR i = 0 TO LEN(enemies) - 1
+    enemy_i = i
+    enemy = enemies(enemy_i)
+    IF enemy(_enabled) _
+    AND (enemy(_hit) > 0 OR enemy(_hp) > 0)
+      FILL enemy(_x), enemy(_y), _
+          enemy(_width), enemy(_height)
+    END
+  END
+END
 
 FOR i = 0 TO LEN(enemies) - 1
   enemy_i = i
-  GOSUB Render Enemy
+  enemy = enemies(enemy_i)
+  IF enemy(_enabled) _
+  AND (enemy(_hit) > 0 OR enemy(_hp) > 0)
+    SCALE 4 * (enemy(_hit) / 2 + 1)
+    GOSUB DrawEnemy
+    RESET
+  END
 END
 
 RETURN
 
-------------------------------------------------------------
- * Render Enemy
-------------------------------------------------------------
+DrawEnemy:
 
-enemy = enemies(enemy_i)
-
-IF enemy(_enabled)
-  FILL enemy(_x), enemy(_y), enemy(_width), enemy(_height)
+IF enemy(_type) = _tank
+  t = FLOOR(TIME / 500 % 2)
+  DRAW enemy(_x) + 10, enemy(_y) + 10, "Tank Enemy", t
+  RETURN
 END
 
-RETURN
+IF enemy(_type) = _special
+  t = FLOOR(TIME / 250 % 2)
+  DRAW enemy(_x) + 10, enemy(_y) + 10, "Special Enemy", t
+  RETURN
+END
 
+IF enemy(_type) = _boss
+  t = FLOOR(TIME / 500 % 2)
+  DRAW enemy(_x) + 20, enemy(_y) + 20, "Boss", t
+  RETURN
+END
+
+t = FLOOR(TIME / 500 % 2)
+DRAW enemy(_x) + 10, enemy(_y) + 10, "Enemy", t
+RETURN
 
 
 
@@ -620,8 +1366,8 @@ RETURN
  * Initialize Bullets
 ------------------------------------------------------------
 
-DIM(64,24) bullets
-DIM(24) bullet
+DIM(64,25) bullets
+DIM(25) bullet
 INIT bullet_i
 
 RETURN
@@ -643,7 +1389,7 @@ FOR i = 0 TO LEN(bullets) - 1
 END
 
 IF bullet_i = -1
-  ECHO "WARNING: Bullet Pool exhausted"
+  LOG "WARNING: Bullet Pool exhausted"
 END
 
 RETURN
@@ -690,8 +1436,8 @@ IF bullet(_enabled)
   
   target_x = 0
   target_y = 0
-  target_width = game_width
-  target_height = game_height
+  target_width = WIDTH
+  target_height = HEIGHT
   
   GOSUB Check Intersection
   IF NOT intersection
@@ -699,7 +1445,7 @@ IF bullet(_enabled)
   ELSE
     IF bullet(_state) = 2
       speed = DELTATIME / 1000 * bullet(_speed)
-      bullet(_y) += bullet(_directiony) * speed
+      bullet(_y) += bullet(_direction) * speed
     ELSE
       bullet(_state) = 2
     END
@@ -726,25 +1472,42 @@ RETURN
 bullet = bullets(bullet_i)
 
 IF bullet(_enabled)
+  sprite_name = NULL
   IF bullet(_friendly)
-    IF bullet(_powerup) = 0
+    IF bullet(_powerup) = _none
       COLOR "limegreen"
     ELSE
-      IF bullet(_powerup) = 1
+      IF bullet(_powerup) = _fastshot
+        sprite_name = "Fast Shot"
         COLOR "green"
       ELSE
-        IF bullet(_powerup) = 2
+        IF bullet(_powerup) = _shield
           COLOR "cyan"
+          sprite_name = "Shield"
         ELSE
           COLOR "#666"
+          sprite_name = "Upgrade"
         END
       END
     END
   ELSE
     COLOR "red"
   END
-  FILL bullet(_x), bullet(_y), _
-       bullet(_width), bullet(_height)
+  IF sprite_name = NULL
+    FILL bullet(_x), bullet(_y), _
+         bullet(_width), bullet(_height)
+  ELSE
+  
+    IF render_colliders
+      FILL bullet(_x), bullet(_y), _
+           bullet(_width), bullet(_height)
+    END
+    
+    SCALE 4
+    DRAW bullet(_x) + 8, bullet(_y) + 8, sprite_name
+    RESET
+    
+  END
 END
 
 RETURN
@@ -757,11 +1520,11 @@ RETURN
  * Initialize Stages
 ------------------------------------------------------------
 
-DIM(3) stages
-DIM(3,2) stage_player
-DIM(3,2) stage_swarm
-DIM(3,48,24) stage_enemies
-DIM(3,64,24) stage_bullets
+DIM(4) stages
+DIM(4,2) stage_player
+DIM(4,2) stage_swarm
+DIM(4,48,25) stage_enemies
+DIM(4,64,25) stage_bullets
 
 INIT stage_i
 
@@ -785,9 +1548,223 @@ swarm_y_target = 0
 swarm_y_velocity = 0
 swarm_y_timer = 0
 
-GOSUB Setup Stages
 
-stage_i = start_stage - 1
+
+😎 Stage 1
+
+swarm_count = 30
+swarm_count_alive = 30
+
+swarm_shoot_interval = 500
+swarm_shoot_factor = 2
+
+swarm_y_target = 0
+swarm_y_max = 3
+swarm_y_interval = 15000
+
+FOR i = 0 TO swarm_count - 1
+  x = i % 10
+  y = FLOOR(i / 10)
+  
+  IF y = 1 AND x % 2 = 0
+    NEXT
+  END
+  
+  e = enemies(i)
+  
+  e(_ox) = 16 + x * 48
+  e(_oy) = 16 + y * 48
+  e(_offset) = 8
+  e(_width) = 32
+  e(_height) = 32
+  e(_speed) = 2
+  e(_maxhp) = 1
+  
+  IF y = 0
+    e(_respawn) = 1
+  END
+  
+  IF y = 1
+    e(_type) = _special
+    e(_powerup) = _shootrate
+  END
+  
+  IF y = 2
+    e(_respawn) = 3
+  END
+  
+  enemy = e
+  GOSUB Start Enemy
+END
+
+stage_i += 1
+GOSUB Save Stage
+RESET enemies
+
+
+
+😅 Stage 2
+
+swarm_count = 15
+swarm_count_alive = 15
+
+swarm_shoot_interval = 350
+swarm_shoot_factor = 2
+
+swarm_y_target = 1
+swarm_y_max = 3
+swarm_y_interval = 15000
+
+FOR i = 0 TO 5
+  e = enemies(i)
+  
+  e(_ox) = 64 + i * 64
+  e(_oy) = 16
+  e(_offset) = 32
+  e(_width) = 32
+  e(_height) = 32
+  e(_speed) = 1
+  e(_maxhp) = 1
+  e(_type) = _special
+  e(_powerup) = _shootrate
+  
+  enemy = e
+  GOSUB Start Enemy
+END
+
+FOR i = 6 TO 10
+  e = enemies(i)
+  
+  e(_ox) = 64 + (i - 6) * 64
+  e(_oy) = 64
+  e(_offset) = 32
+  e(_width) = 32
+  e(_height) = 32
+  e(_speed) = 0.75
+  e(_maxhp) = 1
+  e(_respawn) = 5
+  
+  enemy = e
+  GOSUB Start Enemy
+END
+
+FOR i = 11 TO 14
+  e = enemies(i)
+  
+  e(_ox) = 64 + (i - 10) * 64
+  e(_oy) = 112
+  e(_x) = e(_ox)
+  e(_y) = e(_oy)
+  e(_offset) = 48
+  e(_width) = 32
+  e(_height) = 32
+  e(_speed) = 0.5
+  e(_maxhp) = 1
+  e(_respawn) = 10
+  
+  enemy = e
+  GOSUB Start Enemy
+END
+
+stage_i += 1
+GOSUB Save Stage
+RESET enemies
+
+
+
+😶 Stage 3
+
+swarm_count = 21
+swarm_count_alive = 21
+
+swarm_shoot_interval = 250
+swarm_shoot_factor = 2
+
+swarm_y_target = 0
+swarm_y_max = 2
+swarm_y_interval = 5000
+
+FOR i = 0 TO swarm_count - 1
+  x = i % 7
+  y = FLOOR(i / 7)
+  
+  e = enemies(i)
+  
+  e(_ox) = 80 + x * 48
+  e(_oy) = 16 + y * 48
+  e(_offset) = 8
+  e(_width) = 32
+  e(_height) = 32
+  e(_speed) = 2
+  e(_maxhp) = 1
+  
+  IF y = 0
+    e(_type) = _special
+    e(_powerup) = _shootrate
+  ELSE
+    e(_type) = _tank
+    e(_maxhp) = 3
+    e(_respawn) = 12
+  END
+  
+  enemy = e
+  GOSUB Start Enemy
+END
+
+stage_i += 1
+GOSUB Save Stage
+RESET enemies
+
+
+
+
+😞 Stage 4
+
+swarm_count = 5
+swarm_count_alive = 5
+
+swarm_shoot_interval = 300
+swarm_shoot_factor = 1
+
+swarm_y_target = 0
+swarm_y_max = 1
+
+e = enemies(0)
+e(_type) = _boss
+e(_ox) = WIDTH / 2
+e(_width) = 64
+e(_height) = 64
+e(_speed) = 1
+IF debug_mode
+  e(_maxhp) = 2
+ELSE
+  e(_maxhp) = 20
+END
+enemy = e
+GOSUB Start Enemy
+
+FOR i = 1 TO 4
+  e = enemies(i)
+  e(_type) = _slave
+  e(_ox) = enemies(0)(_ox)
+  e(_oy) = enemies(0)(_oy) + 64
+  e(_offset) = 8
+  e(_width) = 32
+  e(_height) = 32
+  e(_speed) = 1.25
+  e(_maxhp) = 3
+  e(_respawn) = 5
+  enemy = e
+  GOSUB Start Enemy
+END
+
+stage_i += 1
+GOSUB Save Stage
+RESET enemies
+
+
+
+stage_i = -1
 
 RETURN
 
@@ -798,8 +1775,11 @@ RETURN
 stage_timer = MAX(0, stage_timer - DELTATIME)
 IF stage_timer = 0
   stage_timer = theme_milliseconds
-  IF NOT stage_i = -1
+  IF start_stage = -1
     GOSUB Save Stage
+  ELSE
+    stage_i = start_stage - 1
+    start_stage = -1
   END
   stage_i += 1
   IF stage_i >= LEN(stages)
@@ -814,6 +1794,8 @@ RETURN
  * Save Stage
 ------------------------------------------------------------
 
+LOG "Save Stage: " + stage_i
+
 stage_player(stage_i)(0) = player_x
 stage_player(stage_i)(1) = player_y
 
@@ -825,10 +1807,11 @@ stage_swarm(stage_i)(3) = swarm_shoot_factor
 stage_swarm(stage_i)(4) = swarm_shoot_timer
 
 stage_swarm(stage_i)(5) = swarm_y
-stage_swarm(stage_i)(6) = swarm_y_target
-stage_swarm(stage_i)(7) = swarm_y_velocity
-stage_swarm(stage_i)(8) = swarm_y_interval
-stage_swarm(stage_i)(9) = swarm_y_timer
+stage_swarm(stage_i)(6) = swarm_y_max
+stage_swarm(stage_i)(7) = swarm_y_target
+stage_swarm(stage_i)(8) = swarm_y_velocity
+stage_swarm(stage_i)(9) = swarm_y_interval
+stage_swarm(stage_i)(10) = swarm_y_timer
 
 FOR i = 0 TO LEN(enemies) - 1
   FOR j = 0 TO LEN(enemies(i)) - 1
@@ -848,8 +1831,11 @@ RETURN
  * Load Stage
 ------------------------------------------------------------
 
+LOG "Load Stage: " + stage_i
+
 player_x = stage_player(stage_i)(0)
 player_y = stage_player(stage_i)(1)
+player_shield_lost = FALSE
 
 swarm_count = stage_swarm(stage_i)(0)
 swarm_count_alive = stage_swarm(stage_i)(1)
@@ -859,10 +1845,11 @@ swarm_shoot_factor = stage_swarm(stage_i)(3)
 swarm_shoot_timer = stage_swarm(stage_i)(4)
 
 swarm_y = stage_swarm(stage_i)(5)
-swarm_y_target = stage_swarm(stage_i)(6)
-swarm_y_velocity = stage_swarm(stage_i)(7)
-swarm_y_interval = stage_swarm(stage_i)(8)
-swarm_y_timer = stage_swarm(stage_i)(9)
+swarm_y_max = stage_swarm(stage_i)(6)
+swarm_y_target = stage_swarm(stage_i)(7)
+swarm_y_velocity = stage_swarm(stage_i)(8)
+swarm_y_interval = stage_swarm(stage_i)(9)
+swarm_y_timer = stage_swarm(stage_i)(10)
 
 FOR i = 0 TO LEN(enemies) - 1
   FOR j = 0 TO LEN(enemies(i)) - 1
@@ -922,8 +1909,109 @@ RETURN
 
 
 ------------------------------------------------------------
- * Exit
+ * Start Message
 ------------------------------------------------------------
+INIT tw_text
+INIT tw_characters
+INIT tw_speed = 30
+INIT tw_post_delay = 600
+INIT tw_post_delay_timer
+INIT tw_wait
+INIT tw_next
+INIT tw_done
 
-GOSUB Render
-ECHO "GAME OVER"
+INIT m_index
+INIT m_done
+
+PLAY "Type"
+
+BEGIN GAMELOOP
+  
+  press_space = PRESS("SPACE")
+  
+  COLOR "black"
+  FILL
+  
+  IF press_space
+    IF m_allow_skip = TRUE
+      IF tw_characters >= LEN(tw_text)
+        tw_post_delay_timer = tw_post_delay + 1
+      ELSE
+        tw_characters = LEN(tw_text)
+      END
+    END
+    IF NOT m_done
+      tw_next = TRUE
+    END
+  END
+  
+  GOSUB Update Messages
+  
+  IF m_done
+    STOP "Type"
+    BREAK
+  END
+  
+  IF tw_wait
+    ALIGN CENTER
+    COLOR "orange"
+    TEXT WIDTH / 2, HEIGHT - 64, "Press [SPACE] to continue"
+  END
+  
+END
+
+COLOR "black"
+FILL
+
+SLEEP 500
+RETURN
+
+------------------------------------------------------------
+ * Update Messages
+------------------------------------------------------------
+tw_text = m(m_index)
+IF tw_text = 0
+  tw_wait = FALSE
+  m_done = TRUE
+ELSE
+  m_done = FALSE
+  GOSUB Update Typewriter
+  IF tw_done
+    m_index += 1
+    IF m(m_index) = 0
+      RESET m
+      m_done = TRUE
+      m_index = 0
+    END
+  END
+END
+RETURN
+
+------------------------------------------------------------
+ * Update Typewriter
+------------------------------------------------------------
+tw_wait = FALSE
+tw_done = FALSE
+ALIGN LEFT
+COLOR "white"
+SET current_text = MAX(tw_text, tw_characters)
+TEXT 48, HEIGHT / 2 - 64, current_text, WIDTH - 96, tw_text
+IF tw_characters >= LEN(tw_text)
+  STOP "Type"
+  IF tw_post_delay_timer > tw_post_delay
+    tw_wait = TRUE
+    IF tw_next
+      PLAY "Type"
+      PLAY "Use"
+      tw_done = TRUE
+      tw_characters = 0
+      tw_post_delay_timer = 0
+    END
+  ELSE
+    tw_post_delay_timer += DELTATIME
+  END
+ELSE
+  tw_characters += DELTATIME / 1000 * tw_speed
+END
+tw_next = FALSE
+RETURN
