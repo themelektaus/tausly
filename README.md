@@ -8,7 +8,9 @@
 
 - **Simplicity** | You just need some basic knowledge of writing code - That's it!
 - **Game Loop** | The main reason for the existence of this project is
-                  [Ludum Dare](https://ldjam.com/).
+                  [LD 51](https://ldjam.com/events/ludum-dare/51)
+                  where I made the game
+                  [Time Invaders](https://ldjam.com/events/ludum-dare/51/time-invaders).
 - **No dependencies** | Everything is written in Vanilla Javascript.
 - **Like BASIC** | Yes, it is a feature.
 
