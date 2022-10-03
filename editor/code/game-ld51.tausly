@@ -1156,121 +1156,118 @@ RETURN
 
 enemy = enemies(enemy_i)
 
-IF NOT enemy(_enabled)
-  RETURN
-END
+IF enemy(_enabled)
+  enemy(_hit) = MAX(0, enemy(_hit) - DELTATIME / 250)
 
-enemy(_hit) = MAX(0, enemy(_hit) - DELTATIME / 250)
-
-IF enemy(_type) = _slave
-  enemy(_tx) = enemies(0)(_tx) + enemy_i * 48 - 104
-  enemy(_ty) = enemies(0)(_ty) + 64
-  IF enemy_i = 2 OR enemy_i = 3
-    enemy(_ty) += 16
-  END
-ELSE
-  IF enemy(_t) > 0
-    enemy(_t) = MAX(0, enemy(_t) - DELTATIME)
-  END
-  IF enemy(_t) = 0
-    enemy(_t) = 1000
-    IF enemy(_type) = _boss
-      enemy(_tx) = RANDOM(0, WIDTH)
-      enemy(_ty) = RANDOM(0, HEIGHT / 2)
-    ELSE
-      x = enemy(_ox) - enemy(_offset)
-      y = enemy(_ox) + enemy(_offset)
-      enemy(_tx) = RANDOM(x, y)
-      x = enemy(_oy) - enemy(_offset)
-      y = enemy(_oy) + enemy(_offset)
-      enemy(_ty) = RANDOM(x, y)
+  IF enemy(_type) = _slave
+    enemy(_tx) = enemies(0)(_tx) + enemy_i * 48 - 104
+    enemy(_ty) = enemies(0)(_ty) + 64
+    IF enemy_i = 2 OR enemy_i = 3
+      enemy(_ty) += 16
     END
-  END
-END
-
-x = enemy(_x)
-y = enemy(_y)
-tx = enemy(_tx)
-ty = enemy(_ty) + (swarm_y - 1) * 48
-vx = enemy(_vx)
-vy = enemy(_vy)
-t = 1 / enemy(_speed)
-SMOOTHDAMP x, tx, vx, t
-SMOOTHDAMP y, ty, vy, t
-enemy(_x) = x
-enemy(_y) = y
-enemy(_vx) = vx
-enemy(_vy) = vy
-
-Update Enemy Next:
-
-IF enemy(_dead)
-  IF enemy(_hit) = 0
-    IF enemy(_type) = _boss
-      GOSUB Render
-      GOTO Game Won
+  ELSE
+    IF enemy(_t) > 0
+      enemy(_t) = MAX(0, enemy(_t) - DELTATIME)
     END
-    IF enemy(_respawn) = 0
-      RESET enemy
-    ELSE
-      enemy(_respawntimer) = _
-        MAX(0, enemy(_respawntimer) - DELTATIME / 1000)
-      IF enemy(_respawntimer) = 0
-        GOSUB Start Enemy
-        swarm_count_alive += 1
+    IF enemy(_t) = 0
+      enemy(_t) = 1000
+      IF enemy(_type) = _boss
+        enemy(_tx) = RANDOM(0, WIDTH)
+        enemy(_ty) = RANDOM(0, HEIGHT / 2)
+      ELSE
+        x = enemy(_ox) - enemy(_offset)
+        y = enemy(_ox) + enemy(_offset)
+        enemy(_tx) = RANDOM(x, y)
+        x = enemy(_oy) - enemy(_offset)
+        y = enemy(_oy) + enemy(_offset)
+        enemy(_ty) = RANDOM(x, y)
       END
     END
   END
-  RETURN
-END
 
-source_x = enemy(_x)
-source_y = enemy(_y)
-source_width = enemy(_width)
-source_height = enemy(_height)
+  x = enemy(_x)
+  y = enemy(_y)
+  tx = enemy(_tx)
+  ty = enemy(_ty) + (swarm_y - 1) * 48
+  vx = enemy(_vx)
+  vy = enemy(_vy)
+  t = 1 / enemy(_speed)
+  SMOOTHDAMP x, tx, vx, t
+  SMOOTHDAMP y, ty, vy, t
+  enemy(_x) = x
+  enemy(_y) = y
+  enemy(_vx) = vx
+  enemy(_vy) = vy
 
-target_x = player_x
-target_y = player_y
-target_width = player_width
-target_height = player_height
+  Update Enemy Next:
 
-GOSUB Check Intersection
-IF intersection
-  GOSUB Player Hit
-END
+  IF enemy(_dead)
+    IF enemy(_hit) = 0
+      IF enemy(_type) = _boss
+        GOSUB Render
+        GOTO Game Won
+      END
+      IF enemy(_respawn) = 0
+        RESET enemy
+      ELSE
+        enemy(_respawntimer) = _
+          MAX(0, enemy(_respawntimer) - DELTATIME / 1000)
+        IF enemy(_respawntimer) = 0
+          GOSUB Start Enemy
+          swarm_count_alive += 1
+        END
+      END
+    END
+  ELSE
+    source_x = enemy(_x)
+    source_y = enemy(_y)
+    source_width = enemy(_width)
+    source_height = enemy(_height)
 
-FOR j = 0 TO LEN(bullets) - 1
-  bullet = bullets(j)
-  IF bullet(_friendly) AND bullet(_powerup) = _none
-    GOSUB Check Bullet Intersection
+    target_x = player_x
+    target_y = player_y
+    target_width = player_width
+    target_height = player_height
+
+    GOSUB Check Intersection
     IF intersection
-      RESET bullet
-      PLAY "Enemy Hit"
-      enemy(_hp) -= 1
-      enemy(_hit) = 1
-      IF enemy(_hp) = 0
-        IF player_shield_lost = TRUE
-          player_shield_lost = FALSE
-          enemy(_powerup) = _shield
-        END
-        IF NOT enemy(_powerup) = _none
-          GOSUB Spawn Bullet
-          IF NOT bullet_i = -1
-            bullet(_x) = source_x
-            bullet(_y) = source_y
-            bullet(_width) = 24
-            bullet(_height) = 24
-            bullet(_direction) = 1
-            bullet(_speed) = 100
-            bullet(_friendly) = TRUE
-            bullet(_powerup) = enemy(_powerup)
+      GOSUB Player Hit
+    END
+
+    FOR j = 0 TO LEN(bullets) - 1
+      bullet = bullets(j)
+      IF bullet(_friendly) AND bullet(_powerup) = _none
+        GOSUB Check Bullet Intersection
+        IF intersection
+          RESET bullet
+          PLAY "Enemy Hit"
+          enemy(_hp) -= 1
+          enemy(_hit) = 1
+          IF enemy(_hp) = 0
+            IF player_shield_lost = TRUE
+              player_shield_lost = FALSE
+              enemy(_powerup) = _shield
+            END
+            IF NOT enemy(_powerup) = _none
+              GOSUB Spawn Bullet
+              IF NOT bullet_i = -1
+                bullet(_x) = source_x
+                bullet(_y) = source_y
+                bullet(_width) = 24
+                bullet(_height) = 24
+                bullet(_direction) = 1
+                bullet(_speed) = 100
+                bullet(_friendly) = TRUE
+                bullet(_powerup) = enemy(_powerup)
+              END
+            END
+            swarm_count_alive -= 1
+            enemy(_dead) = TRUE
+            enemy(_respawntimer) = enemy(_respawn)
           END
+          BREAK
         END
-        swarm_count_alive -= 1
-        enemy(_dead) = TRUE
-        enemy(_respawntimer) = enemy(_respawn)
       END
-      BREAK
     END
   END
 END
@@ -1327,35 +1324,27 @@ FOR i = 0 TO LEN(enemies) - 1
   IF enemy(_enabled) _
   AND (enemy(_hit) > 0 OR enemy(_hp) > 0)
     SCALE 4 * (enemy(_hit) / 2 + 1)
-    GOSUB DrawEnemy
+    IF enemy(_type) = _tank
+      t = FLOOR(TIME / 500 % 2)
+      DRAW enemy(_x) + 10, enemy(_y) + 10, "Tank Enemy", t
+    ELSE
+      IF enemy(_type) = _special
+        t = FLOOR(TIME / 250 % 2)
+        DRAW enemy(_x) + 10, enemy(_y) + 10, "Special Enemy", t
+      ELSE
+        IF enemy(_type) = _boss
+          t = FLOOR(TIME / 500 % 2)
+          DRAW enemy(_x) + 20, enemy(_y) + 20, "Boss", t
+        ELSE
+          t = FLOOR(TIME / 500 % 2)
+          DRAW enemy(_x) + 10, enemy(_y) + 10, "Enemy", t
+        END
+      END
+    END
     RESET
   END
 END
 
-RETURN
-
-DrawEnemy:
-
-IF enemy(_type) = _tank
-  t = FLOOR(TIME / 500 % 2)
-  DRAW enemy(_x) + 10, enemy(_y) + 10, "Tank Enemy", t
-  RETURN
-END
-
-IF enemy(_type) = _special
-  t = FLOOR(TIME / 250 % 2)
-  DRAW enemy(_x) + 10, enemy(_y) + 10, "Special Enemy", t
-  RETURN
-END
-
-IF enemy(_type) = _boss
-  t = FLOOR(TIME / 500 % 2)
-  DRAW enemy(_x) + 20, enemy(_y) + 20, "Boss", t
-  RETURN
-END
-
-t = FLOOR(TIME / 500 % 2)
-DRAW enemy(_x) + 10, enemy(_y) + 10, "Enemy", t
 RETURN
 
 
