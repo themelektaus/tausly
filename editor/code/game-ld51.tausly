@@ -705,7 +705,7 @@ PLAY "Ingame"
  * Game Loop
 ------------------------------------------------------------
 
-BEGIN GAMELOOP 95
+BEGIN GAMELOOP 185
   GOSUB Update
   GOSUB Render
 END
@@ -1324,7 +1324,7 @@ FOR i = 0 TO LEN(enemies) - 1
   IF enemy(_enabled) _
   AND (enemy(_hit) > 0 OR enemy(_hp) > 0)
     SCALE 4 * (enemy(_hit) / 2 + 1)
-    IF enemy(_type) = _tank
+    IF enemy(_type) = _tank OR enemy(_type) = _slave
       t = FLOOR(TIME / 500 % 2)
       DRAW enemy(_x) + 10, enemy(_y) + 10, "Tank Enemy", t
     ELSE
