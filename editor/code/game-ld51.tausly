@@ -1927,6 +1927,7 @@ BEGIN GAMELOOP
         tw_post_delay_timer = tw_post_delay + 1
       ELSE
         tw_characters = LEN(tw_text)
+        tw_wait = TRUE
       END
     END
     IF NOT m_done
@@ -1979,7 +1980,6 @@ RETURN
 ------------------------------------------------------------
  * Update Typewriter
 ------------------------------------------------------------
-tw_wait = FALSE
 tw_done = FALSE
 ALIGN LEFT
 COLOR "white"
@@ -2000,6 +2000,7 @@ IF tw_characters >= LEN(tw_text)
     tw_post_delay_timer += DELTATIME
   END
 ELSE
+  tw_wait = FALSE
   tw_characters += DELTATIME / 1000 * tw_speed
 END
 tw_next = FALSE
