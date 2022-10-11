@@ -28,7 +28,7 @@ define(
                     },
                     {
                         token: 'keyword.func.tausly',
-                        regex: '\\b(?:CEIL|CLAMP|FLOOR|INPUT|PRESS|RELEASE|INT|MAX|MIN|XRANDOM|RANDOM|ROUND|FPS|LEN|ABS|FRAMETIME|SUM|READ)\\b'
+                        regex: '\\b(?:CEIL|CLAMP|FLOOR|INPUT|PRESS|RELEASE|INT|MAX|MIN|XRANDOM|RANDOM|ROUND|FPS|LEN|ABS|FRAMETIME|SUM|READ|LERP)\\b'
                     },
                     {
                         token: 'keyword.jump.tausly',
