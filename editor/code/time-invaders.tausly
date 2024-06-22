@@ -38,6 +38,8 @@ INIT debug_mode = FALSE
 
 INIT first_time = TRUE
 
+INIT screenshot_mode = FALSE
+
 
 
 ------------------------------------------------------------
@@ -621,6 +623,33 @@ INIT _special = 1
 INIT _boss = 2
 INIT _slave = 3
 INIT _tank = 4
+
+
+
+
+
+------------------------------------------------------------
+ * Screenshot Mode
+------------------------------------------------------------
+IF screenshot_mode
+  
+  DRAW 8 + 0 * 16, 8, "Enemy", 0
+  DRAW 8 + 1 * 16, 8, "Enemy", 1
+  DRAW 8 + 2 * 16, 8, "Special Enemy", 0
+  DRAW 8 + 3 * 16, 8, "Special Enemy", 1
+  DRAW 8 + 4 * 16, 8, "Tank Enemy", 0
+  DRAW 8 + 5 * 16, 8, "Tank Enemy", 1
+  DRAW 8 + 6 * 16, 8, "Boss", 0
+  DRAW 8 + 8 * 16, 8, "Boss", 1
+  
+  DRAW 8, 64, "Ship", 0
+  DRAW 64, 64, "Fast Shot", 0
+  DRAW 80, 64, "Shield", 0
+  DRAW 96, 64, "Upgrade", 0
+  
+  GOTO Exit
+  
+END
 
 
 
@@ -2005,3 +2034,5 @@ ELSE
 END
 tw_next = FALSE
 RETURN
+
+Exit:
